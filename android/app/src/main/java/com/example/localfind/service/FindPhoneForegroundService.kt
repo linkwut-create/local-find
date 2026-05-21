@@ -17,6 +17,8 @@ import com.example.localfind.MainActivity
 import com.example.localfind.hardware.FlashlightController
 import com.example.localfind.hardware.RingController
 import com.example.localfind.server.HttpServerManager
+import com.example.localfind.server.NsdAdvertiser
+import com.example.localfind.server.NsdStatus
 
 class FindPhoneForegroundService : Service() {
 
@@ -25,6 +27,7 @@ class FindPhoneForegroundService : Service() {
     private lateinit var ringController: RingController
     private lateinit var flashlightController: FlashlightController
     private var httpServerManager: HttpServerManager? = null
+    private var nsdAdvertiser: NsdAdvertiser? = null
 
     // 观察者，用于将状态回调投射至 Activity 活动页面
     private var onStatusChangeListener: (() -> Unit)? = null
@@ -44,6 +47,10 @@ class FindPhoneForegroundService : Service() {
         flashlightController = FlashlightController(this)
         
         httpServerManager = HttpServerManager(ringController, flashlightController) {
+            onStatusChangeListener?.invoke()
+        }
+
+        nsdAdvertiser = NsdAdvertiser(this) {
             onStatusChangeListener?.invoke()
         }
     }
@@ -70,6 +77,7 @@ class FindPhoneForegroundService : Service() {
         }
 
         httpServerManager?.start()
+        nsdAdvertiser?.registerService()
         onStatusChangeListener?.invoke()
         
         // START_STICKY 保证因系统内存不足被杀后，系统有机会重建服务
@@ -81,12 +89,14 @@ class FindPhoneForegroundService : Service() {
      */
     fun stopService() {
         httpServerManager?.stop()
+        nsdAdvertiser?.unregisterService()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
     override fun onDestroy() {
         httpServerManager?.stop()
+        nsdAdvertiser?.unregisterService()
         Log.d("ForegroundService", "Service onDestroy finished")
         super.onDestroy()
     }
@@ -94,6 +104,8 @@ class FindPhoneForegroundService : Service() {
     fun isRingActive(): Boolean = httpServerManager?.isRingActive ?: false
     fun getFlashMode(): String = httpServerManager?.flashMode ?: "off"
     fun isServerRunning(): Boolean = httpServerManager != null
+    fun getNsdStatus(): NsdStatus = nsdAdvertiser?.currentStatus ?: NsdStatus.IDLE
+    fun getNsdServiceType(): String = nsdAdvertiser?.serviceType ?: "_localfind._tcp."
 
     fun setStatusChangeListener(listener: (() -> Unit)?) {
         this.onStatusChangeListener = listener

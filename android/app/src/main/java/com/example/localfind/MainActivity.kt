@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import com.example.localfind.service.FindPhoneForegroundService
+import com.example.localfind.server.NsdStatus
 import com.example.localfind.ui.MainScreen
 import com.example.localfind.util.NetworkUtil
 
@@ -32,6 +33,8 @@ class MainActivity : ComponentActivity() {
     private var flashModeState by mutableStateOf("off")
     private var isServiceRunningState by mutableStateOf(false)
     private var deviceIpState by mutableStateOf<String?>(null)
+    private var nsdStatusState by mutableStateOf(NsdStatus.IDLE)
+    private var nsdServiceTypeState by mutableStateOf("_localfind._tcp.")
 
     // 连接后台前台服务的 Connection
     private val serviceConnection = object : ServiceConnection {
@@ -63,6 +66,8 @@ class MainActivity : ComponentActivity() {
             ringActiveState = service.isRingActive()
             flashModeState = service.getFlashMode()
             isServiceRunningState = service.isServerRunning()
+            nsdStatusState = service.getNsdStatus()
+            nsdServiceTypeState = service.getNsdServiceType()
         }
     }
 
@@ -90,6 +95,8 @@ class MainActivity : ComponentActivity() {
                         port = 8888,
                         ringActive = ringActiveState,
                         flashMode = flashModeState,
+                        nsdStatus = nsdStatusState,
+                        nsdServiceType = nsdServiceTypeState,
                         onStartService = { startAndBindService() },
                         onStopService = { shutdownService() },
                         onTestRingToggle = {
@@ -180,6 +187,7 @@ class MainActivity : ComponentActivity() {
         isServiceRunningState = false
         ringActiveState = false
         flashModeState = "off"
+        nsdStatusState = NsdStatus.IDLE
     }
 
     override fun onResume() {

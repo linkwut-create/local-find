@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.localfind.server.NsdStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,6 +27,8 @@ fun MainScreen(
     port: Int,
     ringActive: Boolean,
     flashMode: String,
+    nsdStatus: NsdStatus,
+    nsdServiceType: String,
     onStartService: () -> Unit,
     onStopService: () -> Unit,
     onTestRingToggle: () -> Unit,
@@ -127,6 +130,40 @@ fun MainScreen(
                         Text("监听端口:", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             text = port.toString(),
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("NSD 状态:", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = when(nsdStatus) {
+                                NsdStatus.IDLE -> "未广播"
+                                NsdStatus.ADVERTISING -> "广播中"
+                                NsdStatus.ADVERTISED -> "已广播"
+                                NsdStatus.FAILED -> "广播失败"
+                            },
+                            fontWeight = FontWeight.Bold,
+                            color = when(nsdStatus) {
+                                NsdStatus.ADVERTISED -> Color(0xFF2E7D32)
+                                NsdStatus.FAILED -> Color(0xFFC62828)
+                                else -> MaterialTheme.colorScheme.primary
+                            }
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("服务类型:", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = nsdServiceType,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace,
                             color = MaterialTheme.colorScheme.primary
