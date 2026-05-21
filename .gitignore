@@ -6,3 +6,15 @@ coverage/
 *.log
 .env*
 !.env.example
+# Android / Gradle generated files
+**/.gradle/
+**/build/
+
+# IDE files
+.idea/
+**/.idea/
+*.iml
+
+# Local machine files
+local.properties
+android/local.properties
