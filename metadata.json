@@ -1,0 +1,6 @@
+{
+  "name": "Local Find",
+  "description": "Android local phone finder app (MVP-A) - turns your phone into an HTTP-controlled alert beacon when on the same Wi-Fi network.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
