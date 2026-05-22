@@ -424,12 +424,22 @@ fun ControllerModeScreen(
     onOpenBrowser: (DiscoveredDevice) -> Unit
 ) {
     var selectedDevice by remember { mutableStateOf<DiscoveredDevice?>(null) }
+    var recentDevice by remember { mutableStateOf(tokenStore.getRecentDevice()) }
+
+    // Manual Connection States
+    var manualHost by remember { mutableStateOf("") }
+    var manualPort by remember { mutableStateOf("8888") }
+    var manualName by remember { mutableStateOf("") }
 
     if (selectedDevice != null) {
         RemoteControlPanel(
             device = selectedDevice!!,
             tokenStore = tokenStore,
-            onBack = { selectedDevice = null }
+            onBack = { 
+                selectedDevice = null 
+                // Refresh recent device when coming back
+                recentDevice = tokenStore.getRecentDevice()
+            }
         )
     } else {
         Column(
@@ -439,10 +449,41 @@ fun ControllerModeScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // 1. Recent Device Card
+            recentDevice?.let { device ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("最近连接", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(device.name, fontWeight = FontWeight.Bold)
+                                Text("${device.host}:${device.port}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            }
+                            Button(
+                                onClick = { 
+                                    tokenStore.saveRecentDevice(device.name, device.host, device.port)
+                                    selectedDevice = device 
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Text("快速进入", fontSize = 11.sp)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Discovery Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.1f))
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("发现局域网设备 (NSD Scanner)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
@@ -466,8 +507,70 @@ fun ControllerModeScreen(
                 }
             }
 
+            // 3. Manual Connection Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("手动连接 fallback", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = manualHost,
+                            onValueChange = { manualHost = it },
+                            label = { Text("IP 地址") },
+                            modifier = Modifier.weight(2f),
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodySmall
+                        )
+                        OutlinedTextField(
+                            value = manualPort,
+                            onValueChange = { manualPort = it },
+                            label = { Text("端口") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    
+                    OutlinedTextField(
+                        value = manualName,
+                        onValueChange = { manualName = it },
+                        label = { Text("自定义名称 (可选)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = { Text("例如：我的旧手机") },
+                        textStyle = MaterialTheme.typography.bodySmall
+                    )
+
+                    Button(
+                        onClick = {
+                            val hostTrimmed = manualHost.trim()
+                            val portInt = manualPort.toIntOrNull() ?: 8888
+                            if (hostTrimmed.isNotBlank() && portInt in 1..65535) {
+                                val name = manualName.ifBlank { "Manual Device" }
+                                val device = DiscoveredDevice(
+                                    name = name,
+                                    host = hostTrimmed,
+                                    port = portInt,
+                                    controlUrl = "http://$hostTrimmed:$portInt"
+                                )
+                                tokenStore.saveRecentDevice(name, device.host, portInt)
+                                selectedDevice = device
+                            }
+                        },
+                        modifier = Modifier.align(Alignment.End),
+                        enabled = manualHost.isNotBlank() && (manualPort.toIntOrNull() ?: 0) in 1..65535
+                    ) {
+                        Text("连接到设备")
+                    }
+                }
+            }
+
+            // 4. Discovered Devices List
             if (discoveredDevices.isEmpty()) {
-                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
                     Text("暂未发现设备", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
                 }
             } else {
@@ -485,7 +588,10 @@ fun ControllerModeScreen(
                             }
                             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Button(
-                                    onClick = { selectedDevice = device }, 
+                                    onClick = { 
+                                        tokenStore.saveRecentDevice(device.name, device.host, device.port)
+                                        selectedDevice = device 
+                                    }, 
                                     shape = RoundedCornerShape(8.dp),
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                                     modifier = Modifier.height(32.dp)
@@ -493,7 +599,10 @@ fun ControllerModeScreen(
                                     Text("App 内控制", fontSize = 11.sp)
                                 }
                                 OutlinedButton(
-                                    onClick = { onOpenBrowser(device) }, 
+                                    onClick = { 
+                                        tokenStore.saveRecentDevice(device.name, device.host, device.port)
+                                        onOpenBrowser(device) 
+                                    },
                                     shape = RoundedCornerShape(8.dp),
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                                     modifier = Modifier.height(32.dp)
