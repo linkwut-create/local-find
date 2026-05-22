@@ -11,7 +11,6 @@ import android.os.Bundle
 import android.os.IBinder
 import android.os.PowerManager
 import android.provider.Settings
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +20,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import android.net.Uri
+import androidx.fragment.app.FragmentActivity
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import android.widget.Toast
 import com.example.localfind.service.FindPhoneForegroundService
 import com.example.localfind.server.NsdStatus
 import com.example.localfind.server.ServerStatus
@@ -31,7 +34,7 @@ import com.example.localfind.auth.RemoteDeviceTokenStore
 import com.example.localfind.ui.MainScreen
 import com.example.localfind.util.NetworkUtil
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private var foregroundService: FindPhoneForegroundService? = null
     private var isServiceBound by mutableStateOf(false)
@@ -185,7 +188,10 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onRequestPermission = { checkAndRequestPermissions() },
-                        onOpenBatterySettings = { openBatteryOptimizationSettings() }
+                        onOpenBatterySettings = { openBatteryOptimizationSettings() },
+                        onAuthenticate = { reason, onSuccess, onFailure ->
+                            authenticateLocalUser(reason, onSuccess, onFailure)
+                        }
                     )
                 }
             }
@@ -193,6 +199,54 @@ class MainActivity : ComponentActivity() {
 
         checkAndRequestPermissions()
         refreshServiceStatus()
+    }
+
+    private fun authenticateLocalUser(
+        reason: String,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val biometricManager = BiometricManager.from(this)
+        val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or 
+                            BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        
+        when (biometricManager.canAuthenticate(authenticators)) {
+            BiometricManager.BIOMETRIC_SUCCESS -> {
+                val executor = ContextCompat.getMainExecutor(this)
+                val biometricPrompt = BiometricPrompt(this, executor,
+                    object : BiometricPrompt.AuthenticationCallback() {
+                        override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                            super.onAuthenticationError(errorCode, errString)
+                            onFailure(errString.toString())
+                        }
+
+                        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                            super.onAuthenticationSucceeded(result)
+                            onSuccess()
+                        }
+
+                        override fun onAuthenticationFailed() {
+                            super.onAuthenticationFailed()
+                            // This is for individual failed attempts (wrong finger), 
+                            // error callback is called for permanent failure/cancel
+                        }
+                    })
+
+                val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                    .setTitle("本地身份认证")
+                    .setSubtitle(reason)
+                    .setAllowedAuthenticators(authenticators)
+                    .build()
+
+                biometricPrompt.authenticate(promptInfo)
+            }
+            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
+                onFailure("请先在本机系统中设置锁屏密码或生物识别")
+            }
+            else -> {
+                onFailure("本机认证不可用或未设置锁屏")
+            }
+        }
     }
 
     private fun refreshServiceStatus() {

@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,6 +74,7 @@ fun MainScreen(
     onStopAll: () -> Unit,
     onRequestPermission: () -> Unit,
     onOpenBatterySettings: () -> Unit,
+    onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("被寻找端", "控制端")
@@ -132,7 +134,8 @@ fun MainScreen(
                     onTestFlashStop = onTestFlashStop,
                     onStopAll = onStopAll,
                     onRequestPermission = onRequestPermission,
-                    onOpenBatterySettings = onOpenBatterySettings
+                    onOpenBatterySettings = onOpenBatterySettings,
+                    onAuthenticate = onAuthenticate
                 )
             } else {
                 ControllerModeScreen(
@@ -141,7 +144,8 @@ fun MainScreen(
                     tokenStore = remoteTokenStore,
                     onStartDiscovery = onStartDiscovery,
                     onStopDiscovery = onStopDiscovery,
-                    onOpenBrowser = onOpenDevice
+                    onOpenBrowser = onOpenDevice,
+                    onAuthenticate = onAuthenticate
                 )
             }
         }
@@ -173,6 +177,7 @@ fun FinderModeScreen(
     onStopAll: () -> Unit,
     onRequestPermission: () -> Unit,
     onOpenBatterySettings: () -> Unit,
+    onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit
 ) {
     val clipboardManager = LocalClipboardManager.current
     var isTokenVisible by remember { mutableStateOf(false) }
@@ -208,6 +213,31 @@ fun FinderModeScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // 0. Usage Steps Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("如何寻找这台手机", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                
+                val steps = listOf(
+                    "第一步：点击下方按钮“启动服务”",
+                    "第二步：保持本手机与控制端在同一 Wi-Fi / 局域网",
+                    "第三步：在控制端扫描设备，或手动输入 IP:8888",
+                    "第四步：在控制端输入本页面显示的 8 位 Token",
+                    "第五步：在控制端点击“开始寻找手机”触发响铃和闪烁"
+                )
+                
+                steps.forEach { step ->
+                    Text(step, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+
         // 1. Service Status Card
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -332,6 +362,22 @@ fun FinderModeScreen(
             }
         }
 
+        // 2.5 Security Tips Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("安全与隐私提示", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                Text("• Token 仅用于局域网内授权控制，不会上传云端。", style = MaterialTheme.typography.labelSmall)
+                Text("• 请勿将 Token 提供给不可信的人员。", style = MaterialTheme.typography.labelSmall)
+                Text("• 如果怀疑 Token 泄露，请重置 Token。", style = MaterialTheme.typography.labelSmall)
+            }
+        }
+
         // 3. Background Running Support Card
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -346,7 +392,7 @@ fun FinderModeScreen(
             ) {
                 Text("保持后台运行", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    "服务正在以前台模式运行，但在某些设备上，系统仍可能为了省电而杀掉后台连接。",
+                    "服务正在以前台模式运行，但在某些系统（如小米、华为、OPPO）锁屏后可能限制后台网络或冻结服务，需要允许后台运行/忽略电池优化。",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -434,7 +480,8 @@ fun ControllerModeScreen(
     tokenStore: RemoteDeviceTokenStore,
     onStartDiscovery: () -> Unit,
     onStopDiscovery: () -> Unit,
-    onOpenBrowser: (DiscoveredDevice) -> Unit
+    onOpenBrowser: (DiscoveredDevice) -> Unit,
+    onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit
 ) {
     var selectedDevice by remember { mutableStateOf<DiscoveredDevice?>(null) }
     var recentDevice by remember { mutableStateOf(tokenStore.getRecentDevice()) }
@@ -453,7 +500,8 @@ fun ControllerModeScreen(
                 selectedDevice = null 
                 // Refresh recent device when coming back
                 recentDevice = tokenStore.getRecentDevice()
-            }
+            },
+            onAuthenticate = onAuthenticate
         )
     } else {
         Column(
@@ -489,6 +537,12 @@ fun ControllerModeScreen(
                                 Text("快速进入", fontSize = 11.sp)
                             }
                         }
+                        
+                        Text(
+                            "提示：如果连接失败，请检查两台手机是否在同一 Wi-Fi，且被寻找端的寻机服务已启动。IP 地址可能会因 Wi-Fi 变动而失效。此外，请确保被寻找端没有被系统冻结后台连接。",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Gray
+                        )
                     }
                 }
             }
@@ -529,6 +583,8 @@ fun ControllerModeScreen(
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("手动连接 fallback", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     
+                    Text("提示：Host 填写被寻找端显示的 IP 地址，端口默认 8888。", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = manualHost,
@@ -597,8 +653,18 @@ fun ControllerModeScreen(
 
             // 4. Discovered Devices List
             if (discoveredDevices.isEmpty()) {
-                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                    Text("暂未发现设备", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("未发现局域网设备", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "请确认两台手机在同一 Wi-Fi。如果仍无法发现，请尝试下方的“手动连接”。", 
+                        color = Color.Gray, 
+                        style = MaterialTheme.typography.labelSmall,
+                        textAlign = TextAlign.Center
+                    )
                 }
             } else {
                 discoveredDevices.forEach { device ->
@@ -649,13 +715,14 @@ fun ControllerModeScreen(
 fun RemoteControlPanel(
     device: DiscoveredDevice,
     tokenStore: RemoteDeviceTokenStore,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val client = remember { RemoteControlClient() }
     val snackbarHostState = remember { SnackbarHostState() }
     
-    var token by remember { mutableStateOf(tokenStore.getToken(device.host, device.port) ?: "") }
+    var token by remember { mutableStateOf("") }
     var connectionStatus by remember { mutableStateOf(RemoteConnectionStatus.IDLE) }
     var ringActive by remember { mutableStateOf(false) }
     var flashMode by remember { mutableStateOf("off") }
@@ -679,12 +746,11 @@ fun RemoteControlPanel(
                     snackbarHostState.showSnackbar("请求超时")
                 }
                 is ControlResult.Unauthorized -> {
-                    // status 接口通常不鉴权，但如果返回 401 也处理
                     connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
                 }
                 is ControlResult.Error -> {
                     connectionStatus = RemoteConnectionStatus.OFFLINE
-                    val msg = if (result.message == "connection_failed") "离线 / 服务未启动" else "连接失败: ${result.message}"
+                    val msg = if (result.message == "connection_failed") "离线 / 服务未启动" else "连接失败"
                     snackbarHostState.showSnackbar(msg)
                 }
             }
@@ -694,110 +760,120 @@ fun RemoteControlPanel(
 
     fun sendCommand(endpoint: String) {
         if (token.isEmpty()) {
-            scope.launch { snackbarHostState.showSnackbar("请输入 Token") }
+            scope.launch { snackbarHostState.showSnackbar("请先输入当前设备 Token") }
             return
         }
-        scope.launch {
-            isLoading = true
-            when (val result = client.sendCommand(device.host, device.port, token, endpoint)) {
-                is ControlResult.Success -> {
-                    tokenStore.saveToken(device.host, device.port, token)
-                    snackbarHostState.showSnackbar("命令已发送")
-                    refreshStatus()
+        onAuthenticate("验证身份以发送控制命令", {
+            scope.launch {
+                isLoading = true
+                when (val result = client.sendCommand(device.host, device.port, token, endpoint)) {
+                    is ControlResult.Success -> {
+                        snackbarHostState.showSnackbar("命令已发送")
+                        refreshStatus()
+                    }
+                    is ControlResult.Unauthorized -> {
+                        connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
+                        snackbarHostState.showSnackbar("Token 错误")
+                    }
+                    is ControlResult.Timeout -> {
+                        connectionStatus = RemoteConnectionStatus.TIMEOUT
+                        snackbarHostState.showSnackbar("请求超时")
+                    }
+                    is ControlResult.Error -> {
+                        connectionStatus = RemoteConnectionStatus.OFFLINE
+                        val msg = if (result.message == "connection_failed") "设备离线或服务未启动" else "控制失败"
+                        snackbarHostState.showSnackbar(msg)
+                    }
                 }
-                is ControlResult.Unauthorized -> {
-                    connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
-                    snackbarHostState.showSnackbar("Token 错误")
-                }
-                is ControlResult.Timeout -> {
-                    connectionStatus = RemoteConnectionStatus.TIMEOUT
-                    snackbarHostState.showSnackbar("请求超时")
-                }
-                is ControlResult.Error -> {
-                    connectionStatus = RemoteConnectionStatus.OFFLINE
-                    val msg = if (result.message == "connection_failed") "设备离线或服务未启动" else "控制失败: ${result.message}"
-                    snackbarHostState.showSnackbar(msg)
-                }
+                isLoading = false
             }
-            isLoading = false
-        }
+        }, { error ->
+            scope.launch { snackbarHostState.showSnackbar("本机认证失败: $error") }
+        })
     }
 
     fun startFinding() {
         if (token.isEmpty()) {
-            scope.launch { snackbarHostState.showSnackbar("请输入 Token") }
+            scope.launch { snackbarHostState.showSnackbar("请先输入当前设备 Token") }
             return
         }
-        scope.launch {
-            isLoading = true
-            // 1. Start ring
-            val ringResult = client.sendCommand(device.host, device.port, token, "/command/ring/start")
-            
-            if (ringResult is ControlResult.Unauthorized) {
-                connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
-                snackbarHostState.showSnackbar("Token 错误")
+        onAuthenticate("验证身份以寻找手机", {
+            scope.launch {
+                isLoading = true
+                // 1. Start ring
+                val ringResult = client.sendCommand(device.host, device.port, token, "/command/ring/start")
+                
+                if (ringResult is ControlResult.Unauthorized) {
+                    connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
+                    snackbarHostState.showSnackbar("Token 错误")
+                    isLoading = false
+                    return@launch
+                } else if (ringResult is ControlResult.Timeout) {
+                    connectionStatus = RemoteConnectionStatus.TIMEOUT
+                    snackbarHostState.showSnackbar("请求超时")
+                    isLoading = false
+                    return@launch
+                } else if (ringResult is ControlResult.Error) {
+                    connectionStatus = RemoteConnectionStatus.OFFLINE
+                    val msg = if (ringResult.message == "connection_failed") "设备离线或服务未启动" else "控制失败"
+                    snackbarHostState.showSnackbar(msg)
+                    isLoading = false
+                    return@launch
+                }
+                
+                // 2. Start strobe
+                val flashResult = client.sendCommand(device.host, device.port, token, "/command/flash/strobe/start")
+                
+                if (flashResult is ControlResult.Success) {
+                    connectionStatus = RemoteConnectionStatus.SEARCHING
+                    snackbarHostState.showSnackbar("正在寻找手机")
+                } else {
+                    // Ring succeeded, flash failed
+                    connectionStatus = RemoteConnectionStatus.PARTIAL_SUCCESS
+                    snackbarHostState.showSnackbar("部分成功：响铃已启动，但手电控制失败")
+                }
+                
+                refreshStatus()
                 isLoading = false
-                return@launch
-            } else if (ringResult is ControlResult.Timeout) {
-                connectionStatus = RemoteConnectionStatus.TIMEOUT
-                snackbarHostState.showSnackbar("请求超时")
-                isLoading = false
-                return@launch
-            } else if (ringResult is ControlResult.Error) {
-                connectionStatus = RemoteConnectionStatus.OFFLINE
-                val msg = if (ringResult.message == "connection_failed") "设备离线或服务未启动" else "控制失败: ${ringResult.message}"
-                snackbarHostState.showSnackbar(msg)
-                isLoading = false
-                return@launch
             }
-            
-            // 2. Start strobe
-            val flashResult = client.sendCommand(device.host, device.port, token, "/command/flash/strobe/start")
-            
-            if (flashResult is ControlResult.Success) {
-                connectionStatus = RemoteConnectionStatus.SEARCHING
-                tokenStore.saveToken(device.host, device.port, token)
-                snackbarHostState.showSnackbar("正在寻找手机")
-            } else {
-                // Ring succeeded, flash failed
-                connectionStatus = RemoteConnectionStatus.PARTIAL_SUCCESS
-                snackbarHostState.showSnackbar("部分成功：响铃已启动，但手电控制失败")
-            }
-            
-            refreshStatus()
-            isLoading = false
-        }
+        }, { error ->
+            scope.launch { snackbarHostState.showSnackbar("本机认证失败: $error") }
+        })
     }
 
     fun stopFinding() {
         if (token.isEmpty()) {
-            scope.launch { snackbarHostState.showSnackbar("请输入 Token") }
+            scope.launch { snackbarHostState.showSnackbar("请先输入当前设备 Token") }
             return
         }
-        scope.launch {
-            isLoading = true
-            when (val result = client.sendCommand(device.host, device.port, token, "/command/stop-all")) {
-                is ControlResult.Success -> {
-                    connectionStatus = RemoteConnectionStatus.STOPPED
-                    snackbarHostState.showSnackbar("已停止寻找")
-                    refreshStatus()
+        onAuthenticate("验证身份以停止寻找", {
+            scope.launch {
+                isLoading = true
+                when (val result = client.sendCommand(device.host, device.port, token, "/command/stop-all")) {
+                    is ControlResult.Success -> {
+                        connectionStatus = RemoteConnectionStatus.STOPPED
+                        snackbarHostState.showSnackbar("已停止寻找")
+                        refreshStatus()
+                    }
+                    is ControlResult.Unauthorized -> {
+                        connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
+                        snackbarHostState.showSnackbar("Token 错误")
+                    }
+                    is ControlResult.Timeout -> {
+                        connectionStatus = RemoteConnectionStatus.TIMEOUT
+                        snackbarHostState.showSnackbar("请求超时")
+                    }
+                    is ControlResult.Error -> {
+                        connectionStatus = RemoteConnectionStatus.OFFLINE
+                        val msg = if (result.message == "connection_failed") "设备离线或服务未启动" else "控制失败"
+                        snackbarHostState.showSnackbar(msg)
+                    }
                 }
-                is ControlResult.Unauthorized -> {
-                    connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
-                    snackbarHostState.showSnackbar("Token 错误")
-                }
-                is ControlResult.Timeout -> {
-                    connectionStatus = RemoteConnectionStatus.TIMEOUT
-                    snackbarHostState.showSnackbar("请求超时")
-                }
-                is ControlResult.Error -> {
-                    connectionStatus = RemoteConnectionStatus.OFFLINE
-                    val msg = if (result.message == "connection_failed") "设备离线或服务未启动" else "控制失败: ${result.message}"
-                    snackbarHostState.showSnackbar(msg)
-                }
+                isLoading = false
             }
-            isLoading = false
-        }
+        }, { error ->
+            scope.launch { snackbarHostState.showSnackbar("本机认证失败: $error") }
+        })
     }
 
     LaunchedEffect(device) {
@@ -913,15 +989,27 @@ fun RemoteControlPanel(
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("配对鉴权", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    
                     OutlinedTextField(
                         value = token,
                         onValueChange = { token = it },
-                        label = { Text("输入配对 Token") },
+                        label = { Text("请输入被寻找端当前显示的 Token") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        visualTransformation = PasswordVisualTransformation()
                     )
-                    Text("提示：Token 由被寻找端生成的 8 位代码。首次控制成功后将自动保存。", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text("注意：退出控制面板后需要重新输入 Token，以确保安全。", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    
+                    if (token.isNotEmpty()) {
+                        TextButton(
+                            onClick = { token = "" },
+                            modifier = Modifier.align(Alignment.End),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text("清除本次输入", fontSize = 12.sp)
+                        }
+                    }
                 }
             }
 

@@ -19,6 +19,9 @@
     <!-- 前台服务特殊用途权限 (Android 14+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
+    <!-- 生物识别权限 -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
     <!-- 保持 CPU 唤醒以防锁屏下硬件控制挂起 -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
