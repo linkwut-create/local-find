@@ -27,12 +27,14 @@ class RemoteControlClient {
                 val responseText = connection.inputStream.bufferedReader().use { it.readText() }
                 ControlResult.Success(JSONObject(responseText))
             } else {
-                ControlResult.Error("设备状态获取失败 (HTTP ${connection.responseCode})")
+                ControlResult.Error("HTTP ${connection.responseCode}")
             }
         } catch (e: java.net.SocketTimeoutException) {
             ControlResult.Timeout
+        } catch (e: java.net.ConnectException) {
+            ControlResult.Error("connection_failed")
         } catch (e: Exception) {
-            ControlResult.Error("设备离线或无法连接")
+            ControlResult.Error(e.message ?: "unknown_error")
         }
     }
 
@@ -49,14 +51,14 @@ class RemoteControlClient {
                 200 -> ControlResult.Success()
                 401 -> ControlResult.Unauthorized
                 504 -> ControlResult.Timeout
-                else -> ControlResult.Error("指令执行失败 (HTTP ${connection.responseCode})")
+                else -> ControlResult.Error("HTTP ${connection.responseCode}")
             }
         } catch (e: java.net.SocketTimeoutException) {
             ControlResult.Timeout
         } catch (e: java.net.ConnectException) {
-            ControlResult.Error("设备离线或无法连接")
+            ControlResult.Error("connection_failed")
         } catch (e: Exception) {
-            ControlResult.Error("连接异常: ${e.message}")
+            ControlResult.Error(e.message ?: "unknown_error")
         }
     }
 }

@@ -673,14 +673,16 @@ fun RemoteControlPanel(
                 }
                 is ControlResult.Timeout -> {
                     connectionStatus = RemoteConnectionStatus.TIMEOUT
-                    snackbarHostState.showSnackbar("刷新超时：设备无响应")
+                    snackbarHostState.showSnackbar("请求超时")
                 }
                 is ControlResult.Unauthorized -> {
+                    // status 接口通常不鉴权，但如果返回 401 也处理
                     connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
                 }
                 is ControlResult.Error -> {
                     connectionStatus = RemoteConnectionStatus.OFFLINE
-                    snackbarHostState.showSnackbar("刷新失败: ${result.message}")
+                    val msg = if (result.message == "connection_failed") "离线 / 服务未启动" else "连接失败: ${result.message}"
+                    snackbarHostState.showSnackbar(msg)
                 }
             }
             isLoading = false
@@ -694,7 +696,6 @@ fun RemoteControlPanel(
         }
         scope.launch {
             isLoading = true
-            // 发送命令前不改变全局 connectionStatus，只由结果决定
             when (val result = client.sendCommand(device.host, device.port, token, endpoint)) {
                 is ControlResult.Success -> {
                     tokenStore.saveToken(device.host, device.port, token)
@@ -703,15 +704,16 @@ fun RemoteControlPanel(
                 }
                 is ControlResult.Unauthorized -> {
                     connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
-                    snackbarHostState.showSnackbar("Token 错误或未授权 (401)")
+                    snackbarHostState.showSnackbar("Token 错误")
                 }
                 is ControlResult.Timeout -> {
                     connectionStatus = RemoteConnectionStatus.TIMEOUT
-                    snackbarHostState.showSnackbar("控制超时：硬件可能卡住或离线")
+                    snackbarHostState.showSnackbar("请求超时")
                 }
                 is ControlResult.Error -> {
                     connectionStatus = RemoteConnectionStatus.OFFLINE
-                    snackbarHostState.showSnackbar("控制失败: 设备离线或服务未启动")
+                    val msg = if (result.message == "connection_failed") "设备离线或服务未启动" else "控制失败: ${result.message}"
+                    snackbarHostState.showSnackbar(msg)
                 }
             }
             isLoading = false
@@ -767,9 +769,9 @@ fun RemoteControlPanel(
                     Text(
                         text = when (connectionStatus) {
                             RemoteConnectionStatus.IDLE -> "未检测"
-                            RemoteConnectionStatus.CONNECTING -> "正在连接..."
-                            RemoteConnectionStatus.ONLINE -> "设备在线"
-                            RemoteConnectionStatus.OFFLINE -> "设备离线 / 服务未启动"
+                            RemoteConnectionStatus.CONNECTING -> "连接中..."
+                            RemoteConnectionStatus.ONLINE -> "在线"
+                            RemoteConnectionStatus.OFFLINE -> "离线 / 服务未启动"
                             RemoteConnectionStatus.TIMEOUT -> "请求超时"
                             RemoteConnectionStatus.UNAUTHORIZED -> "Token 错误"
                         },
