@@ -18,8 +18,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import android.net.Uri
 import com.example.localfind.service.FindPhoneForegroundService
 import com.example.localfind.server.NsdStatus
+import com.example.localfind.server.NsdDiscoveryManager
+import com.example.localfind.server.DiscoveryStatus
+import com.example.localfind.server.DiscoveredDevice
 import com.example.localfind.ui.MainScreen
 import com.example.localfind.util.NetworkUtil
 
@@ -35,6 +39,11 @@ class MainActivity : ComponentActivity() {
     private var deviceIpState by mutableStateOf<String?>(null)
     private var nsdStatusState by mutableStateOf(NsdStatus.IDLE)
     private var nsdServiceTypeState by mutableStateOf("_localfind._tcp.")
+
+    // NSD Discovery 状态
+    private lateinit var nsdDiscoveryManager: NsdDiscoveryManager
+    private var discoveryStatusState by mutableStateOf(DiscoveryStatus.IDLE)
+    private var discoveredDevicesState by mutableStateOf(listOf<DiscoveredDevice>())
 
     // 连接后台前台服务的 Connection
     private val serviceConnection = object : ServiceConnection {
@@ -83,22 +92,41 @@ class MainActivity : ComponentActivity() {
         // 分配本机无线 IP
         deviceIpState = NetworkUtil.getLocalIpAddress()
 
+        // 初始化扫描器
+        nsdDiscoveryManager = NsdDiscoveryManager(
+            context = this,
+            onStatusChange = { discoveryStatusState = it },
+            onDevicesUpdate = { discoveredDevicesState = it }
+        )
+
         setContent {
             MaterialTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen(
-                        isServiceRunning = isServiceRunningState,
-                        localIp = deviceIpState,
-                        port = 8888,
-                        ringActive = ringActiveState,
-                        flashMode = flashModeState,
-                        nsdStatus = nsdStatusState,
-                        nsdServiceType = nsdServiceTypeState,
-                        onStartService = { startAndBindService() },
-                        onStopService = { shutdownService() },
+                        MainScreen(
+                            isServiceRunning = isServiceRunningState,
+                            localIp = deviceIpState,
+                            port = 8888,
+                            ringActive = ringActiveState,
+                            flashMode = flashModeState,
+                            nsdStatus = nsdStatusState,
+                            nsdServiceType = nsdServiceTypeState,
+                            discoveryStatus = discoveryStatusState,
+                            discoveredDevices = discoveredDevicesState,
+                            onStartService = { startAndBindService() },
+                            onStopService = { shutdownService() },
+                            onStartDiscovery = { nsdDiscoveryManager.startDiscovery() },
+                            onStopDiscovery = { nsdDiscoveryManager.stopDiscovery() },
+                            onOpenDevice = { device ->
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(device.controlUrl))
+                                    startActivity(intent)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            },
                         onTestRingToggle = {
                             if (isServiceBound) {
                                 if (ringActiveState) {
@@ -196,6 +224,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        nsdDiscoveryManager.stopDiscovery()
         if (isServiceBound) {
             unbindService(serviceConnection)
             isServiceBound = false

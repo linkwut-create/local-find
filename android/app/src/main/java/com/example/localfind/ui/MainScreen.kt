@@ -18,6 +18,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.localfind.server.NsdStatus
+import com.example.localfind.server.DiscoveryStatus
+import com.example.localfind.server.DiscoveredDevice
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,8 +31,13 @@ fun MainScreen(
     flashMode: String,
     nsdStatus: NsdStatus,
     nsdServiceType: String,
+    discoveryStatus: DiscoveryStatus,
+    discoveredDevices: List<DiscoveredDevice>,
     onStartService: () -> Unit,
     onStopService: () -> Unit,
+    onStartDiscovery: () -> Unit,
+    onStopDiscovery: () -> Unit,
+    onOpenDevice: (DiscoveredDevice) -> Unit,
     onTestRingToggle: () -> Unit,
     onTestFlashSteady: () -> Unit,
     onTestFlashStrobe: () -> Unit,
@@ -212,6 +219,110 @@ fun MainScreen(
                     enabled = isServiceRunning
                 ) {
                     Text("停止寻机服务", fontWeight = FontWeight.Bold)
+                }
+            }
+
+            // Discovery Section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "发现局域网设备 (NSD Scanner)",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "扫描状态: " + when(discoveryStatus) {
+                                DiscoveryStatus.IDLE -> "未扫描"
+                                DiscoveryStatus.SCANNING -> "扫描中..."
+                                DiscoveryStatus.FAILED -> "扫描失败"
+                                DiscoveryStatus.STOPPED -> "已停止"
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (discoveryStatus == DiscoveryStatus.SCANNING) Color(0xFF1976D2) else Color.Gray
+                        )
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilledTonalButton(
+                                onClick = onStartDiscovery,
+                                enabled = discoveryStatus != DiscoveryStatus.SCANNING,
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Text("开始扫描", fontSize = 12.sp)
+                            }
+                            FilledTonalButton(
+                                onClick = onStopDiscovery,
+                                enabled = discoveryStatus == DiscoveryStatus.SCANNING,
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Text("停止", fontSize = 12.sp)
+                            }
+                        }
+                    }
+
+                    if (discoveredDevices.isEmpty()) {
+                        Text(
+                            "暂未发现设备",
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    } else {
+                        discoveredDevices.forEach { device ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(device.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                        Text(
+                                            "${device.host}:${device.port}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    
+                                    Button(
+                                        onClick = { onOpenDevice(device) },
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                        modifier = Modifier.height(32.dp),
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text("打开控制页", fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
