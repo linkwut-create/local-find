@@ -35,7 +35,10 @@ enum class RemoteConnectionStatus {
     ONLINE,        // 在线
     OFFLINE,       // 离线 / 服务未启动
     TIMEOUT,       // 请求超时
-    UNAUTHORIZED   // Token 错误
+    UNAUTHORIZED,  // Token 错误
+    SEARCHING,     // 正在寻找手机
+    PARTIAL_SUCCESS, // 部分成功
+    STOPPED        // 已停止
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -720,6 +723,83 @@ fun RemoteControlPanel(
         }
     }
 
+    fun startFinding() {
+        if (token.isEmpty()) {
+            scope.launch { snackbarHostState.showSnackbar("请输入 Token") }
+            return
+        }
+        scope.launch {
+            isLoading = true
+            // 1. Start ring
+            val ringResult = client.sendCommand(device.host, device.port, token, "/command/ring/start")
+            
+            if (ringResult is ControlResult.Unauthorized) {
+                connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
+                snackbarHostState.showSnackbar("Token 错误")
+                isLoading = false
+                return@launch
+            } else if (ringResult is ControlResult.Timeout) {
+                connectionStatus = RemoteConnectionStatus.TIMEOUT
+                snackbarHostState.showSnackbar("请求超时")
+                isLoading = false
+                return@launch
+            } else if (ringResult is ControlResult.Error) {
+                connectionStatus = RemoteConnectionStatus.OFFLINE
+                val msg = if (ringResult.message == "connection_failed") "设备离线或服务未启动" else "控制失败: ${ringResult.message}"
+                snackbarHostState.showSnackbar(msg)
+                isLoading = false
+                return@launch
+            }
+            
+            // 2. Start strobe
+            val flashResult = client.sendCommand(device.host, device.port, token, "/command/flash/strobe/start")
+            
+            if (flashResult is ControlResult.Success) {
+                connectionStatus = RemoteConnectionStatus.SEARCHING
+                tokenStore.saveToken(device.host, device.port, token)
+                snackbarHostState.showSnackbar("正在寻找手机")
+            } else {
+                // Ring succeeded, flash failed
+                connectionStatus = RemoteConnectionStatus.PARTIAL_SUCCESS
+                snackbarHostState.showSnackbar("部分成功：响铃已启动，但手电控制失败")
+            }
+            
+            refreshStatus()
+            isLoading = false
+        }
+    }
+
+    fun stopFinding() {
+        if (token.isEmpty()) {
+            scope.launch { snackbarHostState.showSnackbar("请输入 Token") }
+            return
+        }
+        scope.launch {
+            isLoading = true
+            when (val result = client.sendCommand(device.host, device.port, token, "/command/stop-all")) {
+                is ControlResult.Success -> {
+                    connectionStatus = RemoteConnectionStatus.STOPPED
+                    snackbarHostState.showSnackbar("已停止寻找")
+                    refreshStatus()
+                }
+                is ControlResult.Unauthorized -> {
+                    connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
+                    snackbarHostState.showSnackbar("Token 错误")
+                }
+                is ControlResult.Timeout -> {
+                    connectionStatus = RemoteConnectionStatus.TIMEOUT
+                    snackbarHostState.showSnackbar("请求超时")
+                }
+                is ControlResult.Error -> {
+                    connectionStatus = RemoteConnectionStatus.OFFLINE
+                    val msg = if (result.message == "connection_failed") "设备离线或服务未启动" else "控制失败: ${result.message}"
+                    snackbarHostState.showSnackbar(msg)
+                }
+            }
+            isLoading = false
+        }
+    }
+
     LaunchedEffect(device) {
         refreshStatus()
     }
@@ -759,9 +839,9 @@ fun RemoteControlPanel(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val statusColor = when (connectionStatus) {
-                        RemoteConnectionStatus.ONLINE -> Color(0xFF4CAF50)
+                        RemoteConnectionStatus.ONLINE, RemoteConnectionStatus.SEARCHING -> Color(0xFF4CAF50)
                         RemoteConnectionStatus.CONNECTING -> Color(0xFF2196F3)
-                        RemoteConnectionStatus.UNAUTHORIZED -> Color(0xFFFF9800)
+                        RemoteConnectionStatus.UNAUTHORIZED, RemoteConnectionStatus.PARTIAL_SUCCESS -> Color(0xFFFF9800)
                         RemoteConnectionStatus.OFFLINE, RemoteConnectionStatus.TIMEOUT -> Color(0xFFF44336)
                         else -> Color.Gray
                     }
@@ -774,11 +854,42 @@ fun RemoteControlPanel(
                             RemoteConnectionStatus.OFFLINE -> "离线 / 服务未启动"
                             RemoteConnectionStatus.TIMEOUT -> "请求超时"
                             RemoteConnectionStatus.UNAUTHORIZED -> "Token 错误"
+                            RemoteConnectionStatus.SEARCHING -> "正在寻找手机"
+                            RemoteConnectionStatus.PARTIAL_SUCCESS -> "部分成功 (响铃中)"
+                            RemoteConnectionStatus.STOPPED -> "已停止"
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = statusColor
                     )
+                }
+            }
+
+            // 0. One-tap Find Section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = { startFinding() },
+                        modifier = Modifier.weight(1.3f).height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("开始寻找手机", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, textAlign = TextAlign.Center)
+                    }
+                    Button(
+                        onClick = { stopFinding() },
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("停止寻找", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
 
