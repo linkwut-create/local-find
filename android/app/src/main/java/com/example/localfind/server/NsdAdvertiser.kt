@@ -31,7 +31,8 @@ class NsdAdvertiser(
     private val port = 8888
 
     fun registerService() {
-        if (registrationListener != null) return
+        // 先确保旧的监听器被注销
+        unregisterService()
 
         currentStatus = NsdStatus.ADVERTISING
         

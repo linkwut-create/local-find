@@ -9,6 +9,7 @@ import java.net.URL
 sealed class ControlResult {
     data class Success(val statusJson: JSONObject? = null) : ControlResult()
     object Unauthorized : ControlResult()
+    object Timeout : ControlResult()
     data class Error(val message: String) : ControlResult()
 }
 
@@ -26,10 +27,12 @@ class RemoteControlClient {
                 val responseText = connection.inputStream.bufferedReader().use { it.readText() }
                 ControlResult.Success(JSONObject(responseText))
             } else {
-                ControlResult.Error("HTTP Error: ${connection.responseCode}")
+                ControlResult.Error("设备状态获取失败 (HTTP ${connection.responseCode})")
             }
+        } catch (e: java.net.SocketTimeoutException) {
+            ControlResult.Timeout
         } catch (e: Exception) {
-            ControlResult.Error(e.message ?: "Unknown connection error")
+            ControlResult.Error("设备离线或无法连接")
         }
     }
 
@@ -45,10 +48,13 @@ class RemoteControlClient {
             when (connection.responseCode) {
                 200 -> ControlResult.Success()
                 401 -> ControlResult.Unauthorized
-                else -> ControlResult.Error("HTTP Error: ${connection.responseCode}")
+                504 -> ControlResult.Timeout
+                else -> ControlResult.Error("指令执行失败 (HTTP ${connection.responseCode})")
             }
+        } catch (e: java.net.SocketTimeoutException) {
+            ControlResult.Timeout
         } catch (e: Exception) {
-            ControlResult.Error(e.message ?: "Unknown connection error")
+            ControlResult.Error("设备离线或无法连接")
         }
     }
 }

@@ -66,7 +66,13 @@ class NsdDiscoveryManager(
             }
 
             override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
-                Log.e("NsdDiscovery", "Discovery failed: $errorCode")
+                val errorMsg = when(errorCode) {
+                    NsdManager.FAILURE_ALREADY_ACTIVE -> "扫描已在运行中"
+                    NsdManager.FAILURE_INTERNAL_ERROR -> "系统 NSD 内部错误"
+                    NsdManager.FAILURE_MAX_LIMIT -> "达到系统 NSD 监听限制"
+                    else -> "扫描启动失败 (错误代码: $errorCode)"
+                }
+                Log.e("NsdDiscovery", errorMsg)
                 currentStatus = DiscoveryStatus.FAILED
                 discoveryListener = null
             }

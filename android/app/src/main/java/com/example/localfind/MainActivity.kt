@@ -9,6 +9,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,6 +23,7 @@ import androidx.core.content.ContextCompat
 import android.net.Uri
 import com.example.localfind.service.FindPhoneForegroundService
 import com.example.localfind.server.NsdStatus
+import com.example.localfind.server.ServerStatus
 import com.example.localfind.server.NsdDiscoveryManager
 import com.example.localfind.server.DiscoveryStatus
 import com.example.localfind.server.DiscoveredDevice
@@ -37,6 +40,10 @@ class MainActivity : ComponentActivity() {
     private var ringActiveState by mutableStateOf(false)
     private var flashModeState by mutableStateOf("off")
     private var isServiceRunningState by mutableStateOf(false)
+    private var serverStatusState by mutableStateOf(ServerStatus.STOPPED)
+    private var lastServerErrorState by mutableStateOf<String?>(null)
+    private var wakeLockHeldState by mutableStateOf(false)
+    private var wifiLockHeldState by mutableStateOf(false)
     private var deviceIpState by mutableStateOf<String?>(null)
     private var nsdStatusState by mutableStateOf(NsdStatus.IDLE)
     private var nsdServiceTypeState by mutableStateOf("_localfind._tcp.")
@@ -78,9 +85,14 @@ class MainActivity : ComponentActivity() {
             ringActiveState = service.isRingActive()
             flashModeState = service.getFlashMode()
             isServiceRunningState = service.isServerRunning()
+            serverStatusState = service.getServerStatus()
+            lastServerErrorState = service.getLastServerError()
+            wakeLockHeldState = service.isWakeLockHeld()
+            wifiLockHeldState = service.isWifiLockHeld()
             nsdStatusState = service.getNsdStatus()
             nsdServiceTypeState = service.getNsdServiceType()
             pairingTokenState = service.getPairingToken()
+            deviceIpState = service.getLocalIp()
         }
     }
 
@@ -113,6 +125,10 @@ class MainActivity : ComponentActivity() {
                 ) {
                         MainScreen(
                             isServiceRunning = isServiceRunningState,
+                            serverStatus = serverStatusState,
+                            lastServerError = lastServerErrorState,
+                            wakeLockHeld = wakeLockHeldState,
+                            wifiLockHeld = wifiLockHeldState,
                             localIp = deviceIpState,
                             port = 8888,
                             ringActive = ringActiveState,
@@ -125,6 +141,7 @@ class MainActivity : ComponentActivity() {
                             remoteTokenStore = remoteTokenStore,
                             onStartService = { startAndBindService() },
                             onStopService = { shutdownService() },
+                            onRestartServer = { foregroundService?.restartServer() },
                             onRegenerateToken = {
                                 pairingTokenState = foregroundService?.regeneratePairingToken() ?: ""
                             },
@@ -167,7 +184,8 @@ class MainActivity : ComponentActivity() {
                                 foregroundService?.stopAll()
                             }
                         },
-                        onRequestPermission = { checkAndRequestPermissions() }
+                        onRequestPermission = { checkAndRequestPermissions() },
+                        onOpenBatterySettings = { openBatteryOptimizationSettings() }
                     )
                 }
             }
@@ -183,6 +201,19 @@ class MainActivity : ComponentActivity() {
         try {
             bindToService()
         } catch (_: Exception) {}
+    }
+
+    private fun openBatteryOptimizationSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+            startActivity(intent)
+        } catch (e: Exception) {
+            // Fallback to application details if direct setting fails
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", packageName, null)
+            }
+            startActivity(intent)
+        }
     }
 
     private fun checkAndRequestPermissions() {
@@ -224,6 +255,9 @@ class MainActivity : ComponentActivity() {
             foregroundService = null
         }
         isServiceRunningState = false
+        serverStatusState = ServerStatus.STOPPED
+        wakeLockHeldState = false
+        wifiLockHeldState = false
         ringActiveState = false
         flashModeState = "off"
         nsdStatusState = NsdStatus.IDLE

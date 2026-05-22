@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.localfind.server.NsdStatus
+import com.example.localfind.server.ServerStatus
 import com.example.localfind.server.DiscoveryStatus
 import com.example.localfind.server.DiscoveredDevice
 import com.example.localfind.server.RemoteControlClient
@@ -31,6 +32,10 @@ import org.json.JSONObject
 @Composable
 fun MainScreen(
     isServiceRunning: Boolean,
+    serverStatus: ServerStatus,
+    lastServerError: String?,
+    wakeLockHeld: Boolean,
+    wifiLockHeld: Boolean,
     localIp: String?,
     port: Int,
     ringActive: Boolean,
@@ -43,6 +48,7 @@ fun MainScreen(
     remoteTokenStore: RemoteDeviceTokenStore,
     onStartService: () -> Unit,
     onStopService: () -> Unit,
+    onRestartServer: () -> Unit,
     onRegenerateToken: () -> Unit,
     onStartDiscovery: () -> Unit,
     onStopDiscovery: () -> Unit,
@@ -52,7 +58,8 @@ fun MainScreen(
     onTestFlashStrobe: () -> Unit,
     onTestFlashStop: () -> Unit,
     onStopAll: () -> Unit,
-    onRequestPermission: () -> Unit
+    onRequestPermission: () -> Unit,
+    onOpenBatterySettings: () -> Unit,
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("被寻找端", "控制端")
@@ -91,6 +98,10 @@ fun MainScreen(
             if (selectedTabIndex == 0) {
                 FinderModeScreen(
                     isServiceRunning = isServiceRunning,
+                    serverStatus = serverStatus,
+                    lastServerError = lastServerError,
+                    wakeLockHeld = wakeLockHeld,
+                    wifiLockHeld = wifiLockHeld,
                     localIp = localIp,
                     port = port,
                     ringActive = ringActive,
@@ -100,13 +111,15 @@ fun MainScreen(
                     pairingToken = pairingToken,
                     onStartService = onStartService,
                     onStopService = onStopService,
+                    onRestartServer = onRestartServer,
                     onRegenerateToken = onRegenerateToken,
                     onTestRingToggle = onTestRingToggle,
                     onTestFlashSteady = onTestFlashSteady,
                     onTestFlashStrobe = onTestFlashStrobe,
                     onTestFlashStop = onTestFlashStop,
                     onStopAll = onStopAll,
-                    onRequestPermission = onRequestPermission
+                    onRequestPermission = onRequestPermission,
+                    onOpenBatterySettings = onOpenBatterySettings
                 )
             } else {
                 ControllerModeScreen(
@@ -125,6 +138,10 @@ fun MainScreen(
 @Composable
 fun FinderModeScreen(
     isServiceRunning: Boolean,
+    serverStatus: ServerStatus,
+    lastServerError: String?,
+    wakeLockHeld: Boolean,
+    wifiLockHeld: Boolean,
     localIp: String?,
     port: Int,
     ringActive: Boolean,
@@ -134,13 +151,15 @@ fun FinderModeScreen(
     pairingToken: String,
     onStartService: () -> Unit,
     onStopService: () -> Unit,
+    onRestartServer: () -> Unit,
     onRegenerateToken: () -> Unit,
     onTestRingToggle: () -> Unit,
     onTestFlashSteady: () -> Unit,
     onTestFlashStrobe: () -> Unit,
     onTestFlashStop: () -> Unit,
     onStopAll: () -> Unit,
-    onRequestPermission: () -> Unit
+    onRequestPermission: () -> Unit,
+    onOpenBatterySettings: () -> Unit,
 ) {
     val clipboardManager = LocalClipboardManager.current
     var isTokenVisible by remember { mutableStateOf(false) }
@@ -152,10 +171,12 @@ fun FinderModeScreen(
             title = { Text("确认重置 Token？") },
             text = { Text("重置后，所有已连接的浏览器控制页将失效，需要重新输入新 Token 才能继续控制。") },
             confirmButton = {
-                TextButton(onClick = {
-                    onRegenerateToken()
-                    showRegenerateDialog = false
-                }) {
+                TextButton(
+                    onClick = {
+                        onRegenerateToken()
+                        showRegenerateDialog = false
+                    }
+                ) {
                     Text("确认重置", color = MaterialTheme.colorScheme.error)
                 }
             },
@@ -202,6 +223,15 @@ fun FinderModeScreen(
 
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
 
+                StatusRow("服务状态:", when(serverStatus) {
+                    ServerStatus.STOPPED -> "已停止"
+                    ServerStatus.STARTING -> "正在启动..."
+                    ServerStatus.LISTENING -> "正在监听"
+                    ServerStatus.FAILED -> "启动失败"
+                })
+                if (lastServerError != null) {
+                    StatusRow("最近服务错误:", lastServerError)
+                }
                 StatusRow("手机局域网 IP:", localIp ?: "未连接")
                 StatusRow("监听端口:", port.toString())
                 StatusRow("NSD 状态:", when(nsdStatus) {
@@ -210,6 +240,8 @@ fun FinderModeScreen(
                     NsdStatus.ADVERTISED -> "已广播"
                     NsdStatus.FAILED -> "广播失败"
                 })
+                StatusRow("WakeLock:", if (wakeLockHeld) "已持有 (CPU 唤醒)" else "未持有")
+                StatusRow("WifiLock:", if (wifiLockHeld) "已持有 (网络活跃)" else "未持有")
                 StatusRow("服务类型:", nsdServiceType)
 
                 if (isServiceRunning && localIp != null) {
@@ -287,7 +319,47 @@ fun FinderModeScreen(
             }
         }
 
-        // 3. Service Controls
+        // 3. Background Running Support Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("保持后台运行", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    "服务正在以前台模式运行，但在某些设备上，系统仍可能为了省电而杀掉后台连接。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "建议：请在系统中将本应用设置为“不优化电池使用”或“允许后台活动”。",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "注意：部分设备锁屏后会切断 Wi-Fi，请在系统设置中允许“锁屏后保持 Wi-Fi 连接”。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                OutlinedButton(
+                    onClick = onOpenBatterySettings,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("打开系统电池优化设置", fontSize = 12.sp)
+                }
+            }
+        }
+
+        // 4. Service Controls
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(
                 onClick = { onRequestPermission(); onStartService() },
@@ -303,6 +375,16 @@ fun FinderModeScreen(
                 enabled = isServiceRunning
             ) {
                 Text("停止服务", fontWeight = FontWeight.Bold)
+            }
+        }
+        
+        if (isServiceRunning) {
+            OutlinedButton(
+                onClick = onRestartServer,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("重启 HTTP 服务 (手动故障恢复)", fontSize = 12.sp)
             }
         }
 
@@ -453,6 +535,9 @@ fun RemoteControlPanel(
                         flashMode = json.optString("flash_mode", "off")
                     }
                 }
+                is ControlResult.Timeout -> {
+                    snackbarHostState.showSnackbar("刷新超时：设备无响应")
+                }
                 is ControlResult.Error -> {
                     snackbarHostState.showSnackbar("刷新失败: ${result.message}")
                 }
@@ -476,6 +561,9 @@ fun RemoteControlPanel(
                 }
                 is ControlResult.Unauthorized -> {
                     snackbarHostState.showSnackbar("Token 错误或未授权 (401)")
+                }
+                is ControlResult.Timeout -> {
+                    snackbarHostState.showSnackbar("控制超时：硬件可能卡住或离线")
                 }
                 is ControlResult.Error -> {
                     snackbarHostState.showSnackbar("控制失败: ${result.message}")

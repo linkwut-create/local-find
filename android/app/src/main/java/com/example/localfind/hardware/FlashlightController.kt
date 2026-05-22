@@ -43,7 +43,7 @@ class FlashlightController(private val context: Context) {
      */
     @Synchronized
     fun startSteady() {
-        stopAll()
+        cancelStrobe()
         val id = cameraId ?: return
         try {
             cameraManager.setTorchMode(id, true)
@@ -60,7 +60,7 @@ class FlashlightController(private val context: Context) {
      */
     @Synchronized
     fun startStrobe() {
-        stopAll()
+        cancelStrobe()
         val id = cameraId ?: return
         strobeJob = scope.launch {
             var isOn = false
@@ -84,13 +84,17 @@ class FlashlightController(private val context: Context) {
         Log.d("FlashlightController", "Started strobe flashlight (200ms interval)")
     }
 
+    private fun cancelStrobe() {
+        strobeJob?.cancel()
+        strobeJob = null
+    }
+
     /**
      * 停止全部动作 (关闭手电筒、取消闪烁协程)
      */
     @Synchronized
     fun stopAll() {
-        strobeJob?.cancel()
-        strobeJob = null
+        cancelStrobe()
         
         val id = cameraId ?: return
         try {

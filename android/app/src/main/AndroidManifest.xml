@@ -4,7 +4,9 @@
 
     <!-- 网络通信 -->
     <uses-permission android:name="android.permission.INTERNET" />
-    
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
     <!-- 控制手电筒需要相机权限 -->
     <uses-permission android:name="android.permission.CAMERA" />
     
@@ -16,6 +18,9 @@
     
     <!-- 前台服务特殊用途权限 (Android 14+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <!-- 保持 CPU 唤醒以防锁屏下硬件控制挂起 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
