@@ -14,6 +14,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.localfind.MainActivity
+import com.example.localfind.auth.PairingTokenManager
 import com.example.localfind.hardware.FlashlightController
 import com.example.localfind.hardware.RingController
 import com.example.localfind.server.HttpServerManager
@@ -28,6 +29,7 @@ class FindPhoneForegroundService : Service() {
     private lateinit var flashlightController: FlashlightController
     private var httpServerManager: HttpServerManager? = null
     private var nsdAdvertiser: NsdAdvertiser? = null
+    private lateinit var pairingTokenManager: PairingTokenManager
 
     // 观察者，用于将状态回调投射至 Activity 活动页面
     private var onStatusChangeListener: (() -> Unit)? = null
@@ -45,8 +47,9 @@ class FindPhoneForegroundService : Service() {
         Log.d("ForegroundService", "Service onCreate")
         ringController = RingController(this)
         flashlightController = FlashlightController(this)
+        pairingTokenManager = PairingTokenManager(this)
         
-        httpServerManager = HttpServerManager(ringController, flashlightController) {
+        httpServerManager = HttpServerManager(ringController, flashlightController, pairingTokenManager) {
             onStatusChangeListener?.invoke()
         }
 
@@ -106,6 +109,13 @@ class FindPhoneForegroundService : Service() {
     fun isServerRunning(): Boolean = httpServerManager != null
     fun getNsdStatus(): NsdStatus = nsdAdvertiser?.currentStatus ?: NsdStatus.IDLE
     fun getNsdServiceType(): String = nsdAdvertiser?.serviceType ?: "_localfind._tcp."
+
+    fun getPairingToken(): String = pairingTokenManager.getToken() ?: ""
+    fun regeneratePairingToken(): String {
+        val newToken = pairingTokenManager.regenerateToken()
+        onStatusChangeListener?.invoke()
+        return newToken
+    }
 
     fun setStatusChangeListener(listener: (() -> Unit)?) {
         this.onStatusChangeListener = listener

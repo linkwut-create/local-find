@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
     private var deviceIpState by mutableStateOf<String?>(null)
     private var nsdStatusState by mutableStateOf(NsdStatus.IDLE)
     private var nsdServiceTypeState by mutableStateOf("_localfind._tcp.")
+    private var pairingTokenState by mutableStateOf("")
 
     // NSD Discovery 状态
     private lateinit var nsdDiscoveryManager: NsdDiscoveryManager
@@ -77,6 +78,7 @@ class MainActivity : ComponentActivity() {
             isServiceRunningState = service.isServerRunning()
             nsdStatusState = service.getNsdStatus()
             nsdServiceTypeState = service.getNsdServiceType()
+            pairingTokenState = service.getPairingToken()
         }
     }
 
@@ -115,8 +117,12 @@ class MainActivity : ComponentActivity() {
                             nsdServiceType = nsdServiceTypeState,
                             discoveryStatus = discoveryStatusState,
                             discoveredDevices = discoveredDevicesState,
+                            pairingToken = pairingTokenState,
                             onStartService = { startAndBindService() },
                             onStopService = { shutdownService() },
+                            onRegenerateToken = {
+                                pairingTokenState = foregroundService?.regeneratePairingToken() ?: ""
+                            },
                             onStartDiscovery = { nsdDiscoveryManager.startDiscovery() },
                             onStopDiscovery = { nsdDiscoveryManager.stopDiscovery() },
                             onOpenDevice = { device ->

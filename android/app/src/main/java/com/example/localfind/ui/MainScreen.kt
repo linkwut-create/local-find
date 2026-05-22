@@ -33,8 +33,10 @@ fun MainScreen(
     nsdServiceType: String,
     discoveryStatus: DiscoveryStatus,
     discoveredDevices: List<DiscoveredDevice>,
+    pairingToken: String,
     onStartService: () -> Unit,
     onStopService: () -> Unit,
+    onRegenerateToken: () -> Unit,
     onStartDiscovery: () -> Unit,
     onStopDiscovery: () -> Unit,
     onOpenDevice: (DiscoveredDevice) -> Unit,
@@ -323,6 +325,57 @@ fun MainScreen(
                             }
                         }
                     }
+                }
+            }
+
+            // Authentication Section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "本地配对与鉴权",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("当前配对 Token:", style = MaterialTheme.typography.labelSmall)
+                            Text(
+                                text = pairingToken.ifEmpty { "未生成" },
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontFamily = FontFamily.Monospace,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        
+                        Button(
+                            onClick = onRegenerateToken,
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("重置 Token", fontSize = 12.sp)
+                        }
+                    }
+                    
+                    Text(
+                        "在控制页输入此 Token 即可获得操作权限。请勿将 Token 泄露给他人。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                    )
                 }
             }
 

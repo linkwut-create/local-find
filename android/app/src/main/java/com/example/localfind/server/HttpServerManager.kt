@@ -1,11 +1,14 @@
 package com.example.localfind.server
 
 import android.util.Log
+import com.example.localfind.auth.PairingTokenManager
 import com.example.localfind.hardware.FlashlightController
 import com.example.localfind.hardware.RingController
+import com.example.localfind.util.NetworkUtil
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
@@ -14,9 +17,11 @@ import io.ktor.server.netty.NettyApplicationEngine
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
+import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
+import io.ktor.util.pipeline.PipelineContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +31,7 @@ import kotlinx.coroutines.launch
 class HttpServerManager(
     private val ringController: RingController,
     private val flashlightController: FlashlightController,
+    private val tokenManager: PairingTokenManager,
     private val onStatusChange: () -> Unit
 ) {
     private var server: NettyApplicationEngine? = null
@@ -37,6 +43,24 @@ class HttpServerManager(
         private set
 
     fun getPort(): Int = 8888
+
+    /**
+     * 校验 Token 是否正确
+     */
+    private suspend fun PipelineContext<Unit, ApplicationCall>.authenticate(body: suspend () -> Unit) {
+        val headerToken = call.request.headers["X-LocalFind-Token"]
+        val queryToken = call.request.queryParameters["token"]
+        val validToken = tokenManager.getToken()
+
+        if (validToken != null && (headerToken == validToken || queryToken == validToken)) {
+            body()
+        } else {
+            call.respond(HttpStatusCode.Unauthorized, buildJsonObject {
+                put("success", false)
+                put("message", "Unauthorized: Invalid or missing token")
+            })
+        }
+    }
 
     /**
      * 启动本地 Ktor Web 服务，监听端口 8888
@@ -100,6 +124,10 @@ class HttpServerManager(
                                             <div class="status-row"><span class="label">Ring Status:</span> <span id="ring-val" class="value">LOADING...</span></div>
                                             <div class="status-row"><span class="label">Flash Status:</span> <span id="flash-val" class="value">LOADING...</span></div>
                                         </div>
+                                        <div class="status-section">
+                                            <div class="label" style="margin-bottom:8px">Pairing Token:</div>
+                                            <input type="text" id="token-input" placeholder="Enter Token" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd; box-sizing:border-box;">
+                                        </div>
                                         <div class="button-grid">
                                             <button class="btn-primary" onclick="callApi('/command/ring/start', 'POST')">Start Ring</button>
                                             <button class="btn-danger" onclick="callApi('/command/ring/stop', 'POST')">Stop Ring</button>
@@ -111,6 +139,10 @@ class HttpServerManager(
                                         </div>
                                     </div>
                                     <script>
+                                        const tokenInput = document.getElementById('token-input');
+                                        tokenInput.value = localStorage.getItem('localfind_token') || '';
+                                        tokenInput.oninput = () => localStorage.setItem('localfind_token', tokenInput.value);
+
                                         async function updateStatus() {
                                             try {
                                                 const res = await fetch('/status');
@@ -129,8 +161,15 @@ class HttpServerManager(
                                         }
 
                                         async function callApi(url, method) {
+                                            const token = tokenInput.value;
                                             try {
-                                                await fetch(url, { method: method });
+                                                const res = await fetch(url, { 
+                                                    method: method,
+                                                    headers: { 'X-LocalFind-Token': token }
+                                                });
+                                                if (res.status === 401) {
+                                                    alert('Unauthorized: Please check your Token');
+                                                }
                                                 setTimeout(updateStatus, 100);
                                             } catch (e) {
                                                 console.error('API call failed', e);
@@ -158,70 +197,82 @@ class HttpServerManager(
 
                         // 2. POST /command/ring/start  开始循环拉响警报音
                         post("/command/ring/start") {
-                            isRingActive = true
-                            ringController.startRing()
-                            onStatusChange()
-                            call.respond(buildJsonObject { 
-                                put("success", true)
-                                put("message", "Ring started") 
-                            })
+                            authenticate {
+                                isRingActive = true
+                                ringController.startRing()
+                                onStatusChange()
+                                call.respond(buildJsonObject { 
+                                    put("success", true)
+                                    put("message", "Ring started") 
+                                })
+                            }
                         }
 
                         // 3. POST /command/ring/stop  停止警报音
                         post("/command/ring/stop") {
-                            isRingActive = false
-                            ringController.stopRing()
-                            onStatusChange()
-                            call.respond(buildJsonObject { 
-                                put("success", true)
-                                put("message", "Ring stopped") 
-                            })
+                            authenticate {
+                                isRingActive = false
+                                ringController.stopRing()
+                                onStatusChange()
+                                call.respond(buildJsonObject { 
+                                    put("success", true)
+                                    put("message", "Ring stopped") 
+                                })
+                            }
                         }
 
                         // 4. POST /command/flash/steady/start  开启手电筒常亮
                         post("/command/flash/steady/start") {
-                            flashMode = "steady"
-                            flashlightController.startSteady()
-                            onStatusChange()
-                            call.respond(buildJsonObject { 
-                                put("success", true)
-                                put("message", "Steady flashlight started") 
-                            })
+                            authenticate {
+                                flashMode = "steady"
+                                flashlightController.startSteady()
+                                onStatusChange()
+                                call.respond(buildJsonObject { 
+                                    put("success", true)
+                                    put("message", "Steady flashlight started") 
+                                })
+                            }
                         }
 
                         // 5. POST /command/flash/strobe/start  开启 200ms 的爆闪
                         post("/command/flash/strobe/start") {
-                            flashMode = "strobe"
-                            flashlightController.startStrobe()
-                            onStatusChange()
-                            call.respond(buildJsonObject { 
-                                put("success", true)
-                                put("message", "Strobe flashlight started") 
-                            })
+                            authenticate {
+                                flashMode = "strobe"
+                                flashlightController.startStrobe()
+                                onStatusChange()
+                                call.respond(buildJsonObject { 
+                                    put("success", true)
+                                    put("message", "Strobe flashlight started") 
+                                })
+                            }
                         }
 
                         // 6. POST /command/flash/stop  强制熄灭手电
                         post("/command/flash/stop") {
-                            flashMode = "off"
-                            flashlightController.stopAll()
-                            onStatusChange()
-                            call.respond(buildJsonObject { 
-                                put("success", true)
-                                put("message", "Flashlight stopped") 
-                            })
+                            authenticate {
+                                flashMode = "off"
+                                flashlightController.stopAll()
+                                onStatusChange()
+                                call.respond(buildJsonObject { 
+                                    put("success", true)
+                                    put("message", "Flashlight stopped") 
+                                })
+                            }
                         }
 
                         // 7. POST /command/stop-all  熄灭灯光并停响警报
                         post("/command/stop-all") {
-                            isRingActive = false
-                            flashMode = "off"
-                            ringController.stopRing()
-                            flashlightController.stopAll()
-                            onStatusChange()
-                            call.respond(buildJsonObject { 
-                                put("success", true)
-                                put("message", "All hardware alerts stopped") 
-                            })
+                            authenticate {
+                                isRingActive = false
+                                flashMode = "off"
+                                ringController.stopRing()
+                                flashlightController.stopAll()
+                                onStatusChange()
+                                call.respond(buildJsonObject { 
+                                    put("success", true)
+                                    put("message", "All hardware alerts stopped") 
+                                })
+                            }
                         }
                     }
                 }
