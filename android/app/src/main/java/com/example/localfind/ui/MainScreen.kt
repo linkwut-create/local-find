@@ -12,6 +12,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,6 +49,31 @@ fun MainScreen(
     onStopAll: () -> Unit,
     onRequestPermission: () -> Unit
 ) {
+    val clipboardManager = LocalClipboardManager.current
+    var isTokenVisible by remember { mutableStateOf(false) }
+    var showRegenerateDialog by remember { mutableStateOf(false) }
+
+    if (showRegenerateDialog) {
+        AlertDialog(
+            onDismissRequest = { showRegenerateDialog = false },
+            title = { Text("确认重置 Token？") },
+            text = { Text("重置后，所有已连接的浏览器控制页将失效，需要重新输入新 Token 才能继续控制。") },
+            confirmButton = {
+                TextButton(onClick = {
+                    onRegenerateToken()
+                    showRegenerateDialog = false
+                }) {
+                    Text("确认重置", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRegenerateDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -338,7 +365,7 @@ fun MainScreen(
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
                         text = "本地配对与鉴权",
@@ -346,33 +373,102 @@ fun MainScreen(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.secondary
                     )
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+
+                    // Control URL Display
+                    val controlUrl = "http://${localIp ?: "127.0.0.1"}:$port"
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(10.dp)
                     ) {
-                        Column {
-                            Text("当前配对 Token:", style = MaterialTheme.typography.labelSmall)
+                        Text("控制页地址:", style = MaterialTheme.typography.labelSmall)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = pairingToken.ifEmpty { "未生成" },
+                                text = controlUrl,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            TextButton(
+                                onClick = { clipboardManager.setText(AnnotatedString(controlUrl)) },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                modifier = Modifier.height(28.dp)
+                            ) {
+                                Text("复制", fontSize = 12.sp)
+                            }
+                        }
+                    }
+                    
+                    // Token Display
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(10.dp)
+                    ) {
+                        Text("当前配对 Token:", style = MaterialTheme.typography.labelSmall)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (isTokenVisible) pairingToken.ifEmpty { "未生成" } else "********",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.ExtraBold,
                                 fontFamily = FontFamily.Monospace,
                                 color = MaterialTheme.colorScheme.primary
                             )
+                            Row {
+                                TextButton(
+                                    onClick = { isTokenVisible = !isTokenVisible },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                    modifier = Modifier.height(28.dp)
+                                ) {
+                                    Text(if (isTokenVisible) "隐藏" else "显示", fontSize = 12.sp)
+                                }
+                                Spacer(modifier = Modifier.width(4.dp))
+                                TextButton(
+                                    onClick = { clipboardManager.setText(AnnotatedString(pairingToken)) },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                    modifier = Modifier.height(28.dp)
+                                ) {
+                                    Text("复制", fontSize = 12.sp)
+                                }
+                            }
                         }
-                        
+                    }
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
                         Button(
-                            onClick = onRegenerateToken,
-                            shape = RoundedCornerShape(8.dp)
+                            onClick = { showRegenerateDialog = true },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
                         ) {
-                            Text("重置 Token", fontSize = 12.sp)
+                            Text("重置 Token", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                     
                     Text(
-                        "在控制页输入此 Token 即可获得操作权限。请勿将 Token 泄露给他人。",
+                        "安全提示：在控制页输入此 Token 即可获得操作权限。请勿将其泄露。",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                     )
