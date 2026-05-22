@@ -25,8 +25,18 @@ import com.example.localfind.server.DiscoveredDevice
 import com.example.localfind.server.RemoteControlClient
 import com.example.localfind.server.ControlResult
 import com.example.localfind.auth.RemoteDeviceTokenStore
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+
+enum class RemoteConnectionStatus {
+    IDLE,          // 未检测
+    CONNECTING,    // 连接中
+    ONLINE,        // 在线
+    OFFLINE,       // 离线 / 服务未启动
+    TIMEOUT,       // 请求超时
+    UNAUTHORIZED   // Token 错误
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -430,6 +440,7 @@ fun ControllerModeScreen(
     var manualHost by remember { mutableStateOf("") }
     var manualPort by remember { mutableStateOf("8888") }
     var manualName by remember { mutableStateOf("") }
+    var manualError by remember { mutableStateOf<String?>(null) }
 
     if (selectedDevice != null) {
         RemoteControlPanel(
@@ -518,18 +529,20 @@ fun ControllerModeScreen(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = manualHost,
-                            onValueChange = { manualHost = it },
+                            onValueChange = { manualHost = it; manualError = null },
                             label = { Text("IP 地址") },
                             modifier = Modifier.weight(2f),
                             singleLine = true,
+                            isError = manualError != null && manualHost.isBlank(),
                             textStyle = MaterialTheme.typography.bodySmall
                         )
                         OutlinedTextField(
                             value = manualPort,
-                            onValueChange = { manualPort = it },
+                            onValueChange = { manualPort = it; manualError = null },
                             label = { Text("端口") },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
+                            isError = manualError != null && manualPort.toIntOrNull() == null,
                             textStyle = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -544,24 +557,35 @@ fun ControllerModeScreen(
                         textStyle = MaterialTheme.typography.bodySmall
                     )
 
+                    if (manualError != null) {
+                        Text(manualError!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
+                    }
+
                     Button(
                         onClick = {
                             val hostTrimmed = manualHost.trim()
-                            val portInt = manualPort.toIntOrNull() ?: 8888
-                            if (hostTrimmed.isNotBlank() && portInt in 1..65535) {
-                                val name = manualName.ifBlank { "Manual Device" }
-                                val device = DiscoveredDevice(
-                                    name = name,
-                                    host = hostTrimmed,
-                                    port = portInt,
-                                    controlUrl = "http://$hostTrimmed:$portInt"
-                                )
-                                tokenStore.saveRecentDevice(name, device.host, portInt)
-                                selectedDevice = device
+                            val portInt = manualPort.toIntOrNull()
+                            
+                            if (hostTrimmed.isBlank()) {
+                                manualError = "请输入 IP 地址"
+                                return@Button
                             }
+                            if (portInt == null || portInt !in 1..65535) {
+                                manualError = "端口无效 (1-65535)"
+                                return@Button
+                            }
+
+                            val name = manualName.ifBlank { "Manual Device" }
+                            val device = DiscoveredDevice(
+                                name = name,
+                                host = hostTrimmed,
+                                port = portInt,
+                                controlUrl = "http://$hostTrimmed:$portInt"
+                            )
+                            tokenStore.saveRecentDevice(name, device.host, portInt)
+                            selectedDevice = device
                         },
-                        modifier = Modifier.align(Alignment.End),
-                        enabled = manualHost.isNotBlank() && (manualPort.toIntOrNull() ?: 0) in 1..65535
+                        modifier = Modifier.align(Alignment.End)
                     ) {
                         Text("连接到设备")
                     }
@@ -629,6 +653,7 @@ fun RemoteControlPanel(
     val snackbarHostState = remember { SnackbarHostState() }
     
     var token by remember { mutableStateOf(tokenStore.getToken(device.host, device.port) ?: "") }
+    var connectionStatus by remember { mutableStateOf(RemoteConnectionStatus.IDLE) }
     var ringActive by remember { mutableStateOf(false) }
     var flashMode by remember { mutableStateOf("off") }
     var isLoading by remember { mutableStateOf(false) }
@@ -636,6 +661,7 @@ fun RemoteControlPanel(
     fun refreshStatus() {
         scope.launch {
             isLoading = true
+            connectionStatus = RemoteConnectionStatus.CONNECTING
             when (val result = client.getStatus(device.host, device.port)) {
                 is ControlResult.Success -> {
                     val json = result.statusJson
@@ -643,14 +669,19 @@ fun RemoteControlPanel(
                         ringActive = json.optBoolean("ring_active", false)
                         flashMode = json.optString("flash_mode", "off")
                     }
+                    connectionStatus = RemoteConnectionStatus.ONLINE
                 }
                 is ControlResult.Timeout -> {
+                    connectionStatus = RemoteConnectionStatus.TIMEOUT
                     snackbarHostState.showSnackbar("刷新超时：设备无响应")
                 }
+                is ControlResult.Unauthorized -> {
+                    connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
+                }
                 is ControlResult.Error -> {
+                    connectionStatus = RemoteConnectionStatus.OFFLINE
                     snackbarHostState.showSnackbar("刷新失败: ${result.message}")
                 }
-                else -> {}
             }
             isLoading = false
         }
@@ -663,19 +694,24 @@ fun RemoteControlPanel(
         }
         scope.launch {
             isLoading = true
+            // 发送命令前不改变全局 connectionStatus，只由结果决定
             when (val result = client.sendCommand(device.host, device.port, token, endpoint)) {
                 is ControlResult.Success -> {
                     tokenStore.saveToken(device.host, device.port, token)
+                    snackbarHostState.showSnackbar("命令已发送")
                     refreshStatus()
                 }
                 is ControlResult.Unauthorized -> {
+                    connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
                     snackbarHostState.showSnackbar("Token 错误或未授权 (401)")
                 }
                 is ControlResult.Timeout -> {
+                    connectionStatus = RemoteConnectionStatus.TIMEOUT
                     snackbarHostState.showSnackbar("控制超时：硬件可能卡住或离线")
                 }
                 is ControlResult.Error -> {
-                    snackbarHostState.showSnackbar("控制失败: ${result.message}")
+                    connectionStatus = RemoteConnectionStatus.OFFLINE
+                    snackbarHostState.showSnackbar("控制失败: 设备离线或服务未启动")
                 }
             }
             isLoading = false
@@ -701,6 +737,47 @@ fun RemoteControlPanel(
                 TextButton(onClick = onBack) { Text("← 返回设备列表") }
                 Spacer(modifier = Modifier.weight(1f))
                 if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            }
+
+            // Connection Status Row
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = when (connectionStatus) {
+                    RemoteConnectionStatus.ONLINE -> Color(0xFFE8F5E9)
+                    RemoteConnectionStatus.CONNECTING -> Color(0xFFE3F2FD)
+                    RemoteConnectionStatus.UNAUTHORIZED -> Color(0xFFFFF3E0)
+                    RemoteConnectionStatus.OFFLINE, RemoteConnectionStatus.TIMEOUT -> Color(0xFFFFEBEE)
+                    else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                },
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val statusColor = when (connectionStatus) {
+                        RemoteConnectionStatus.ONLINE -> Color(0xFF4CAF50)
+                        RemoteConnectionStatus.CONNECTING -> Color(0xFF2196F3)
+                        RemoteConnectionStatus.UNAUTHORIZED -> Color(0xFFFF9800)
+                        RemoteConnectionStatus.OFFLINE, RemoteConnectionStatus.TIMEOUT -> Color(0xFFF44336)
+                        else -> Color.Gray
+                    }
+                    Surface(shape = androidx.compose.foundation.shape.CircleShape, color = statusColor, modifier = Modifier.size(10.dp)) {}
+                    Text(
+                        text = when (connectionStatus) {
+                            RemoteConnectionStatus.IDLE -> "未检测"
+                            RemoteConnectionStatus.CONNECTING -> "正在连接..."
+                            RemoteConnectionStatus.ONLINE -> "设备在线"
+                            RemoteConnectionStatus.OFFLINE -> "设备离线 / 服务未启动"
+                            RemoteConnectionStatus.TIMEOUT -> "请求超时"
+                            RemoteConnectionStatus.UNAUTHORIZED -> "Token 错误"
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = statusColor
+                    )
+                }
             }
 
             Card(modifier = Modifier.fillMaxWidth()) {

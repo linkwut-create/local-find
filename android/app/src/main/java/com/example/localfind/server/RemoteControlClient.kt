@@ -53,8 +53,10 @@ class RemoteControlClient {
             }
         } catch (e: java.net.SocketTimeoutException) {
             ControlResult.Timeout
-        } catch (e: Exception) {
+        } catch (e: java.net.ConnectException) {
             ControlResult.Error("设备离线或无法连接")
+        } catch (e: Exception) {
+            ControlResult.Error("连接异常: ${e.message}")
         }
     }
 }
