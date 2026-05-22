@@ -11,7 +11,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import com.example.localfind.util.QrCodeUtil
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.common.InputImage
+import java.util.concurrent.Executors
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +86,7 @@ fun MainScreen(
     onStartDiscovery: () -> Unit,
     onStopDiscovery: () -> Unit,
     onOpenDevice: (DiscoveredDevice) -> Unit,
+    onScanQrCode: () -> Unit,
     onTestRingToggle: () -> Unit,
     onTestFlashSteady: () -> Unit,
     onTestFlashStrobe: () -> Unit,
@@ -145,6 +165,7 @@ fun MainScreen(
                     onStartDiscovery = onStartDiscovery,
                     onStopDiscovery = onStopDiscovery,
                     onOpenBrowser = onOpenDevice,
+                    onScanQrCode = onScanQrCode,
                     onAuthenticate = onAuthenticate
                 )
             }
@@ -362,6 +383,59 @@ fun FinderModeScreen(
             }
         }
 
+        // 2.1 QR Code Pairing Card
+        if (isServiceRunning && localIp != null && pairingToken.isNotEmpty()) {
+            val qrContent = buildJsonObject {
+                put("type", "local_find_pairing")
+                put("name", "LocalFind-${android.os.Build.MODEL}")
+                put("host", localIp)
+                put("port", port)
+                put("token", pairingToken)
+            }.toString()
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val qrBitmap = remember(qrContent) {
+                        QrCodeUtil.generateQrCode(qrContent, 400)
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .background(Color.White, RoundedCornerShape(8.dp))
+                            .padding(4.dp)
+                    ) {
+                        qrBitmap?.let {
+                            androidx.compose.foundation.Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = "Pairing QR Code",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit
+                            )
+                        }
+                    }
+
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("配对二维码", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text("• 控制端扫码后可快速连接", style = MaterialTheme.typography.labelSmall)
+                        Text("• 二维码只在局域网内使用", style = MaterialTheme.typography.labelSmall)
+                        Text("• 如果泄露，请重置 Token", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+        }
+
         // 2.5 Security Tips Card
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -481,10 +555,15 @@ fun ControllerModeScreen(
     onStartDiscovery: () -> Unit,
     onStopDiscovery: () -> Unit,
     onOpenBrowser: (DiscoveredDevice) -> Unit,
+    onScanQrCode: () -> Unit,
     onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit
 ) {
     var selectedDevice by remember { mutableStateOf<DiscoveredDevice?>(null) }
     var recentDevice by remember { mutableStateOf(tokenStore.getRecentDevice()) }
+    var isScanning by remember { mutableStateOf(false) }
+    var initialScannedToken by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // Manual Connection States
     var manualHost by remember { mutableStateOf("") }
@@ -496,211 +575,267 @@ fun ControllerModeScreen(
         RemoteControlPanel(
             device = selectedDevice!!,
             tokenStore = tokenStore,
+            initialToken = initialScannedToken,
             onBack = { 
                 selectedDevice = null 
+                initialScannedToken = ""
                 // Refresh recent device when coming back
                 recentDevice = tokenStore.getRecentDevice()
             },
             onAuthenticate = onAuthenticate
         )
-    } else {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // 1. Recent Device Card
-            recentDevice?.let { device ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f))
-                ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("最近连接", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
-                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(device.name, fontWeight = FontWeight.Bold)
-                                Text("${device.host}:${device.port}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                            }
-                            Button(
-                                onClick = { 
-                                    tokenStore.saveRecentDevice(device.name, device.host, device.port)
-                                    selectedDevice = device 
-                                },
-                                shape = RoundedCornerShape(8.dp),
-                                contentPadding = PaddingValues(horizontal = 12.dp),
-                                modifier = Modifier.height(32.dp)
-                            ) {
-                                Text("快速进入", fontSize = 11.sp)
-                            }
-                        }
+    } else if (isScanning) {
+        QrScannerScreen(
+            onResult = { result: String ->
+                try {
+                    val json = JSONObject(result)
+                    if (json.optString("type") == "local_find_pairing") {
+                        val host = json.getString("host")
+                        val port = json.getInt("port")
+                        val name = json.optString("name", "Scanned Device")
+                        val token = json.getString("token")
                         
-                        Text(
-                            "提示：如果连接失败，请检查两台手机是否在同一 Wi-Fi，且被寻找端的寻机服务已启动。IP 地址可能会因 Wi-Fi 变动而失效。此外，请确保被寻找端没有被系统冻结后台连接。",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.Gray
+                        val device = DiscoveredDevice(
+                            name = name,
+                            host = host,
+                            port = port,
+                            controlUrl = "http://$host:$port"
                         )
+                        
+                        selectedDevice = device
+                        initialScannedToken = token
+                        isScanning = false
+                    } else {
+                        scope.launch { snackbarHostState.showSnackbar("不是有效的 Local Find 配对码") }
+                        isScanning = false
                     }
+                } catch (_: Exception) {
+                    scope.launch { snackbarHostState.showSnackbar("扫码解析失败") }
+                    isScanning = false
                 }
-            }
-
-            // 2. Discovery Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.1f))
+            },
+            onClose = { isScanning = false }
+        )
+    } else {
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("发现局域网设备 (NSD Scanner)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
-                    
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "状态: " + when(discoveryStatus) {
-                                DiscoveryStatus.IDLE -> "未扫描"
-                                DiscoveryStatus.SCANNING -> "扫描中..."
-                                DiscoveryStatus.FAILED -> "扫描失败"
-                                DiscoveryStatus.STOPPED -> "已停止"
-                            },
-                            fontWeight = FontWeight.Bold,
-                            color = if (discoveryStatus == DiscoveryStatus.SCANNING) Color(0xFF1976D2) else Color.Gray
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = onStartDiscovery, enabled = discoveryStatus != DiscoveryStatus.SCANNING) { Text("开始扫描", fontSize = 12.sp) }
-                            OutlinedButton(onClick = onStopDiscovery, enabled = discoveryStatus == DiscoveryStatus.SCANNING) { Text("停止", fontSize = 12.sp) }
-                        }
-                    }
-                }
-            }
-
-            // 3. Manual Connection Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("手动连接 fallback", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    
-                    Text("提示：Host 填写被寻找端显示的 IP 地址，端口默认 8888。", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = manualHost,
-                            onValueChange = { manualHost = it; manualError = null },
-                            label = { Text("IP 地址") },
-                            modifier = Modifier.weight(2f),
-                            singleLine = true,
-                            isError = manualError != null && manualHost.isBlank(),
-                            textStyle = MaterialTheme.typography.bodySmall
-                        )
-                        OutlinedTextField(
-                            value = manualPort,
-                            onValueChange = { manualPort = it; manualError = null },
-                            label = { Text("端口") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            isError = manualError != null && manualPort.toIntOrNull() == null,
-                            textStyle = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    
-                    OutlinedTextField(
-                        value = manualName,
-                        onValueChange = { manualName = it },
-                        label = { Text("自定义名称 (可选)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        placeholder = { Text("例如：我的旧手机") },
-                        textStyle = MaterialTheme.typography.bodySmall
-                    )
-
-                    if (manualError != null) {
-                        Text(manualError!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
-                    }
-
-                    Button(
-                        onClick = {
-                            val hostTrimmed = manualHost.trim()
-                            val portInt = manualPort.toIntOrNull()
-                            
-                            if (hostTrimmed.isBlank()) {
-                                manualError = "请输入 IP 地址"
-                                return@Button
-                            }
-                            if (portInt == null || portInt !in 1..65535) {
-                                manualError = "端口无效 (1-65535)"
-                                return@Button
-                            }
-
-                            val name = manualName.ifBlank { "Manual Device" }
-                            val device = DiscoveredDevice(
-                                name = name,
-                                host = hostTrimmed,
-                                port = portInt,
-                                controlUrl = "http://$hostTrimmed:$portInt"
-                            )
-                            tokenStore.saveRecentDevice(name, device.host, portInt)
-                            selectedDevice = device
-                        },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text("连接到设备")
-                    }
-                }
-            }
-
-            // 4. Discovered Devices List
-            if (discoveredDevices.isEmpty()) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text("未发现局域网设备", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
-                    Text(
-                        "请确认两台手机在同一 Wi-Fi。如果仍无法发现，请尝试下方的“手动连接”。", 
-                        color = Color.Gray, 
-                        style = MaterialTheme.typography.labelSmall,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            } else {
-                discoveredDevices.forEach { device ->
+                // 1. Recent Device Card
+                recentDevice?.let { device ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f))
                     ) {
-                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(device.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                Text("${device.host}:${device.port}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.primary)
-                            }
-                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("最近连接", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(device.name, fontWeight = FontWeight.Bold)
+                                    Text("${device.host}:${device.port}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                }
                                 Button(
                                     onClick = { 
                                         tokenStore.saveRecentDevice(device.name, device.host, device.port)
                                         selectedDevice = device 
-                                    }, 
-                                    shape = RoundedCornerShape(8.dp),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                                    modifier = Modifier.height(32.dp)
-                                ) {
-                                    Text("App 内控制", fontSize = 11.sp)
-                                }
-                                OutlinedButton(
-                                    onClick = { 
-                                        tokenStore.saveRecentDevice(device.name, device.host, device.port)
-                                        onOpenBrowser(device) 
                                     },
                                     shape = RoundedCornerShape(8.dp),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp),
                                     modifier = Modifier.height(32.dp)
                                 ) {
-                                    Text("浏览器打开", fontSize = 11.sp)
+                                    Text("快速进入", fontSize = 11.sp)
+                                }
+                            }
+                            
+                            Text(
+                                "提示：如果连接失败，请检查两台手机是否在同一 Wi-Fi，且被寻找端的寻机服务已启动。IP 地址可能会因 Wi-Fi变动而失效。此外，请确保被寻找端没有被系统冻结后台连接。",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                }
+
+                // 2. Discovery Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.1f))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("发现局域网设备 (NSD Scanner)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
+                        
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "状态: " + when(discoveryStatus) {
+                                    DiscoveryStatus.IDLE -> "未扫描"
+                                    DiscoveryStatus.SCANNING -> "扫描中..."
+                                    DiscoveryStatus.FAILED -> "扫描失败"
+                                    DiscoveryStatus.STOPPED -> "已停止"
+                                },
+                                fontWeight = FontWeight.Bold,
+                                color = if (discoveryStatus == DiscoveryStatus.SCANNING) Color(0xFF1976D2) else Color.Gray
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(onClick = onStartDiscovery, enabled = discoveryStatus != DiscoveryStatus.SCANNING) { Text("开始扫描", fontSize = 12.sp) }
+                                OutlinedButton(onClick = onStopDiscovery, enabled = discoveryStatus == DiscoveryStatus.SCANNING) { Text("停止", fontSize = 12.sp) }
+                            }
+                        }
+
+                        Divider(
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+                        )
+
+                        Button(
+                            onClick = {
+                                onScanQrCode()
+                                isScanning = true
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                        ) {
+                            Text("扫码连接设备", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                // 3. Manual Connection Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("手动连接 fallback", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        
+                        Text("提示：Host 填写被寻找端显示的 IP 地址，端口默认 8888。", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = manualHost,
+                                onValueChange = { manualHost = it; manualError = null },
+                                label = { Text("IP 地址") },
+                                modifier = Modifier.weight(2f),
+                                singleLine = true,
+                                isError = manualError != null && manualHost.isBlank(),
+                                textStyle = MaterialTheme.typography.bodySmall
+                            )
+                            OutlinedTextField(
+                                value = manualPort,
+                                onValueChange = { manualPort = it; manualError = null },
+                                label = { Text("端口") },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true,
+                                isError = manualError != null && manualPort.toIntOrNull() == null,
+                                textStyle = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        
+                        OutlinedTextField(
+                            value = manualName,
+                            onValueChange = { manualName = it },
+                            label = { Text("自定义名称 (可选)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            placeholder = { Text("例如：我的旧手机") },
+                            textStyle = MaterialTheme.typography.bodySmall
+                        )
+
+                        if (manualError != null) {
+                            Text(manualError!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
+                        }
+
+                        Button(
+                            onClick = {
+                                val hostTrimmed = manualHost.trim()
+                                val portInt = manualPort.toIntOrNull()
+                                
+                                if (hostTrimmed.isBlank()) {
+                                    manualError = "请输入 IP 地址"
+                                    return@Button
+                                }
+                                if (portInt == null || portInt !in 1..65535) {
+                                    manualError = "端口无效 (1-65535)"
+                                    return@Button
+                                }
+
+                                val name = manualName.ifBlank { "Manual Device" }
+                                val device = DiscoveredDevice(
+                                    name = name,
+                                    host = hostTrimmed,
+                                    port = portInt,
+                                    controlUrl = "http://$hostTrimmed:$portInt"
+                                )
+                                tokenStore.saveRecentDevice(name, device.host, portInt)
+                                selectedDevice = device
+                            },
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text("连接到设备")
+                        }
+                    }
+                }
+
+                // 4. Discovered Devices List
+                if (discoveredDevices.isEmpty()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("未发现局域网设备", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "请确认两台手机在同一 Wi-Fi。如果仍无法发现，请尝试下方的“手动连接”。", 
+                            color = Color.Gray, 
+                            style = MaterialTheme.typography.labelSmall,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    discoveredDevices.forEach { device ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                        ) {
+                            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(device.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                    Text("${device.host}:${device.port}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.primary)
+                                }
+                                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Button(
+                                        onClick = { 
+                                            tokenStore.saveRecentDevice(device.name, device.host, device.port)
+                                            selectedDevice = device 
+                                        }, 
+                                        shape = RoundedCornerShape(8.dp),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                        modifier = Modifier.height(32.dp)
+                                    ) {
+                                        Text("App 内控制", fontSize = 11.sp)
+                                    }
+                                    OutlinedButton(
+                                        onClick = { 
+                                            tokenStore.saveRecentDevice(device.name, device.host, device.port)
+                                            onOpenBrowser(device) 
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                        modifier = Modifier.height(32.dp)
+                                    ) {
+                                        Text("浏览器打开", fontSize = 11.sp)
+                                    }
                                 }
                             }
                         }
@@ -715,6 +850,7 @@ fun ControllerModeScreen(
 fun RemoteControlPanel(
     device: DiscoveredDevice,
     tokenStore: RemoteDeviceTokenStore,
+    initialToken: String = "",
     onBack: () -> Unit,
     onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit
 ) {
@@ -722,11 +858,25 @@ fun RemoteControlPanel(
     val client = remember { RemoteControlClient() }
     val snackbarHostState = remember { SnackbarHostState() }
     
-    var token by remember { mutableStateOf("") }
+    var inputToken by remember { mutableStateOf(initialToken) }
+    var hasSavedToken by remember { mutableStateOf(tokenStore.getToken(device.host, device.port) != null) }
     var connectionStatus by remember { mutableStateOf(RemoteConnectionStatus.IDLE) }
     var ringActive by remember { mutableStateOf(false) }
     var flashMode by remember { mutableStateOf("off") }
     var isLoading by remember { mutableStateOf(false) }
+
+    fun getEffectiveToken(): String? {
+        if (inputToken.isNotEmpty()) return inputToken
+        return tokenStore.getToken(device.host, device.port)
+    }
+
+    fun handleSuccessfulCommand(usedToken: String) {
+        if (usedToken == inputToken) {
+            tokenStore.saveToken(device.host, device.port, inputToken)
+            inputToken = ""
+            hasSavedToken = true
+        }
+    }
 
     fun refreshStatus() {
         scope.launch {
@@ -759,15 +909,17 @@ fun RemoteControlPanel(
     }
 
     fun sendCommand(endpoint: String) {
-        if (token.isEmpty()) {
-            scope.launch { snackbarHostState.showSnackbar("请先输入当前设备 Token") }
+        val effectiveToken = getEffectiveToken()
+        if (effectiveToken == null) {
+            scope.launch { snackbarHostState.showSnackbar("请先输入 Token") }
             return
         }
         onAuthenticate("验证身份以发送控制命令", {
             scope.launch {
                 isLoading = true
-                when (val result = client.sendCommand(device.host, device.port, token, endpoint)) {
+                when (val result = client.sendCommand(device.host, device.port, effectiveToken, endpoint)) {
                     is ControlResult.Success -> {
+                        handleSuccessfulCommand(effectiveToken)
                         snackbarHostState.showSnackbar("命令已发送")
                         refreshStatus()
                     }
@@ -793,15 +945,16 @@ fun RemoteControlPanel(
     }
 
     fun startFinding() {
-        if (token.isEmpty()) {
-            scope.launch { snackbarHostState.showSnackbar("请先输入当前设备 Token") }
+        val effectiveToken = getEffectiveToken()
+        if (effectiveToken == null) {
+            scope.launch { snackbarHostState.showSnackbar("请先输入 Token") }
             return
         }
         onAuthenticate("验证身份以寻找手机", {
             scope.launch {
                 isLoading = true
                 // 1. Start ring
-                val ringResult = client.sendCommand(device.host, device.port, token, "/command/ring/start")
+                val ringResult = client.sendCommand(device.host, device.port, effectiveToken, "/command/ring/start")
                 
                 if (ringResult is ControlResult.Unauthorized) {
                     connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
@@ -822,9 +975,10 @@ fun RemoteControlPanel(
                 }
                 
                 // 2. Start strobe
-                val flashResult = client.sendCommand(device.host, device.port, token, "/command/flash/strobe/start")
+                val flashResult = client.sendCommand(device.host, device.port, effectiveToken, "/command/flash/strobe/start")
                 
                 if (flashResult is ControlResult.Success) {
+                    handleSuccessfulCommand(effectiveToken)
                     connectionStatus = RemoteConnectionStatus.SEARCHING
                     snackbarHostState.showSnackbar("正在寻找手机")
                 } else {
@@ -842,15 +996,17 @@ fun RemoteControlPanel(
     }
 
     fun stopFinding() {
-        if (token.isEmpty()) {
-            scope.launch { snackbarHostState.showSnackbar("请先输入当前设备 Token") }
+        val effectiveToken = getEffectiveToken()
+        if (effectiveToken == null) {
+            scope.launch { snackbarHostState.showSnackbar("请先输入 Token") }
             return
         }
         onAuthenticate("验证身份以停止寻找", {
             scope.launch {
                 isLoading = true
-                when (val result = client.sendCommand(device.host, device.port, token, "/command/stop-all")) {
+                when (val result = client.sendCommand(device.host, device.port, effectiveToken, "/command/stop-all")) {
                     is ControlResult.Success -> {
+                        handleSuccessfulCommand(effectiveToken)
                         connectionStatus = RemoteConnectionStatus.STOPPED
                         snackbarHostState.showSnackbar("已停止寻找")
                         refreshStatus()
@@ -990,24 +1146,51 @@ fun RemoteControlPanel(
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("配对鉴权", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     
+                    if (hasSavedToken) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text("✓", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
+                                    Text("Token 已保存，可直接控制", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                }
+                                TextButton(
+                                    onClick = { 
+                                        tokenStore.clearToken(device.host, device.port)
+                                        hasSavedToken = false
+                                    },
+                                    contentPadding = PaddingValues(0.dp)
+                                ) {
+                                    Text("清除", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+
                     OutlinedTextField(
-                        value = token,
-                        onValueChange = { token = it },
-                        label = { Text("请输入被寻找端当前显示的 Token") },
+                        value = inputToken,
+                        onValueChange = { inputToken = it },
+                        label = { Text(if (hasSavedToken) "输入新 Token 以更换" else "请输入被寻找端显示的 Token") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(8.dp),
                         visualTransformation = PasswordVisualTransformation()
                     )
-                    Text("注意：退出控制面板后需要重新输入 Token，以确保安全。", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                     
-                    if (token.isNotEmpty()) {
+                    if (inputToken.isNotEmpty()) {
                         TextButton(
-                            onClick = { token = "" },
+                            onClick = { inputToken = "" },
                             modifier = Modifier.align(Alignment.End),
                             contentPadding = PaddingValues(0.dp)
                         ) {
-                            Text("清除本次输入", fontSize = 12.sp)
+                            Text("清空输入", fontSize = 12.sp)
                         }
                     }
                 }
@@ -1054,6 +1237,93 @@ fun RemoteControlPanel(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun QrScannerScreen(
+    onResult: (String) -> Unit,
+    onClose: () -> Unit
+) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+    
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        AndroidView(
+            factory = { ctx ->
+                val previewView = PreviewView(ctx)
+                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                
+                cameraProviderFuture.addListener({
+                    val cameraProvider = cameraProviderFuture.get()
+                    val preview = Preview.Builder().build().also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
+                    }
+                    
+                    val imageAnalysis = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+                    
+                    val scanner = BarcodeScanning.getClient(
+                        BarcodeScannerOptions.Builder()
+                            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+                            .build()
+                    )
+                    
+                    imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
+                        val mediaImage = imageProxy.image
+                        if (mediaImage != null) {
+                            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                            scanner.process(image)
+                                .addOnSuccessListener { barcodes ->
+                                    for (barcode in barcodes) {
+                                        barcode.rawValue?.let { 
+                                            onResult(it)
+                                            // Stop further processing
+                                            cameraProvider.unbindAll()
+                                        }
+                                    }
+                                }
+                                .addOnCompleteListener {
+                                    imageProxy.close()
+                                }
+                        } else {
+                            imageProxy.close()
+                        }
+                    }
+                    
+                    try {
+                        cameraProvider.unbindAll()
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            CameraSelector.DEFAULT_BACK_CAMERA,
+                            preview,
+                            imageAnalysis
+                        )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }, ContextCompat.getMainExecutor(ctx))
+                
+                previewView
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+        
+        // UI Overlays (Back button, frame, etc.)
+        TextButton(
+            onClick = onClose,
+            modifier = Modifier.align(Alignment.TopStart).padding(16.dp).background(Color.Black.copy(alpha = 0.5f), androidx.compose.foundation.shape.CircleShape)
+        ) {
+            Text("关闭", color = Color.White, fontWeight = FontWeight.Bold)
+        }
+        
+        Text(
+            "将二维码放入框内即可扫码",
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 64.dp).background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(horizontal = 16.dp, vertical = 8.dp),
+            color = Color.White,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 

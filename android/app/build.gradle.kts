@@ -63,6 +63,13 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.biometric)
     
+    // 二维码与扫码
+    implementation(libs.zxing.core)
+    implementation(libs.mlkit.barcode.scanning)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    
     // Ktor Server 依赖
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)

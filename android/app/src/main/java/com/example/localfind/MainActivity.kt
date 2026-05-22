@@ -158,6 +158,9 @@ class MainActivity : FragmentActivity() {
                                     e.printStackTrace()
                                 }
                             },
+                        onScanQrCode = {
+                            checkAndRequestPermissions()
+                        },
                         onTestRingToggle = {
                             if (isServiceBound) {
                                 if (ringActiveState) {
