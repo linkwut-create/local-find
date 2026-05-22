@@ -74,106 +74,180 @@ class HttpServerManager(
 
                 // GET / - Browser control page
                 get("/") {
+                    val deviceName = android.os.Build.MODEL
                     val html = """
                         <!DOCTYPE html>
-                        <html lang="en">
+                        <html lang="zh-CN">
                         <head>
                             <meta charset="UTF-8">
                             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                            <title>Local Find Control Panel</title>
+                            <title>Local Find - 电脑端控制页</title>
                             <style>
-                                body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; line-height: 1.6; background-color: #f0f2f5; color: #1c1e21; }
-                                .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-                                h1 { color: #1877f2; text-align: center; margin-bottom: 24px; }
-                                .status-section { background: #f7f8fa; padding: 15px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #ddd; }
-                                .status-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px; }
-                                .status-row:last-child { margin-bottom: 0; }
-                                .label { font-weight: bold; color: #65676b; }
-                                .value { font-family: monospace; font-weight: bold; }
-                                .active { color: #28a745; }
-                                .inactive { color: #dc3545; }
-                                .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-                                button { padding: 14px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s, transform 0.1s; }
+                                :root { --primary: #007AFF; --danger: #FF3B30; --success: #34C759; --bg: #F2F2F7; --card: #FFFFFF; }
+                                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg); color: #000; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+                                .card { background: var(--card); padding: 24px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; box-sizing: border-box; }
+                                h1 { margin: 0 0 8px; font-size: 24px; text-align: center; color: var(--primary); }
+                                .subtitle { text-align: center; color: #8E8E93; margin-bottom: 24px; font-size: 14px; }
+                                .device-info { background: #F2F2F7; padding: 12px; border-radius: 12px; margin-bottom: 24px; font-size: 14px; }
+                                .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+                                .info-label { color: #8E8E93; }
+                                .info-value { font-weight: 600; }
+                                .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+                                .status-item { background: #F2F2F7; padding: 12px; border-radius: 12px; text-align: center; }
+                                .status-label { font-size: 12px; color: #8E8E93; display: block; margin-bottom: 4px; }
+                                .status-value { font-weight: bold; font-size: 16px; }
+                                .active { color: var(--success); }
+                                .inactive { color: #8E8E93; }
+                                .token-section { margin-bottom: 24px; }
+                                .token-section label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; }
+                                input[type="password"] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #C7C7CC; box-sizing: border-box; font-size: 16px; text-align: center; letter-spacing: 4px; }
+                                .button-group { display: flex; flex-direction: column; gap: 12px; }
+                                .row { display: flex; gap: 12px; }
+                                button { flex: 1; padding: 16px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
                                 button:active { transform: scale(0.98); }
-                                .btn-primary { background: #1877f2; color: white; }
-                                .btn-primary:hover { background: #166fe5; }
-                                .btn-danger { background: #f02849; color: white; }
-                                .btn-danger:hover { background: #d92241; }
-                                .btn-warning { background: #f7b924; color: white; }
-                                .btn-warning:hover { background: #e0a721; }
-                                .btn-secondary { background: #e4e6eb; color: #050505; }
-                                .btn-secondary:hover { background: #d8dadf; }
-                                .btn-full { grid-column: span 2; margin-top: 8px; }
-                                .btn-stop-all { background: #4b4f56; color: white; }
-                                .btn-stop-all:hover { background: #393d42; }
-                                @media (max-width: 480px) {
-                                    .button-grid { grid-template-columns: 1fr; }
-                                    .btn-full { grid-column: span 1; }
-                                }
+                                .btn-main { background: var(--primary); color: white; }
+                                .btn-stop { background: var(--danger); color: white; }
+                                .btn-outline { background: #E5E5EA; color: #000; }
+                                .result-box { margin-top: 24px; padding: 12px; border-radius: 12px; font-size: 14px; text-align: center; display: none; }
+                                .instructions { font-size: 13px; color: #8E8E93; margin-top: 10px; line-height: 1.5; }
+                                .instructions ul { padding-left: 20px; margin: 8px 0; }
                             </style>
                         </head>
                         <body>
-                            <div class="container">
-                                <h1>Local Find Control Panel</h1>
-                                <div class="status-section">
-                                    <div class="status-row"><span class="label">Service Status:</span> <span class="value active">RUNNING</span></div>
-                                    <div class="status-row"><span class="label">Ring Status:</span> <span id="ring-val" class="value">LOADING...</span></div>
-                                    <div class="status-row"><span class="label">Flash Status:</span> <span id="flash-val" class="value">LOADING...</span></div>
+                            <div class="card">
+                                <h1>Local Find</h1>
+                                <div class="subtitle">电脑端零安装控制页</div>
+                                
+                                <div class="device-info">
+                                    <div class="info-row"><span class="info-label">当前设备:</span> <span class="info-value" id="device-name">$deviceName</span></div>
+                                    <div class="info-row"><span class="info-label">服务地址:</span> <span class="info-value" id="service-addr">--</span></div>
                                 </div>
-                                <div class="status-section">
-                                    <div class="label" style="margin-bottom:8px">Pairing Token:</div>
-                                    <input type="text" id="token-input" placeholder="Enter Token" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd; box-sizing:border-box;">
+
+                                <div class="status-grid">
+                                    <div class="status-item"><span class="status-label">服务状态</span><span class="status-value active" id="service-status">在线</span></div>
+                                    <div class="status-item"><span class="status-label">可访问性</span><span class="status-value active" id="reachability">可连接</span></div>
+                                    <div class="status-item"><span class="status-label">响铃状态</span><span class="status-value" id="ring-status">--</span></div>
+                                    <div class="status-item"><span class="status-label">闪光模式</span><span class="status-value" id="flash-status">--</span></div>
                                 </div>
-                                <div class="button-grid">
-                                    <button class="btn-primary" onclick="callApi('/command/ring/start', 'POST')">Start Ring</button>
-                                    <button class="btn-danger" onclick="callApi('/command/ring/stop', 'POST')">Stop Ring</button>
-                                    <button class="btn-warning" onclick="callApi('/command/flash/steady/start', 'POST')">Flash Steady</button>
-                                    <button class="btn-warning" onclick="callApi('/command/flash/strobe/start', 'POST')">Flash Strobe</button>
-                                    <button class="btn-danger" onclick="callApi('/command/flash/stop', 'POST')">Stop Flash</button>
-                                    <button class="btn-secondary" onclick="updateStatus()">Refresh Status</button>
-                                    <button class="btn-stop-all btn-full" onclick="callApi('/command/stop-all', 'POST')">Stop All</button>
+
+                                <div class="token-section">
+                                    <label for="token-input">输入 8 位配对 Token</label>
+                                    <input type="password" id="token-input" maxlength="8" placeholder="••••••••">
+                                </div>
+
+                                <div class="button-group">
+                                    <button class="btn-main" onclick="startFinding()">开始寻找手机</button>
+                                    <div class="row">
+                                        <button class="btn-outline" onclick="toggleRing()" id="btn-ring">响铃</button>
+                                        <button class="btn-outline" onclick="toggleFlash()" id="btn-flash">闪光</button>
+                                    </div>
+                                    <button class="btn-stop" onclick="callApi('/command/stop-all')">停止寻找 / 全部停止</button>
+                                    <button class="btn-outline" onclick="updateStatus()">刷新状态</button>
+                                </div>
+
+                                <div id="result-box" class="result-box"></div>
+                            </div>
+
+                            <div class="card" style="padding: 16px;">
+                                <div class="instructions">
+                                    <strong>使用说明:</strong>
+                                    <ul>
+                                        <li>电脑端无需安装任何软件。</li>
+                                        <li>请确保电脑和手机在同一 Wi-Fi / 局域网。</li>
+                                        <li>控制命令需要被寻找手机当前显示的 8 位 Token。</li>
+                                        <li>Chrome 插件快捷控制将在后续版本提供。</li>
+                                    </ul>
                                 </div>
                             </div>
+
                             <script>
                                 const tokenInput = document.getElementById('token-input');
-                                tokenInput.value = localStorage.getItem('localfind_token') || '';
-                                tokenInput.oninput = () => localStorage.setItem('localfind_token', tokenInput.value);
+                                const serviceAddrEl = document.getElementById('service-addr');
+                                const resultBox = document.getElementById('result-box');
+
+                                // Set addr from browser location
+                                serviceAddrEl.textContent = location.protocol + '//' + location.host + '/';
+
+                                async function showResult(msg, isError = false) {
+                                    resultBox.textContent = msg;
+                                    resultBox.style.display = 'block';
+                                    resultBox.style.background = isError ? '#FFD6D6' : '#D6FFDA';
+                                    resultBox.style.color = isError ? '#D00' : '#080';
+                                    setTimeout(() => { resultBox.style.display = 'none'; }, 5000);
+                                }
 
                                 async function updateStatus() {
                                     try {
                                         const res = await fetch('/status');
+                                        if (!res.ok) throw new Error('status_error');
                                         const data = await res.json();
-                                        const ringEl = document.getElementById('ring-val');
-                                        const flashEl = document.getElementById('flash-val');
                                         
-                                        ringEl.textContent = data.ring_active ? 'ACTIVE' : 'IDLE';
-                                        ringEl.className = 'value ' + (data.ring_active ? 'active' : 'inactive');
+                                        document.getElementById('service-status').textContent = '在线';
+                                        document.getElementById('reachability').textContent = '可连接';
                                         
-                                        flashEl.textContent = data.flash_mode.toUpperCase();
-                                        flashEl.className = 'value ' + (data.flash_mode !== 'off' ? 'active' : 'inactive');
+                                        const ringStatus = document.getElementById('ring-status');
+                                        ringStatus.textContent = data.ring_active ? '鸣叫中' : '静音';
+                                        ringStatus.className = 'status-value ' + (data.ring_active ? 'active' : 'inactive');
+
+                                        const flashStatus = document.getElementById('flash-status');
+                                        flashStatus.textContent = data.flash_mode === 'off' ? '关闭' : (data.flash_mode === 'strobe' ? '爆闪' : '常亮');
+                                        flashStatus.className = 'status-value ' + (data.flash_mode !== 'off' ? 'active' : 'inactive');
                                     } catch (e) {
-                                        console.error('Failed to update status', e);
+                                        document.getElementById('service-status').textContent = '未知';
+                                        document.getElementById('reachability').textContent = '连接失败';
+                                        showResult('无法连接到手机，请检查网络', true);
                                     }
                                 }
 
-                                async function callApi(url, method) {
+                                async function callApi(endpoint) {
                                     const token = tokenInput.value;
+                                    if (!token) {
+                                        showResult('请输入 Token', true);
+                                        return;
+                                    }
                                     try {
-                                        const res = await fetch(url, { 
-                                            method: method,
+                                        const res = await fetch(endpoint, {
+                                            method: 'POST',
                                             headers: { 'X-LocalFind-Token': token }
                                         });
                                         if (res.status === 401) {
-                                            alert('Unauthorized: Please check your Token');
+                                            showResult('Token 错误或已失效', true);
+                                        } else if (res.status === 200) {
+                                            showResult('命令已发送');
+                                            setTimeout(updateStatus, 500);
+                                        } else {
+                                            showResult('操作失败 (' + res.status + ')', true);
                                         }
-                                        setTimeout(updateStatus, 100);
                                     } catch (e) {
-                                        console.error('API call failed', e);
+                                        showResult('网络错误或请求超时', true);
                                     }
                                 }
 
+                                function startFinding() {
+                                    const token = tokenInput.value;
+                                    if (!token) {
+                                        showResult('请输入 Token', true);
+                                        return;
+                                    }
+                                    showResult('正在发送开始指令...');
+                                    fetch('/command/ring/start', { method: 'POST', headers: { 'X-LocalFind-Token': token } })
+                                        .then(() => fetch('/command/flash/strobe/start', { method: 'POST', headers: { 'X-LocalFind-Token': token } }))
+                                        .then(() => { showResult('开始寻找手机'); setTimeout(updateStatus, 500); })
+                                        .catch(() => showResult('指令发送失败', true));
+                                }
+
+                                function toggleRing() {
+                                    const isActive = document.getElementById('ring-status').classList.contains('active');
+                                    callApi(isActive ? '/command/ring/stop' : '/command/ring/start');
+                                }
+
+                                function toggleFlash() {
+                                    const isActive = document.getElementById('flash-status').classList.contains('active');
+                                    callApi(isActive ? '/command/flash/stop' : '/command/flash/strobe/start');
+                                }
+
                                 updateStatus();
-                                setInterval(updateStatus, 3000);
+                                setInterval(updateStatus, 5000);
                             </script>
                         </body>
                         </html>

@@ -314,18 +314,27 @@ fun FinderModeScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-                            .padding(12.dp)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("控制页地址:", style = MaterialTheme.typography.labelSmall)
+                        Text("电脑浏览器远程控制 (无需安装):", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Text("在电脑浏览器打开下方地址，即可在同 Wi-Fi 下寻找手机。", style = MaterialTheme.typography.bodySmall)
+                        
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(text = controlUrl, style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
-                            TextButton(onClick = { clipboardManager.setText(AnnotatedString(controlUrl)) }) {
-                                Text("复制", fontSize = 12.sp)
+                            TextButton(
+                                onClick = { clipboardManager.setText(AnnotatedString(controlUrl)) },
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                            ) {
+                                Text("复制地址", fontSize = 12.sp)
                             }
                         }
                     }
