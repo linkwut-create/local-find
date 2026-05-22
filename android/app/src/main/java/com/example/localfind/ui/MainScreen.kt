@@ -21,6 +21,11 @@ import androidx.compose.ui.unit.sp
 import com.example.localfind.server.NsdStatus
 import com.example.localfind.server.DiscoveryStatus
 import com.example.localfind.server.DiscoveredDevice
+import com.example.localfind.server.RemoteControlClient
+import com.example.localfind.server.ControlResult
+import com.example.localfind.auth.RemoteDeviceTokenStore
+import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +40,7 @@ fun MainScreen(
     discoveryStatus: DiscoveryStatus,
     discoveredDevices: List<DiscoveredDevice>,
     pairingToken: String,
+    remoteTokenStore: RemoteDeviceTokenStore,
     onStartService: () -> Unit,
     onStopService: () -> Unit,
     onRegenerateToken: () -> Unit,
@@ -106,9 +112,10 @@ fun MainScreen(
                 ControllerModeScreen(
                     discoveryStatus = discoveryStatus,
                     discoveredDevices = discoveredDevices,
+                    tokenStore = remoteTokenStore,
                     onStartDiscovery = onStartDiscovery,
                     onStopDiscovery = onStopDiscovery,
-                    onOpenDevice = onOpenDevice
+                    onOpenBrowser = onOpenDevice
                 )
             }
         }
@@ -329,66 +336,246 @@ fun FinderModeScreen(
 fun ControllerModeScreen(
     discoveryStatus: DiscoveryStatus,
     discoveredDevices: List<DiscoveredDevice>,
+    tokenStore: RemoteDeviceTokenStore,
     onStartDiscovery: () -> Unit,
     onStopDiscovery: () -> Unit,
-    onOpenDevice: (DiscoveredDevice) -> Unit
+    onOpenBrowser: (DiscoveredDevice) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f))
+    var selectedDevice by remember { mutableStateOf<DiscoveredDevice?>(null) }
+
+    if (selectedDevice != null) {
+        RemoteControlPanel(
+            device = selectedDevice!!,
+            tokenStore = tokenStore,
+            onBack = { selectedDevice = null }
+        )
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("发现局域网设备 (NSD Scanner)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
-                
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "状态: " + when(discoveryStatus) {
-                            DiscoveryStatus.IDLE -> "未扫描"
-                            DiscoveryStatus.SCANNING -> "扫描中..."
-                            DiscoveryStatus.FAILED -> "扫描失败"
-                            DiscoveryStatus.STOPPED -> "已停止"
-                        },
-                        fontWeight = FontWeight.Bold,
-                        color = if (discoveryStatus == DiscoveryStatus.SCANNING) Color(0xFF1976D2) else Color.Gray
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = onStartDiscovery, enabled = discoveryStatus != DiscoveryStatus.SCANNING) { Text("开始扫描", fontSize = 12.sp) }
-                        OutlinedButton(onClick = onStopDiscovery, enabled = discoveryStatus == DiscoveryStatus.SCANNING) { Text("停止", fontSize = 12.sp) }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("发现局域网设备 (NSD Scanner)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
+                    
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "状态: " + when(discoveryStatus) {
+                                DiscoveryStatus.IDLE -> "未扫描"
+                                DiscoveryStatus.SCANNING -> "扫描中..."
+                                DiscoveryStatus.FAILED -> "扫描失败"
+                                DiscoveryStatus.STOPPED -> "已停止"
+                            },
+                            fontWeight = FontWeight.Bold,
+                            color = if (discoveryStatus == DiscoveryStatus.SCANNING) Color(0xFF1976D2) else Color.Gray
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = onStartDiscovery, enabled = discoveryStatus != DiscoveryStatus.SCANNING) { Text("开始扫描", fontSize = 12.sp) }
+                            OutlinedButton(onClick = onStopDiscovery, enabled = discoveryStatus == DiscoveryStatus.SCANNING) { Text("停止", fontSize = 12.sp) }
+                        }
+                    }
+                }
+            }
+
+            if (discoveredDevices.isEmpty()) {
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                    Text("暂未发现设备", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                }
+            } else {
+                discoveredDevices.forEach { device ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                    ) {
+                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(device.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text("${device.host}:${device.port}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.primary)
+                            }
+                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Button(
+                                    onClick = { selectedDevice = device }, 
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                    modifier = Modifier.height(32.dp)
+                                ) {
+                                    Text("App 内控制", fontSize = 11.sp)
+                                }
+                                OutlinedButton(
+                                    onClick = { onOpenBrowser(device) }, 
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                    modifier = Modifier.height(32.dp)
+                                ) {
+                                    Text("浏览器打开", fontSize = 11.sp)
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+}
 
-        if (discoveredDevices.isEmpty()) {
-            Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                Text("暂未发现设备", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
-            }
-        } else {
-            discoveredDevices.forEach { device ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-                ) {
-                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(device.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                            Text("${device.host}:${device.port}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.primary)
-                            Text(device.controlUrl, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                        }
-                        Button(onClick = { onOpenDevice(device) }, shape = RoundedCornerShape(8.dp)) {
-                            Text("打开控制页", fontSize = 12.sp)
-                        }
+@Composable
+fun RemoteControlPanel(
+    device: DiscoveredDevice,
+    tokenStore: RemoteDeviceTokenStore,
+    onBack: () -> Unit
+) {
+    val scope = rememberCoroutineScope()
+    val client = remember { RemoteControlClient() }
+    val snackbarHostState = remember { SnackbarHostState() }
+    
+    var token by remember { mutableStateOf(tokenStore.getToken(device.host, device.port) ?: "") }
+    var ringActive by remember { mutableStateOf(false) }
+    var flashMode by remember { mutableStateOf("off") }
+    var isLoading by remember { mutableStateOf(false) }
+
+    fun refreshStatus() {
+        scope.launch {
+            isLoading = true
+            when (val result = client.getStatus(device.host, device.port)) {
+                is ControlResult.Success -> {
+                    val json = result.statusJson
+                    if (json != null) {
+                        ringActive = json.optBoolean("ring_active", false)
+                        flashMode = json.optString("flash_mode", "off")
                     }
+                }
+                is ControlResult.Error -> {
+                    snackbarHostState.showSnackbar("刷新失败: ${result.message}")
+                }
+                else -> {}
+            }
+            isLoading = false
+        }
+    }
+
+    fun sendCommand(endpoint: String) {
+        if (token.isEmpty()) {
+            scope.launch { snackbarHostState.showSnackbar("请输入 Token") }
+            return
+        }
+        scope.launch {
+            isLoading = true
+            when (val result = client.sendCommand(device.host, device.port, token, endpoint)) {
+                is ControlResult.Success -> {
+                    tokenStore.saveToken(device.host, device.port, token)
+                    refreshStatus()
+                }
+                is ControlResult.Unauthorized -> {
+                    snackbarHostState.showSnackbar("Token 错误或未授权 (401)")
+                }
+                is ControlResult.Error -> {
+                    snackbarHostState.showSnackbar("控制失败: ${result.message}")
+                }
+            }
+            isLoading = false
+        }
+    }
+
+    LaunchedEffect(device) {
+        refreshStatus()
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onBack) { Text("← 返回设备列表") }
+                Spacer(modifier = Modifier.weight(1f))
+                if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            }
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(device.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text("控制地址: ${device.controlUrl}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        IndicatorBox("远端响铃", if (ringActive) "鸣叫中" else "静音", ringActive, Modifier.weight(1f))
+                        IndicatorBox("远端手电", when(flashMode) { "steady" -> "常亮"; "strobe" -> "爆闪"; else -> "关闭" }, flashMode != "off", Modifier.weight(1f))
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("配对鉴权", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    OutlinedTextField(
+                        value = token,
+                        onValueChange = { token = it },
+                        label = { Text("输入配对 Token") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    Text("提示：Token 由被寻找端生成的 8 位代码。首次控制成功后将自动保存。", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("硬件控制", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { sendCommand("/command/flash/steady/start") }, modifier = Modifier.weight(1f)) { Text("常亮", fontSize = 12.sp) }
+                    Button(onClick = { sendCommand("/command/flash/strobe/start") }, modifier = Modifier.weight(1f)) { Text("爆闪", fontSize = 12.sp) }
+                }
+                
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { sendCommand("/command/flash/stop") }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)) { Text("关闭手电", fontSize = 12.sp) }
+                    Button(onClick = { refreshStatus() }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)) { Text("刷新状态", fontSize = 12.sp) }
+                }
+
+                Button(
+                    onClick = { sendCommand("/command/stop-all") }, 
+                    modifier = Modifier.fillMaxWidth(), 
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("一键停止全部动作", fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider()
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = { sendCommand("/command/ring/start") }, 
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                ) {
+                    Text("拉响报警 (会发出声音)", fontWeight = FontWeight.Bold)
+                }
+                
+                OutlinedButton(
+                    onClick = { sendCommand("/command/ring/stop") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("停止响铃")
                 }
             }
         }

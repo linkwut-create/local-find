@@ -23,7 +23,8 @@
         android:label="Local Find"
         android:roundIcon="@android:drawable/ic_menu_search"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+        android:usesCleartextTraffic="true">
         
         <activity
             android:name=".MainActivity"

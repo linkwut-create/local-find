@@ -24,6 +24,7 @@ import com.example.localfind.server.NsdStatus
 import com.example.localfind.server.NsdDiscoveryManager
 import com.example.localfind.server.DiscoveryStatus
 import com.example.localfind.server.DiscoveredDevice
+import com.example.localfind.auth.RemoteDeviceTokenStore
 import com.example.localfind.ui.MainScreen
 import com.example.localfind.util.NetworkUtil
 
@@ -45,6 +46,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var nsdDiscoveryManager: NsdDiscoveryManager
     private var discoveryStatusState by mutableStateOf(DiscoveryStatus.IDLE)
     private var discoveredDevicesState by mutableStateOf(listOf<DiscoveredDevice>())
+    private lateinit var remoteTokenStore: RemoteDeviceTokenStore
 
     // 连接后台前台服务的 Connection
     private val serviceConnection = object : ServiceConnection {
@@ -101,6 +103,8 @@ class MainActivity : ComponentActivity() {
             onDevicesUpdate = { discoveredDevicesState = it }
         )
 
+        remoteTokenStore = RemoteDeviceTokenStore(this)
+
         setContent {
             MaterialTheme {
                 Surface(
@@ -118,6 +122,7 @@ class MainActivity : ComponentActivity() {
                             discoveryStatus = discoveryStatusState,
                             discoveredDevices = discoveredDevicesState,
                             pairingToken = pairingTokenState,
+                            remoteTokenStore = remoteTokenStore,
                             onStartService = { startAndBindService() },
                             onStopService = { shutdownService() },
                             onRegenerateToken = {
