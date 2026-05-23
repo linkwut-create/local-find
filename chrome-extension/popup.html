@@ -16,14 +16,35 @@
       <section class="device-card" aria-label="Current device">
         <div class="device-card-title">当前设备</div>
         <div class="device-grid">
-          <span>Host</span>
-          <strong id="device-host">未设置</strong>
-          <span>Port</span>
-          <strong id="device-port">8888</strong>
-          <span>Token</span>
+          <span>名称</span>
+          <strong id="device-name">手动模式</strong>
+          <span>地址</span>
+          <strong id="device-address">未设置</strong>
+          <span>模式</span>
           <strong id="device-token-status">未保存</strong>
         </div>
         <p id="last-success" class="last-success">上次成功：暂无</p>
+      </section>
+
+      <section class="pairing-card" aria-label="Add phone">
+        <div class="pairing-header">
+          <span>添加手机</span>
+        </div>
+        <div class="pairing-fields">
+          <label class="field">
+            <span>Host</span>
+            <input id="pairing-host" name="pairing-host" type="text" placeholder="192.168.1.108" autocomplete="off" spellcheck="false">
+          </label>
+          <label class="field">
+            <span>Port</span>
+            <input id="pairing-port" name="pairing-port" type="number" min="1" max="65535" inputmode="numeric" value="8888">
+          </label>
+        </div>
+        <div class="pairing-actions">
+          <button id="check-phone" type="button" class="secondary-action">检查手机</button>
+          <button id="request-pairing" type="button">请求配对</button>
+        </div>
+        <output id="pairing-status" class="pairing-status" role="status" aria-live="polite">未检查</output>
       </section>
 
       <section class="primary-controls" aria-label="Find phone">

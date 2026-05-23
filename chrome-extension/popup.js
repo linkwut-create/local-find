@@ -10,6 +10,9 @@ const PIN_HASH_ITERATIONS = 100000;
 const PROTECTION_METHOD_PIN = "pin";
 const PROTECTION_METHOD_WEBAUTHN = "webauthn";
 const PROTECTION_METHOD_WEBAUTHN_OR_PIN = "webauthn-or-pin";
+const CONTROLLER_NAME = "Chrome on Windows";
+const CONTROLLER_TYPE = "chrome_extension";
+const PAIRING_POLL_INTERVAL_MS = 2000;
 
 const COMMANDS = {
   status: { method: "GET", path: "/status", label: "检查状态" },
@@ -35,10 +38,15 @@ const registerWebAuthnButton = document.getElementById("register-webauthn");
 const testWebAuthnButton = document.getElementById("test-webauthn");
 const resultOutput = document.getElementById("result");
 const endpointPreview = document.getElementById("endpoint-preview");
-const deviceHost = document.getElementById("device-host");
-const devicePort = document.getElementById("device-port");
+const deviceName = document.getElementById("device-name");
+const deviceAddress = document.getElementById("device-address");
 const deviceTokenStatus = document.getElementById("device-token-status");
 const lastSuccess = document.getElementById("last-success");
+const pairingHostInput = document.getElementById("pairing-host");
+const pairingPortInput = document.getElementById("pairing-port");
+const checkPhoneButton = document.getElementById("check-phone");
+const requestPairingButton = document.getElementById("request-pairing");
+const pairingStatusOutput = document.getElementById("pairing-status");
 const protectionStatus = document.getElementById("protection-status");
 const webauthnStatus = document.getElementById("webauthn-status");
 const pinModal = document.getElementById("pin-modal");
@@ -56,6 +64,10 @@ let localPinHash = "";
 let webauthnEnabled = false;
 let webauthnCredentialId = "";
 let protectionMethod = PROTECTION_METHOD_PIN;
+let devices = [];
+let selectedDeviceId = "";
+let controllerId = "";
+let pairingPollTimer = null;
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -72,7 +84,10 @@ function init() {
       localPinHash: "",
       webauthnEnabled: false,
       webauthnCredentialId: "",
-      protectionMethod: PROTECTION_METHOD_PIN
+      protectionMethod: PROTECTION_METHOD_PIN,
+      devices: [],
+      selectedDeviceId: "",
+      controllerId: ""
     },
     ({
       host,
@@ -85,10 +100,15 @@ function init() {
       localPinHash: savedLocalPinHash,
       webauthnEnabled: savedWebAuthnEnabled,
       webauthnCredentialId: savedWebAuthnCredentialId,
-      protectionMethod: savedProtectionMethod
+      protectionMethod: savedProtectionMethod,
+      devices: savedDevices,
+      selectedDeviceId: savedSelectedDeviceId,
+      controllerId: savedControllerId
     }) => {
       hostInput.value = host || "";
       portInput.value = String(port || DEFAULT_PORT);
+      pairingHostInput.value = host || "";
+      pairingPortInput.value = String(port || DEFAULT_PORT);
       rememberTokenState = rememberToken === true;
       rememberTokenInput.checked = rememberTokenState;
       tokenInput.value = rememberToken === true ? savedToken || "" : "";
@@ -99,6 +119,9 @@ function init() {
       webauthnEnabled = savedWebAuthnEnabled === true;
       webauthnCredentialId = savedWebAuthnCredentialId || "";
       protectionMethod = normalizeProtectionMethod(savedProtectionMethod);
+      devices = normalizeDevices(savedDevices);
+      selectedDeviceId = getUsableSelectedDeviceId(savedSelectedDeviceId, devices);
+      controllerId = savedControllerId || "";
       protectionMethodSelect.value = protectionMethod;
       updateEndpointPreview();
       updateDeviceCard();
@@ -114,6 +137,11 @@ function init() {
   tokenInput.addEventListener("input", saveTokenIfRemembered);
   rememberTokenInput.addEventListener("change", handleRememberTokenChange);
   clearSavedTokenButton.addEventListener("click", clearSavedToken);
+  pairingHostInput.addEventListener("input", handlePairingInput);
+  pairingHostInput.addEventListener("blur", normalizePairingFields);
+  pairingPortInput.addEventListener("input", handlePairingInput);
+  checkPhoneButton.addEventListener("click", checkPhone);
+  requestPairingButton.addEventListener("click", requestPairing);
   setLocalPinButton.addEventListener("click", setLocalPin);
   disableProtectionButton.addEventListener("click", disableProtection);
   protectionMethodSelect.addEventListener("change", handleProtectionMethodChange);
@@ -148,6 +176,322 @@ function normalizeConnectionFields() {
   updateEndpointPreview();
   saveConnectionSettings();
   updateDeviceCard();
+}
+
+function handlePairingInput() {
+  syncPairingPortFromHost();
+}
+
+function normalizePairingFields() {
+  const connection = parsePairingInput();
+  pairingHostInput.value = connection.host;
+  pairingPortInput.value = connection.port;
+}
+
+async function checkPhone() {
+  try {
+    setPairingBusy(true);
+    const target = parsePairingInput();
+    validateConnectionTarget(target);
+
+    const { body } = await sendJsonRequest(`${getBaseUrlForTarget(target)}/device-info`);
+    pairingStatusOutput.textContent = formatDeviceInfo(body);
+  } catch (error) {
+    pairingStatusOutput.textContent = getFriendlyErrorMessage(error);
+    pairingStatusOutput.classList.add("error");
+  } finally {
+    setPairingBusy(false);
+  }
+}
+
+async function requestPairing() {
+  try {
+    clearPairingPoll();
+    setPairingBusy(true);
+    const target = parsePairingInput();
+    validateConnectionTarget(target);
+    const id = await getOrCreateControllerId();
+    const nonce = createUuid();
+
+    const { body } = await sendJsonRequest(`${getBaseUrlForTarget(target)}/pairing/request`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        controllerId: id,
+        controllerName: CONTROLLER_NAME,
+        controllerType: CONTROLLER_TYPE,
+        nonce
+      })
+    });
+
+    if (!body?.requestId) {
+      throw new Error("配对请求未返回 requestId");
+    }
+
+    pairingStatusOutput.classList.remove("error");
+    pairingStatusOutput.textContent = "等待手机确认";
+    pollPairingStatus(target, body.requestId);
+  } catch (error) {
+    setPairingBusy(false);
+    pairingStatusOutput.textContent = getFriendlyErrorMessage(error);
+    pairingStatusOutput.classList.add("error");
+  }
+}
+
+function pollPairingStatus(target, requestId) {
+  const run = async () => {
+    try {
+      const url = `${getBaseUrlForTarget(target)}/pairing/status?requestId=${encodeURIComponent(requestId)}`;
+      const { response, body } = await sendJsonRequest(url, { allowedStatuses: [404] });
+      if (response.status === 404 && body?.status !== "expired") {
+        throw new Error(getHttpErrorMessage(response, body, ""));
+      }
+      const status = body?.status || "pending";
+
+      if (status === "pending") {
+        pairingStatusOutput.classList.remove("error");
+        pairingStatusOutput.textContent = "等待手机确认";
+        pairingPollTimer = window.setTimeout(run, PAIRING_POLL_INTERVAL_MS);
+        return;
+      }
+
+      clearPairingPoll();
+      setPairingBusy(false);
+
+      if (status === "accepted") {
+        await saveAcceptedDevice(body, target);
+        pairingStatusOutput.classList.remove("error");
+        pairingStatusOutput.textContent = "配对成功，已保存设备";
+        return;
+      }
+
+      pairingStatusOutput.classList.toggle("error", status === "rejected" || status === "expired");
+      pairingStatusOutput.textContent = getPairingTerminalMessage(status);
+    } catch (error) {
+      clearPairingPoll();
+      setPairingBusy(false);
+      pairingStatusOutput.textContent = getFriendlyErrorMessage(error);
+      pairingStatusOutput.classList.add("error");
+    }
+  };
+
+  run();
+}
+
+function clearPairingPoll() {
+  if (pairingPollTimer) {
+    window.clearTimeout(pairingPollTimer);
+    pairingPollTimer = null;
+  }
+}
+
+function parsePairingInput() {
+  const parsed = parseHostValue(pairingHostInput.value);
+  const port = parsed.port || String(pairingPortInput.value || DEFAULT_PORT).trim();
+
+  return {
+    host: parsed.host,
+    port
+  };
+}
+
+function syncPairingPortFromHost() {
+  const parsed = parseHostValue(pairingHostInput.value);
+  if (parsed.port && isValidPort(parsed.port)) {
+    pairingPortInput.value = parsed.port;
+  }
+}
+
+function validateConnectionTarget(target) {
+  const missing = [];
+
+  if (!target.host) {
+    missing.push("host");
+  }
+
+  if (!isValidPort(target.port)) {
+    missing.push("port");
+  }
+
+  if (missing.length > 0) {
+    throw new Error(`请补全 ${missing.join("、")}`);
+  }
+}
+
+function formatDeviceInfo(info) {
+  const pairingMode = info?.pairingMode === true;
+  const lines = [
+    `device name: ${info?.name || "未返回"}`,
+    `device id: ${info?.id || "未返回"}`,
+    `pairingMode: ${pairingMode ? "true" : "false"}`,
+    `service: ${info?.service || "未返回"}`
+  ];
+
+  if (!pairingMode) {
+    lines.push("请先在手机 App 中开启电脑插件配对模式。");
+  }
+
+  pairingStatusOutput.classList.remove("error");
+  return lines.join("\n");
+}
+
+function getPairingTerminalMessage(status) {
+  if (status === "rejected") {
+    return "手机已拒绝";
+  }
+
+  if (status === "expired") {
+    return "配对请求已过期";
+  }
+
+  return `配对请求已结束：${status || "未知状态"}`;
+}
+
+async function saveAcceptedDevice(pairingResult, target) {
+  const pairedDevice = pairingResult?.device || {};
+  const controlToken = pairingResult?.controlToken || "";
+
+  if (!pairedDevice.id || !controlToken) {
+    throw new Error("配对成功响应缺少 device 或 controlToken");
+  }
+
+  const now = new Date().toISOString();
+  const nextDevice = {
+    id: pairedDevice.id,
+    name: pairedDevice.name || "Android Phone",
+    type: pairedDevice.type || "android_phone",
+    host: pairedDevice.host || target.host,
+    port: String(pairedDevice.port || target.port || DEFAULT_PORT),
+    token: controlToken,
+    pairedAt: now,
+    lastSuccessAt: ""
+  };
+
+  const existing = devices.find((device) => device.id === nextDevice.id);
+  if (existing) {
+    nextDevice.pairedAt = existing.pairedAt || now;
+    nextDevice.lastSuccessAt = existing.lastSuccessAt || "";
+  }
+
+  devices = upsertDevice(devices, nextDevice);
+  selectedDeviceId = nextDevice.id;
+  await setStorage({
+    devices,
+    selectedDeviceId
+  });
+
+  updateEndpointPreview();
+  updateDeviceCard();
+}
+
+function upsertDevice(currentDevices, nextDevice) {
+  const withoutDevice = currentDevices.filter((device) => device.id !== nextDevice.id);
+  return [...withoutDevice, nextDevice];
+}
+
+function normalizeDevices(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((device) => device && device.id)
+    .map((device) => ({
+      id: String(device.id),
+      name: device.name || "Android Phone",
+      type: device.type || "android_phone",
+      host: device.host || "",
+      port: String(device.port || DEFAULT_PORT),
+      token: device.token || "",
+      pairedAt: device.pairedAt || "",
+      lastSuccessAt: device.lastSuccessAt || ""
+    }));
+}
+
+function getUsableSelectedDeviceId(value, currentDevices) {
+  const id = value || "";
+  return currentDevices.some((device) => device.id === id) ? id : "";
+}
+
+function getSelectedDevice() {
+  return devices.find((device) => device.id === selectedDeviceId) || null;
+}
+
+function getSelectedCommandTarget() {
+  const selectedDevice = getSelectedDevice();
+
+  if (!selectedDevice || !selectedDevice.host || !isValidPort(selectedDevice.port) || !selectedDevice.token) {
+    return null;
+  }
+
+  return {
+    host: selectedDevice.host,
+    port: selectedDevice.port,
+    token: selectedDevice.token,
+    deviceId: selectedDevice.id
+  };
+}
+
+async function getOrCreateControllerId() {
+  if (controllerId) {
+    return controllerId;
+  }
+
+  controllerId = createUuid();
+  await setStorage({ controllerId });
+  return controllerId;
+}
+
+function createUuid() {
+  if (crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  const bytes = randomBytes(16);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+async function sendJsonRequest(url, options = {}) {
+  const allowedStatuses = options.allowedStatuses || [];
+  const request = {
+    method: options.method || "GET",
+    cache: "no-store",
+    headers: options.headers || {},
+    body: options.body
+  };
+
+  try {
+    const response = await fetch(url, request);
+    const bodyText = await response.text();
+    const body = parseJson(bodyText);
+
+    if (!response.ok && !allowedStatuses.includes(response.status)) {
+      throw new Error(getHttpErrorMessage(response, body, bodyText));
+    }
+
+    return { response, body, bodyText };
+  } catch (error) {
+    if (error?.message) {
+      throw error;
+    }
+    throw new Error(NETWORK_ERROR_MESSAGE);
+  }
+}
+
+function setPairingBusy(isBusy) {
+  checkPhoneButton.disabled = isBusy;
+  requestPairingButton.disabled = isBusy;
+}
+
+function setStorage(values) {
+  return new Promise((resolve) => {
+    chrome.storage.local.set(values, resolve);
+  });
 }
 
 async function handleRememberTokenChange() {
@@ -638,21 +982,21 @@ async function sendCheckedRequest(command) {
 }
 
 async function sendRequest(command) {
+  const target = getCommandTarget(command);
   const request = {
     method: command.method,
     cache: "no-store"
   };
 
-  validateCommandInputs(command);
+  validateCommandInputs(command, target);
 
   if (command.method === "POST") {
-    const token = tokenInput.value;
     request.headers = {
-      "X-LocalFind-Token": token
+      "X-LocalFind-Token": target.token
     };
   }
 
-  const url = `${getBaseUrl()}${command.path}`;
+  const url = `${getBaseUrlForTarget(target)}${command.path}`;
 
   try {
     return await fetch(url, request);
@@ -671,7 +1015,11 @@ function openDiagnosticsPage() {
 }
 
 function getBaseUrl() {
-  const { host, port } = parseConnectionInput();
+  return getBaseUrlForTarget(getDisplayTarget());
+}
+
+function getBaseUrlForTarget(target) {
+  const { host, port } = target;
 
   if (!host) {
     throw new Error("请输入 host");
@@ -684,19 +1032,46 @@ function getBaseUrl() {
   return `http://${host}:${port}`;
 }
 
-function validateCommandInputs(command) {
-  const { host, port } = parseConnectionInput();
+function getDisplayTarget() {
+  const selectedDevice = getSelectedDevice();
+
+  if (selectedDevice?.host && isValidPort(selectedDevice.port)) {
+    return {
+      host: selectedDevice.host,
+      port: selectedDevice.port
+    };
+  }
+
+  return parseConnectionInput();
+}
+
+function getCommandTarget(command) {
+  const selectedTarget = getSelectedCommandTarget();
+  if (selectedTarget) {
+    return selectedTarget;
+  }
+
+  const manual = parseConnectionInput();
+  return {
+    host: manual.host,
+    port: manual.port,
+    token: command.method === "POST" ? tokenInput.value : "",
+    deviceId: ""
+  };
+}
+
+function validateCommandInputs(command, target = getCommandTarget(command)) {
   const missing = [];
 
-  if (!host) {
+  if (!target.host) {
     missing.push("host");
   }
 
-  if (!isValidPort(port)) {
+  if (!isValidPort(target.port)) {
     missing.push("port");
   }
 
-  if (command.method === "POST" && !tokenInput.value) {
+  if (command.method === "POST" && !target.token) {
     missing.push("token");
   }
 
@@ -757,18 +1132,34 @@ function isValidPort(port) {
 }
 
 function updateEndpointPreview() {
-  const { host, port } = parseConnectionInput();
+  const { host, port } = getDisplayTarget();
   const displayHost = host || "HOST";
   const displayPort = isValidPort(port) ? port : DEFAULT_PORT;
   endpointPreview.textContent = `http://${displayHost}:${displayPort}`;
 }
 
 function updateDeviceCard() {
+  const selectedDevice = getSelectedDevice();
+
+  if (selectedDevice) {
+    deviceName.textContent = selectedDevice.name || "Android Phone";
+    deviceAddress.textContent = formatAddress(selectedDevice.host, selectedDevice.port);
+    deviceTokenStatus.textContent = selectedDevice.token ? "已配对" : "缺少 token";
+    lastSuccess.textContent = `上次成功：${selectedDevice.lastSuccessAt ? formatDateTime(selectedDevice.lastSuccessAt) : "暂无"}`;
+    return;
+  }
+
   const { host, port } = parseConnectionInput();
-  deviceHost.textContent = host || "未设置";
-  devicePort.textContent = isValidPort(port) ? port : DEFAULT_PORT;
-  deviceTokenStatus.textContent = rememberTokenInput.checked && tokenInput.value ? "已保存" : "未保存";
+  deviceName.textContent = "手动模式";
+  deviceAddress.textContent = host ? formatAddress(host, port) : "未设置";
+  deviceTokenStatus.textContent = rememberTokenInput.checked && tokenInput.value ? "旧 Token 已保存" : "手动 host/port/token";
   lastSuccess.textContent = `上次成功：${lastSuccessAt ? formatDateTime(lastSuccessAt) : "暂无"}`;
+}
+
+function formatAddress(host, port) {
+  const displayHost = host || "未设置";
+  const displayPort = isValidPort(port) ? port : DEFAULT_PORT;
+  return `${displayHost}:${displayPort}`;
 }
 
 function updateProtectionStatus() {
@@ -798,8 +1189,21 @@ function updateProtectionMethodOptions() {
 }
 
 function saveLastSuccessAt() {
-  lastSuccessAt = new Date().toISOString();
-  chrome.storage.local.set({ lastSuccessAt });
+  const now = new Date().toISOString();
+  const selectedTarget = getSelectedCommandTarget();
+
+  if (selectedTarget) {
+    devices = devices.map((device) => (
+      device.id === selectedTarget.deviceId
+        ? { ...device, lastSuccessAt: now }
+        : device
+    ));
+    chrome.storage.local.set({ devices });
+  } else {
+    lastSuccessAt = now;
+    chrome.storage.local.set({ lastSuccessAt });
+  }
+
   updateDeviceCard();
 }
 
@@ -876,6 +1280,10 @@ function getHttpErrorMessage(response, body, bodyText) {
 
   if (response.status === 404) {
     return "接口不存在 (404)。请确认手机服务已启动，并且当前 Android 版本支持该控制接口。";
+  }
+
+  if (response.status === 403 && (body?.message || "").includes("Pairing mode")) {
+    return "请先在手机 App 中开启电脑插件配对模式。";
   }
 
   if (response.status >= 500) {

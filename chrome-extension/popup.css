@@ -82,6 +82,50 @@ h1 {
   gap: 8px;
 }
 
+.pairing-card {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.pairing-header {
+  color: #202124;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pairing-fields {
+  display: grid;
+  grid-template-columns: 1fr 88px;
+  gap: 8px;
+}
+
+.pairing-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.pairing-status {
+  min-height: 34px;
+  border: 1px solid #dadce0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #f8fafd;
+  color: #3c4043;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-line;
+  word-break: break-word;
+}
+
+.pairing-status.error {
+  color: #a50e0e;
+}
+
 .protection-card {
   display: grid;
   gap: 8px;
