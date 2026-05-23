@@ -2,12 +2,14 @@ const DEFAULT_PORT = "8888";
 
 const COMMANDS = {
   status: { method: "GET", path: "/status", label: "检查状态" },
-  "ring-start": { method: "POST", path: "/command/ring/start", label: "开始响铃" },
-  "ring-stop": { method: "POST", path: "/command/ring/stop", label: "停止响铃" },
-  "flash-start": { method: "POST", path: "/command/flash/strobe/start", label: "开始闪光" },
-  "flash-stop": { method: "POST", path: "/command/flash/stop", label: "停止闪光" },
-  "stop-all": { method: "POST", path: "/command/stop-all", label: "停止全部" }
+  "ring-start": { method: "POST", path: "/command/ring/start", label: "开始响铃", success: "已开始响铃" },
+  "ring-stop": { method: "POST", path: "/command/ring/stop", label: "停止响铃", success: "已停止响铃" },
+  "flash-start": { method: "POST", path: "/command/flash/strobe/start", label: "开始闪光", success: "已开始闪光" },
+  "flash-stop": { method: "POST", path: "/command/flash/stop", label: "停止闪光", success: "已停止闪光" },
+  "stop-all": { method: "POST", path: "/command/stop-all", label: "停止全部", success: "已停止全部" }
 };
+
+const NETWORK_ERROR_MESSAGE = "无法连接手机服务。请检查手机和电脑是否在同一 Wi-Fi、手机服务是否启动、IP/端口是否正确。";
 
 const hostInput = document.getElementById("host");
 const portInput = document.getElementById("port");
@@ -26,6 +28,7 @@ function init() {
   });
 
   hostInput.addEventListener("input", handleConnectionInput);
+  hostInput.addEventListener("blur", normalizeConnectionFields);
   portInput.addEventListener("input", handleConnectionInput);
 
   buttons.forEach((button) => {
@@ -34,15 +37,26 @@ function init() {
 }
 
 function handleConnectionInput() {
+  syncPortFromHost();
   updateEndpointPreview();
   saveConnectionSettings();
 }
 
 function saveConnectionSettings() {
+  const connection = parseConnectionInput();
+
   chrome.storage.local.set({
-    host: hostInput.value.trim(),
-    port: getPort()
+    host: connection.host,
+    port: connection.port
   });
+}
+
+function normalizeConnectionFields() {
+  const connection = parseConnectionInput();
+  hostInput.value = connection.host;
+  portInput.value = connection.port;
+  updateEndpointPreview();
+  saveConnectionSettings();
 }
 
 async function handleButtonClick(commandName) {
@@ -66,17 +80,16 @@ async function handleButtonClick(commandName) {
     const body = parseJson(bodyText);
 
     if (!response.ok) {
-      const message = body?.message || bodyText || response.statusText || "请求失败";
-      throw new Error(`${response.status} ${message}`);
+      throw new Error(getHttpErrorMessage(response, body, bodyText));
     }
 
     if (command.method === "GET" && body) {
       showResult(formatStatus(body), false);
     } else {
-      showResult(`${command.label}成功`, false);
+      showResult(command.success || `${command.label}成功`, false);
     }
   } catch (error) {
-    showResult(error.message || "请求失败", true);
+    showResult(getFriendlyErrorMessage(error), true);
   } finally {
     setBusy(false);
   }
@@ -98,7 +111,13 @@ async function sendRequest(command) {
     };
   }
 
-  return fetch(`${getBaseUrl()}${command.path}`, request);
+  const url = `${getBaseUrl()}${command.path}`;
+
+  try {
+    return await fetch(url, request);
+  } catch {
+    throw new Error(NETWORK_ERROR_MESSAGE);
+  }
 }
 
 function openDiagnosticsPage() {
@@ -111,8 +130,7 @@ function openDiagnosticsPage() {
 }
 
 function getBaseUrl() {
-  const host = normalizeHost(hostInput.value);
-  const port = getPort();
+  const { host, port } = parseConnectionInput();
 
   if (!host) {
     throw new Error("请输入 host");
@@ -125,12 +143,46 @@ function getBaseUrl() {
   return `http://${host}:${port}`;
 }
 
-function normalizeHost(value) {
-  return value
-    .trim()
-    .replace(/^https?:\/\//i, "")
-    .replace(/\/.*$/, "")
-    .replace(/:\d+$/, "");
+function parseConnectionInput() {
+  const parsed = parseHostValue(hostInput.value);
+  const port = parsed.port || getPort();
+
+  return {
+    host: parsed.host,
+    port
+  };
+}
+
+function parseHostValue(value) {
+  const raw = value.trim();
+  if (!raw) {
+    return { host: "", port: "" };
+  }
+
+  const withScheme = /^https?:\/\//i.test(raw) ? raw : `http://${raw}`;
+
+  try {
+    const url = new URL(withScheme);
+    return {
+      host: url.hostname,
+      port: url.port
+    };
+  } catch {
+    const withoutScheme = raw.replace(/^https?:\/\//i, "");
+    const withoutPath = withoutScheme.replace(/\/.*$/, "");
+    const match = withoutPath.match(/^(.+):(\d+)$/);
+    return {
+      host: match ? match[1] : withoutPath,
+      port: match ? match[2] : ""
+    };
+  }
+}
+
+function syncPortFromHost() {
+  const parsed = parseHostValue(hostInput.value);
+  if (parsed.port && isValidPort(parsed.port)) {
+    portInput.value = parsed.port;
+  }
 }
 
 function getPort() {
@@ -143,9 +195,10 @@ function isValidPort(port) {
 }
 
 function updateEndpointPreview() {
-  const host = normalizeHost(hostInput.value) || "HOST";
-  const port = isValidPort(getPort()) ? getPort() : DEFAULT_PORT;
-  endpointPreview.textContent = `http://${host}:${port}`;
+  const { host, port } = parseConnectionInput();
+  const displayHost = host || "HOST";
+  const displayPort = isValidPort(port) ? port : DEFAULT_PORT;
+  endpointPreview.textContent = `http://${displayHost}:${displayPort}`;
 }
 
 function setBusy(isBusy) {
@@ -172,8 +225,57 @@ function parseJson(text) {
 }
 
 function formatStatus(status) {
-  const ring = status.ring_active === true ? "响铃中" : "未响铃";
-  const flash = status.flash_mode || "off";
   const service = status.service || status.status || "online";
-  return `状态: ${service} | ${ring} | 闪光: ${flash}`;
+  const ring = formatRingStatus(status.ring_active);
+  const flash = status.flash_mode || "off";
+
+  return [
+    "状态检查成功",
+    `service: ${service}`,
+    `ring_active: ${ring}`,
+    `flash_mode: ${flash}`
+  ].join("\n");
+}
+
+function formatRingStatus(value) {
+  if (value === true) {
+    return "true (响铃中)";
+  }
+
+  if (value === false) {
+    return "false (未响铃)";
+  }
+
+  return "未返回";
+}
+
+function getHttpErrorMessage(response, body, bodyText) {
+  if (response.status === 401) {
+    return "Token 错误或手机 Token 已重置。";
+  }
+
+  if (response.status === 404) {
+    return "接口不存在 (404)。请确认手机服务已启动，并且当前 Android 版本支持该控制接口。";
+  }
+
+  if (response.status >= 500) {
+    return `手机服务返回错误 (${response.status})。请确认手机端 Local Find 服务状态，或打开诊断页查看。`;
+  }
+
+  const serverMessage = body?.message || body?.error || bodyText || response.statusText || "请求未完成";
+  return `请求失败 (${response.status})。${serverMessage}`;
+}
+
+function getFriendlyErrorMessage(error) {
+  const message = error?.message || "";
+
+  if (message === NETWORK_ERROR_MESSAGE) {
+    return message;
+  }
+
+  if (message.includes("Failed to fetch") || message.includes("NetworkError")) {
+    return NETWORK_ERROR_MESSAGE;
+  }
+
+  return message || "请求失败。请检查 IP、端口和手机服务状态。";
 }

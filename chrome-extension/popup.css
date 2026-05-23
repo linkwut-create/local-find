@@ -99,6 +99,18 @@ button:disabled {
   opacity: 0.64;
 }
 
+button.primary-action {
+  min-height: 46px;
+  border-color: #0b57d0;
+  background: #1a73e8;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+button.primary-action:hover {
+  background: #1557b0;
+}
+
 button.danger {
   border-color: #f3c6c2;
   background: #fce8e6;
@@ -107,6 +119,18 @@ button.danger {
 
 button.danger:hover {
   background: #fad2cf;
+}
+
+button.primary-stop {
+  min-height: 46px;
+  border-color: #a50e0e;
+  background: #d93025;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+button.primary-stop:hover {
+  background: #b3261e;
 }
 
 button.secondary {
@@ -125,6 +149,7 @@ button.secondary {
   color: #188038;
   font-size: 12px;
   line-height: 1.45;
+  white-space: pre-line;
   word-break: break-word;
 }
 
