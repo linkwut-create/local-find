@@ -10,9 +10,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Canvas
 import com.example.localfind.util.QrCodeUtil
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -1531,7 +1535,43 @@ fun QrScannerScreen(
             modifier = Modifier.fillMaxSize()
         )
         
-        // UI Overlays (Back button, frame, etc.)
+        // Scan frame overlay — dimmed background with clear cutout and corner brackets
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val canvasW = size.width
+            val canvasH = size.height
+            val frameW = canvasW * 0.60f
+            val frameH = canvasH * 0.40f
+            val left = (canvasW - frameW) / 2f
+            val top = (canvasH - frameH) / 2f
+            val right = left + frameW
+            val bottom = top + frameH
+            val dimColor = Color.Black.copy(alpha = 0.45f)
+            val frameColor = Color.White
+            val lineWidth = 3.dp.toPx()
+            val cornerPx = 28.dp.toPx()
+
+            // Four dimmed rectangles around the frame
+            drawRect(dimColor, Offset(0f, 0f), Size(canvasW, top))                       // top
+            drawRect(dimColor, Offset(0f, bottom), Size(canvasW, canvasH - bottom))      // bottom
+            drawRect(dimColor, Offset(0f, top), Size(left, frameH))                      // left
+            drawRect(dimColor, Offset(right, top), Size(canvasW - right, frameH))        // right
+
+            // Corner brackets — app icon style (L-shaped)
+            // Top-left
+            drawLine(frameColor, Offset(left, top + cornerPx), Offset(left, top), lineWidth)
+            drawLine(frameColor, Offset(left, top), Offset(left + cornerPx, top), lineWidth)
+            // Top-right
+            drawLine(frameColor, Offset(right - cornerPx, top), Offset(right, top), lineWidth)
+            drawLine(frameColor, Offset(right, top), Offset(right, top + cornerPx), lineWidth)
+            // Bottom-left
+            drawLine(frameColor, Offset(left, bottom - cornerPx), Offset(left, bottom), lineWidth)
+            drawLine(frameColor, Offset(left, bottom), Offset(left + cornerPx, bottom), lineWidth)
+            // Bottom-right
+            drawLine(frameColor, Offset(right - cornerPx, bottom), Offset(right, bottom), lineWidth)
+            drawLine(frameColor, Offset(right, bottom), Offset(right, bottom - cornerPx), lineWidth)
+        }
+
+        // UI Overlays (Back button, hint text)
         TextButton(
             onClick = onClose,
             modifier = Modifier.align(Alignment.TopStart).padding(16.dp).background(Color.Black.copy(alpha = 0.5f), androidx.compose.foundation.shape.CircleShape)
