@@ -25,6 +25,8 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.util.pipeline.PipelineContext
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.coroutines.CoroutineScope
@@ -192,6 +194,25 @@ class HttpServerManager(
                             put("status", request.status)
                         }
                     )
+                }
+
+                get("/pairing/controllers") {
+                    authenticate {
+                        call.respond(
+                            buildJsonObject {
+                                put("controllers", buildJsonArray {
+                                    pairedControllerTokenStore.getAll().forEach { controller ->
+                                        add(buildJsonObject {
+                                            put("controllerId", controller.controllerId)
+                                            put("controllerName", controller.controllerName)
+                                            put("controllerType", controller.controllerType)
+                                            put("pairedAt", controller.pairedAt)
+                                        })
+                                    }
+                                })
+                            }
+                        )
+                    }
                 }
 
                 // GET / - Browser control page
