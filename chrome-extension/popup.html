@@ -26,6 +26,18 @@
         <p id="last-success" class="last-success">上次成功：暂无</p>
       </section>
 
+      <section class="primary-controls" aria-label="Find phone">
+        <button type="button" data-command="find-phone" class="find-phone-action">一键找手机</button>
+        <button type="button" data-command="stop-all" class="primary-stop">停止全部</button>
+      </section>
+
+      <section class="secondary-controls" aria-label="Quick commands">
+        <button type="button" data-command="flash-start" class="secondary-action">开始闪光</button>
+        <button type="button" data-command="flash-stop" class="secondary-action">停止闪光</button>
+        <button type="button" data-command="status" class="secondary-action">检查状态</button>
+        <button type="button" data-command="diagnostics" class="secondary-action">打开诊断页</button>
+      </section>
+
       <section class="paired-devices-card" aria-label="Paired phones">
         <div class="paired-devices-header">
           <span>已配对手机</span>
@@ -54,9 +66,37 @@
         <output id="pairing-status" class="pairing-status" role="status" aria-live="polite">未检查</output>
       </section>
 
-      <section class="primary-controls" aria-label="Find phone">
-        <button type="button" data-command="find-phone" class="find-phone-action">一键找手机</button>
-        <button type="button" data-command="stop-all" class="primary-stop">停止全部</button>
+      <details class="manual-compat-card">
+        <summary>高级：手动 Host/Token 兼容模式</summary>
+        <p class="manual-compat-note">已配对设备优先。手动模式只用于旧 Token fallback 或临时调试。</p>
+        <section class="fields" aria-label="Connection settings">
+          <label class="field">
+            <span>Host</span>
+            <input id="host" name="host" type="text" placeholder="192.168.1.108" autocomplete="off" spellcheck="false">
+          </label>
+
+          <label class="field">
+            <span>Port</span>
+            <input id="port" name="port" type="number" min="1" max="65535" inputmode="numeric" value="8888">
+          </label>
+
+          <label class="field">
+            <span>Token</span>
+            <input id="token" name="token" type="password" autocomplete="off" spellcheck="false">
+          </label>
+
+          <div class="token-options">
+            <label class="remember-token">
+              <input id="remember-token" name="remember-token" type="checkbox">
+              <span>记住此电脑上的 Token</span>
+            </label>
+            <button id="clear-saved-token" type="button" class="text-action">清除已保存 Token</button>
+          </div>
+        </section>
+      </details>
+
+      <section class="actions quiet-actions" aria-label="Other commands">
+        <button type="button" data-command="ring-stop" class="secondary-action">停止响铃</button>
       </section>
 
       <section class="protection-card" aria-label="Local protection lock">
@@ -91,43 +131,6 @@
           <button id="register-webauthn" type="button">注册系统验证</button>
           <button id="test-webauthn" type="button" class="secondary-action">测试系统验证</button>
         </div>
-      </section>
-
-      <details class="manual-compat-card">
-        <summary>高级：手动 Host/Token 兼容模式</summary>
-        <p class="manual-compat-note">已配对设备优先。手动模式只用于旧 Token fallback 或临时调试。</p>
-        <section class="fields" aria-label="Connection settings">
-          <label class="field">
-            <span>Host</span>
-            <input id="host" name="host" type="text" placeholder="192.168.1.108" autocomplete="off" spellcheck="false">
-          </label>
-
-          <label class="field">
-            <span>Port</span>
-            <input id="port" name="port" type="number" min="1" max="65535" inputmode="numeric" value="8888">
-          </label>
-
-          <label class="field">
-            <span>Token</span>
-            <input id="token" name="token" type="password" autocomplete="off" spellcheck="false">
-          </label>
-
-          <div class="token-options">
-            <label class="remember-token">
-              <input id="remember-token" name="remember-token" type="checkbox">
-              <span>记住此电脑上的 Token</span>
-            </label>
-            <button id="clear-saved-token" type="button" class="text-action">清除已保存 Token</button>
-          </div>
-        </section>
-      </details>
-
-      <section class="actions advanced-actions" aria-label="Advanced commands">
-        <button type="button" data-command="status">检查状态</button>
-        <button type="button" data-command="ring-stop">停止响铃</button>
-        <button type="button" data-command="flash-start">开始闪光</button>
-        <button type="button" data-command="flash-stop">停止闪光</button>
-        <button type="button" data-command="diagnostics" class="secondary">打开诊断页</button>
       </section>
 
       <output id="result" class="result" role="status" aria-live="polite">未连接</output>

@@ -506,15 +506,15 @@ button.primary-stop:hover {
   background: #b3261e;
 }
 
-.advanced-actions {
-  padding-top: 2px;
+.secondary-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
-button.secondary {
-  grid-column: 1 / -1;
-  border-color: #d7d9dc;
-  background: #ffffff;
-  color: #3c4043;
+.quiet-actions {
+  display: grid;
+  grid-template-columns: 1fr;
 }
 
 .result {
