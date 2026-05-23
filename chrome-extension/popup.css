@@ -41,6 +41,47 @@ h1 {
   word-break: break-all;
 }
 
+.device-card {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.device-card-title {
+  color: #202124;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.device-grid {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 6px 10px;
+  color: #5f6368;
+  font-size: 12px;
+}
+
+.device-grid strong {
+  min-width: 0;
+  color: #202124;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.last-success {
+  margin: 0;
+  color: #5f6368;
+  font-size: 12px;
+}
+
+.primary-controls {
+  display: grid;
+  gap: 8px;
+}
+
 .fields {
   display: grid;
   gap: 10px;
@@ -141,15 +182,15 @@ button.text-action:hover {
   text-decoration: underline;
 }
 
-button.primary-action {
-  min-height: 46px;
+button.find-phone-action {
+  min-height: 52px;
   border-color: #0b57d0;
   background: #1a73e8;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 16px;
 }
 
-button.primary-action:hover {
+button.find-phone-action:hover {
   background: #1557b0;
 }
 
@@ -173,6 +214,10 @@ button.primary-stop {
 
 button.primary-stop:hover {
   background: #b3261e;
+}
+
+.advanced-actions {
+  padding-top: 2px;
 }
 
 button.secondary {

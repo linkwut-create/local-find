@@ -1,8 +1,12 @@
 const DEFAULT_PORT = "8888";
+const FIND_PHONE_STEPS = [
+  { method: "POST", path: "/command/ring/start", label: "响铃" },
+  { method: "POST", path: "/command/flash/strobe/start", label: "闪光" }
+];
 
 const COMMANDS = {
   status: { method: "GET", path: "/status", label: "检查状态" },
-  "ring-start": { method: "POST", path: "/command/ring/start", label: "开始响铃", success: "已开始响铃" },
+  "find-phone": { method: "SEQUENCE", label: "一键找手机", success: "已开始一键找手机：响铃 + 闪光" },
   "ring-stop": { method: "POST", path: "/command/ring/stop", label: "停止响铃", success: "已停止响铃" },
   "flash-start": { method: "POST", path: "/command/flash/strobe/start", label: "开始闪光", success: "已开始闪光" },
   "flash-stop": { method: "POST", path: "/command/flash/stop", label: "停止闪光", success: "已停止闪光" },
@@ -18,19 +22,27 @@ const rememberTokenInput = document.getElementById("remember-token");
 const clearSavedTokenButton = document.getElementById("clear-saved-token");
 const resultOutput = document.getElementById("result");
 const endpointPreview = document.getElementById("endpoint-preview");
+const deviceHost = document.getElementById("device-host");
+const devicePort = document.getElementById("device-port");
+const deviceTokenStatus = document.getElementById("device-token-status");
+const lastSuccess = document.getElementById("last-success");
 const buttons = Array.from(document.querySelectorAll("[data-command]"));
+
+let lastSuccessAt = "";
 
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
   chrome.storage.local.get(
-    { host: "", port: DEFAULT_PORT, rememberToken: false, savedToken: "" },
-    ({ host, port, rememberToken, savedToken }) => {
+    { host: "", port: DEFAULT_PORT, rememberToken: false, savedToken: "", lastSuccessAt: "" },
+    ({ host, port, rememberToken, savedToken, lastSuccessAt: savedLastSuccessAt }) => {
       hostInput.value = host || "";
       portInput.value = String(port || DEFAULT_PORT);
       rememberTokenInput.checked = rememberToken === true;
       tokenInput.value = rememberToken === true ? savedToken || "" : "";
+      lastSuccessAt = savedLastSuccessAt || "";
       updateEndpointPreview();
+      updateDeviceCard();
     }
   );
 
@@ -50,6 +62,7 @@ function handleConnectionInput() {
   syncPortFromHost();
   updateEndpointPreview();
   saveConnectionSettings();
+  updateDeviceCard();
 }
 
 function saveConnectionSettings() {
@@ -67,6 +80,7 @@ function normalizeConnectionFields() {
   portInput.value = connection.port;
   updateEndpointPreview();
   saveConnectionSettings();
+  updateDeviceCard();
 }
 
 function handleRememberTokenChange() {
@@ -75,11 +89,12 @@ function handleRememberTokenChange() {
       rememberToken: true,
       savedToken: tokenInput.value
     });
+    updateDeviceCard();
     return;
   }
 
   chrome.storage.local.set({ rememberToken: false }, () => {
-    chrome.storage.local.remove("savedToken");
+    chrome.storage.local.remove("savedToken", updateDeviceCard);
   });
 }
 
@@ -92,6 +107,7 @@ function saveTokenIfRemembered() {
     rememberToken: true,
     savedToken: tokenInput.value
   });
+  updateDeviceCard();
 }
 
 function clearSavedToken() {
@@ -99,6 +115,7 @@ function clearSavedToken() {
   rememberTokenInput.checked = false;
   chrome.storage.local.set({ rememberToken: false }, () => {
     chrome.storage.local.remove("savedToken", () => {
+      updateDeviceCard();
       showResult("已清除已保存 Token", false);
     });
   });
@@ -120,18 +137,18 @@ async function handleButtonClick(commandName) {
     setBusy(true);
     showResult(`${command.label}中...`, false);
 
-    const response = await sendRequest(command);
-    const bodyText = await response.text();
-    const body = parseJson(bodyText);
-
-    if (!response.ok) {
-      throw new Error(getHttpErrorMessage(response, body, bodyText));
-    }
-
-    if (command.method === "GET" && body) {
-      showResult(formatStatus(body), false);
+    if (command.method === "SEQUENCE") {
+      await runFindPhoneSequence();
+      saveLastSuccessAt();
+      showResult(command.success, false);
     } else {
-      showResult(command.success || `${command.label}成功`, false);
+      const { body } = await sendCheckedRequest(command);
+      if (command.method === "GET") {
+        showResult(body ? formatStatus(body) : "状态检查成功", false);
+      } else {
+        saveLastSuccessAt();
+        showResult(command.success || `${command.label}成功`, false);
+      }
     }
   } catch (error) {
     showResult(getFriendlyErrorMessage(error), true);
@@ -140,17 +157,44 @@ async function handleButtonClick(commandName) {
   }
 }
 
+async function runFindPhoneSequence() {
+  validateCommandInputs({ method: "POST" });
+
+  try {
+    await sendCheckedRequest(FIND_PHONE_STEPS[0]);
+  } catch (error) {
+    throw new Error(`响铃启动失败：${getFriendlyErrorMessage(error)}`);
+  }
+
+  try {
+    await sendCheckedRequest(FIND_PHONE_STEPS[1]);
+  } catch (error) {
+    throw new Error(`响铃已开始，但闪光启动失败：${getFriendlyErrorMessage(error)}`);
+  }
+}
+
+async function sendCheckedRequest(command) {
+  const response = await sendRequest(command);
+  const bodyText = await response.text();
+  const body = parseJson(bodyText);
+
+  if (!response.ok) {
+    throw new Error(getHttpErrorMessage(response, body, bodyText));
+  }
+
+  return { response, body, bodyText };
+}
+
 async function sendRequest(command) {
   const request = {
     method: command.method,
     cache: "no-store"
   };
 
+  validateCommandInputs(command);
+
   if (command.method === "POST") {
     const token = tokenInput.value;
-    if (!token) {
-      throw new Error("请输入 token");
-    }
     request.headers = {
       "X-LocalFind-Token": token
     };
@@ -186,6 +230,27 @@ function getBaseUrl() {
   }
 
   return `http://${host}:${port}`;
+}
+
+function validateCommandInputs(command) {
+  const { host, port } = parseConnectionInput();
+  const missing = [];
+
+  if (!host) {
+    missing.push("host");
+  }
+
+  if (!isValidPort(port)) {
+    missing.push("port");
+  }
+
+  if (command.method === "POST" && !tokenInput.value) {
+    missing.push("token");
+  }
+
+  if (missing.length > 0) {
+    throw new Error(`请补全 ${missing.join("、")}`);
+  }
 }
 
 function parseConnectionInput() {
@@ -244,6 +309,38 @@ function updateEndpointPreview() {
   const displayHost = host || "HOST";
   const displayPort = isValidPort(port) ? port : DEFAULT_PORT;
   endpointPreview.textContent = `http://${displayHost}:${displayPort}`;
+}
+
+function updateDeviceCard() {
+  const { host, port } = parseConnectionInput();
+  deviceHost.textContent = host || "未设置";
+  devicePort.textContent = isValidPort(port) ? port : DEFAULT_PORT;
+  deviceTokenStatus.textContent = rememberTokenInput.checked && tokenInput.value ? "已保存" : "未保存";
+  lastSuccess.textContent = `上次成功：${lastSuccessAt ? formatDateTime(lastSuccessAt) : "暂无"}`;
+}
+
+function saveLastSuccessAt() {
+  lastSuccessAt = new Date().toISOString();
+  chrome.storage.local.set({ lastSuccessAt });
+  updateDeviceCard();
+}
+
+function formatDateTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "暂无";
+  }
+
+  const year = date.getFullYear();
+  const month = padDatePart(date.getMonth() + 1);
+  const day = padDatePart(date.getDate());
+  const hours = padDatePart(date.getHours());
+  const minutes = padDatePart(date.getMinutes());
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
+function padDatePart(value) {
+  return String(value).padStart(2, "0");
 }
 
 function setBusy(isBusy) {

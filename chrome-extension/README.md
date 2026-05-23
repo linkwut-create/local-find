@@ -1,8 +1,8 @@
-# Local Find Chrome Extension MVP-K.2
+# Local Find Chrome Extension MVP-K.3
 
 This directory contains the minimal Chrome extension control entry for the Local Find Android HTTP service.
 
-K.2 focuses on the home, dorm, and office scenario: before going out, when the Android phone cannot be found nearby, use the computer's Chrome extension to make the phone ring or flash quickly. On a trusted private computer, the user can explicitly choose to remember the token.
+K.3 focuses on the home, dorm, and office scenario: before going out, when the Android phone cannot be found nearby, open the computer's Chrome extension and click one primary action to make the phone ring and flash. On a trusted private computer, the user can explicitly choose to remember the token.
 
 ## Scope
 
@@ -34,13 +34,17 @@ It does not request `history`, `cookies`, `tabs`, `scripting`, `webRequest`, `cl
 3. Load unpacked and select this `chrome-extension` directory.
 4. Enter the Android device host, port, and current token.
 5. On a trusted private computer only, optionally check `记住此电脑上的 Token`.
-6. Click `开始响铃` to make the phone ring, then click `停止全部` after finding it.
+6. Recommended path: open the extension, click `一键找手机`, let the phone ring and flash, then click `停止全部` after finding the phone.
 7. Use `开始闪光` when visual feedback is useful.
 8. Use `打开诊断页` to open the Android service page in the browser.
+
+`一键找手机` is equivalent to starting ring plus strobe flash in sequence.
 
 The token field is `type=password`; POST requests read the token only from that input. The token is not written to console and is never placed in URLs.
 
 The host field accepts plain hosts such as `192.168.1.108` and also tolerates pasted URLs such as `http://192.168.1.108:8888/`. Host and port are saved in `chrome.storage.local`.
+
+The current device card shows host, port, token saved status, and the last successful control command time. It stores only `lastSuccessAt`, not command logs and not token history.
 
 ## Token Storage
 
@@ -59,3 +63,4 @@ The host field accepts plain hosts such as `192.168.1.108` and also tolerates pa
 - Check that the port is correct. The default is `8888`.
 - If a command returns 401, enter the current phone token again. The phone token may have been reset, and any saved token should be updated or cleared.
 - If status or commands fail, open the browser diagnostic page from the popup and confirm the Android service responds.
+- If `一键找手机` cannot run, check host, port, token, Android service status, and that the computer and phone are on the same Wi-Fi.
