@@ -1,8 +1,8 @@
-# Local Find Chrome Extension MVP-K.3
+# Local Find Chrome Extension MVP-K.4
 
 This directory contains the minimal Chrome extension control entry for the Local Find Android HTTP service.
 
-K.3 focuses on the home, dorm, and office scenario: before going out, when the Android phone cannot be found nearby, open the computer's Chrome extension and click one primary action to make the phone ring and flash. On a trusted private computer, the user can explicitly choose to remember the token.
+K.4 focuses on the home, dorm, and office scenario: before going out, when the Android phone cannot be found nearby, open the computer's Chrome extension and click one primary action to make the phone ring and flash. On a trusted private computer, the user can explicitly choose to remember the token and protect sensitive actions with a local PIN.
 
 ## Scope
 
@@ -45,6 +45,16 @@ The token field is `type=password`; POST requests read the token only from that 
 The host field accepts plain hosts such as `192.168.1.108` and also tolerates pasted URLs such as `http://192.168.1.108:8888/`. Host and port are saved in `chrome.storage.local`.
 
 The current device card shows host, port, token saved status, and the last successful control command time. It stores only `lastSuccessAt`, not command logs and not token history.
+
+## Local Protection PIN
+
+- The K.4 protection lock is a Chrome extension local PIN, not the Windows or macOS system password.
+- PIN is not saved in plain text. The extension uses Web Crypto PBKDF2 with a generated salt and saves `localPinSalt`, `localPinHash`, and `protectionEnabled`.
+- Chrome extensions do not have a general system password verification API. True system-level verification would require a later WebAuthn or Native Messaging design.
+- Protection is off by default. Setting a PIN turns `protectionEnabled` on.
+- After protection is enabled, `一键找手机`, `开始闪光`, saved-token changes, and `清除已保存 Token` require local PIN verification. `停止全部` stays immediately available so the user can stop the phone after finding it.
+- After protection is enabled, every sensitive action requires entering the local PIN again.
+- Closing the protection lock requires entering the current PIN.
 
 ## Token Storage
 

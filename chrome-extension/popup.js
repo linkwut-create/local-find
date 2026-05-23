@@ -3,6 +3,10 @@ const FIND_PHONE_STEPS = [
   { method: "POST", path: "/command/ring/start", label: "响铃" },
   { method: "POST", path: "/command/flash/strobe/start", label: "闪光" }
 ];
+const PROTECTED_COMMANDS = new Set(["find-phone", "flash-start"]);
+const MIN_PIN_LENGTH = 4;
+const MAX_PIN_LENGTH = 12;
+const PIN_HASH_ITERATIONS = 100000;
 
 const COMMANDS = {
   status: { method: "GET", path: "/status", label: "检查状态" },
@@ -20,29 +24,65 @@ const portInput = document.getElementById("port");
 const tokenInput = document.getElementById("token");
 const rememberTokenInput = document.getElementById("remember-token");
 const clearSavedTokenButton = document.getElementById("clear-saved-token");
+const localPinInput = document.getElementById("local-pin");
+const setLocalPinButton = document.getElementById("set-local-pin");
+const disableProtectionButton = document.getElementById("disable-protection");
 const resultOutput = document.getElementById("result");
 const endpointPreview = document.getElementById("endpoint-preview");
 const deviceHost = document.getElementById("device-host");
 const devicePort = document.getElementById("device-port");
 const deviceTokenStatus = document.getElementById("device-token-status");
 const lastSuccess = document.getElementById("last-success");
+const protectionStatus = document.getElementById("protection-status");
+const pinModal = document.getElementById("pin-modal");
+const pinModalMessage = document.getElementById("pin-modal-message");
+const verifyPinInput = document.getElementById("verify-pin");
+const confirmPinButton = document.getElementById("confirm-pin");
+const cancelPinButton = document.getElementById("cancel-pin");
 const buttons = Array.from(document.querySelectorAll("[data-command]"));
 
 let lastSuccessAt = "";
+let rememberTokenState = false;
+let protectionEnabled = false;
+let localPinSalt = "";
+let localPinHash = "";
 
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
   chrome.storage.local.get(
-    { host: "", port: DEFAULT_PORT, rememberToken: false, savedToken: "", lastSuccessAt: "" },
-    ({ host, port, rememberToken, savedToken, lastSuccessAt: savedLastSuccessAt }) => {
+    {
+      host: "",
+      port: DEFAULT_PORT,
+      rememberToken: false,
+      savedToken: "",
+      lastSuccessAt: "",
+      protectionEnabled: false,
+      localPinSalt: "",
+      localPinHash: ""
+    },
+    ({
+      host,
+      port,
+      rememberToken,
+      savedToken,
+      lastSuccessAt: savedLastSuccessAt,
+      protectionEnabled: savedProtectionEnabled,
+      localPinSalt: savedLocalPinSalt,
+      localPinHash: savedLocalPinHash
+    }) => {
       hostInput.value = host || "";
       portInput.value = String(port || DEFAULT_PORT);
-      rememberTokenInput.checked = rememberToken === true;
+      rememberTokenState = rememberToken === true;
+      rememberTokenInput.checked = rememberTokenState;
       tokenInput.value = rememberToken === true ? savedToken || "" : "";
       lastSuccessAt = savedLastSuccessAt || "";
+      protectionEnabled = savedProtectionEnabled === true;
+      localPinSalt = savedLocalPinSalt || "";
+      localPinHash = savedLocalPinHash || "";
       updateEndpointPreview();
       updateDeviceCard();
+      updateProtectionStatus();
     }
   );
 
@@ -52,6 +92,8 @@ function init() {
   tokenInput.addEventListener("input", saveTokenIfRemembered);
   rememberTokenInput.addEventListener("change", handleRememberTokenChange);
   clearSavedTokenButton.addEventListener("click", clearSavedToken);
+  setLocalPinButton.addEventListener("click", setLocalPin);
+  disableProtectionButton.addEventListener("click", disableProtection);
 
   buttons.forEach((button) => {
     button.addEventListener("click", () => handleButtonClick(button.dataset.command));
@@ -83,42 +125,233 @@ function normalizeConnectionFields() {
   updateDeviceCard();
 }
 
-function handleRememberTokenChange() {
-  if (rememberTokenInput.checked) {
+async function handleRememberTokenChange() {
+  const shouldRemember = rememberTokenInput.checked;
+
+  try {
+    await requireLocalVerification("验证后才能修改 Token 保存设置。");
+
+    if (shouldRemember) {
+      rememberTokenState = true;
+      rememberTokenInput.checked = true;
+      chrome.storage.local.set({
+        rememberToken: true,
+        savedToken: tokenInput.value
+      });
+      updateDeviceCard();
+      return;
+    }
+
+    rememberTokenState = false;
+    rememberTokenInput.checked = false;
+    chrome.storage.local.set({ rememberToken: false }, () => {
+      chrome.storage.local.remove("savedToken", updateDeviceCard);
+    });
+  } catch (error) {
+    rememberTokenInput.checked = rememberTokenState;
+    showResult(getFriendlyErrorMessage(error), true);
+  }
+}
+
+async function saveTokenIfRemembered() {
+  if (!rememberTokenInput.checked) {
+    return;
+  }
+
+  try {
+    await requireLocalVerification("验证后才能保存 Token。");
     chrome.storage.local.set({
       rememberToken: true,
       savedToken: tokenInput.value
     });
     updateDeviceCard();
-    return;
+  } catch (error) {
+    showResult(getFriendlyErrorMessage(error), true);
   }
-
-  chrome.storage.local.set({ rememberToken: false }, () => {
-    chrome.storage.local.remove("savedToken", updateDeviceCard);
-  });
 }
 
-function saveTokenIfRemembered() {
-  if (!rememberTokenInput.checked) {
-    return;
-  }
-
-  chrome.storage.local.set({
-    rememberToken: true,
-    savedToken: tokenInput.value
-  });
-  updateDeviceCard();
-}
-
-function clearSavedToken() {
-  tokenInput.value = "";
-  rememberTokenInput.checked = false;
-  chrome.storage.local.set({ rememberToken: false }, () => {
-    chrome.storage.local.remove("savedToken", () => {
-      updateDeviceCard();
-      showResult("已清除已保存 Token", false);
+async function clearSavedToken() {
+  try {
+    await requireLocalVerification("验证后才能清除已保存 Token。");
+    tokenInput.value = "";
+    rememberTokenInput.checked = false;
+    rememberTokenState = false;
+    chrome.storage.local.set({ rememberToken: false }, () => {
+      chrome.storage.local.remove("savedToken", () => {
+        updateDeviceCard();
+        showResult("已清除已保存 Token", false);
+      });
     });
+  } catch (error) {
+    showResult(getFriendlyErrorMessage(error), true);
+  }
+}
+
+async function setLocalPin() {
+  const pin = localPinInput.value;
+
+  try {
+    if (protectionEnabled) {
+      await requireLocalVerification("验证当前 PIN 后才能更新保护 PIN。");
+    }
+
+    validatePin(pin);
+    const salt = createSalt();
+    const hash = await hashPin(pin, salt);
+    protectionEnabled = true;
+    localPinSalt = salt;
+    localPinHash = hash;
+    chrome.storage.local.set({
+      protectionEnabled: true,
+      localPinSalt: salt,
+      localPinHash: hash
+    });
+    localPinInput.value = "";
+    updateProtectionStatus();
+    showResult("已开启本地保护锁", false);
+  } catch (error) {
+    showResult(getFriendlyErrorMessage(error), true);
+  }
+}
+
+async function disableProtection() {
+  if (!protectionEnabled) {
+    showResult("本地保护锁未开启", false);
+    return;
+  }
+
+  try {
+    await requireLocalVerification("请输入当前 PIN 以关闭保护锁。");
+    protectionEnabled = false;
+    localPinSalt = "";
+    localPinHash = "";
+    chrome.storage.local.set({ protectionEnabled: false }, () => {
+      chrome.storage.local.remove(["localPinSalt", "localPinHash"], () => {
+        updateProtectionStatus();
+        showResult("已关闭本地保护锁", false);
+      });
+    });
+  } catch (error) {
+    showResult(getFriendlyErrorMessage(error), true);
+  }
+}
+
+async function requireProtectedCommand(commandName) {
+  if (!PROTECTED_COMMANDS.has(commandName)) {
+    return;
+  }
+
+  await requireLocalVerification("请输入本地保护 PIN 以继续。");
+}
+
+async function requireLocalVerification(message) {
+  if (!protectionEnabled) {
+    return;
+  }
+
+  const pin = await promptForPin(message);
+  const isValid = await verifyPin(pin);
+  if (!isValid) {
+    throw new Error("本地验证失败");
+  }
+}
+
+function promptForPin(message) {
+  pinModalMessage.textContent = message || "请输入本地保护 PIN。";
+  verifyPinInput.value = "";
+  pinModal.classList.remove("hidden");
+  verifyPinInput.focus();
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      confirmPinButton.removeEventListener("click", handleConfirm);
+      cancelPinButton.removeEventListener("click", handleCancel);
+      verifyPinInput.removeEventListener("keydown", handleKeyDown);
+      pinModal.classList.add("hidden");
+    };
+
+    const handleConfirm = () => {
+      const pin = verifyPinInput.value;
+      cleanup();
+      resolve(pin);
+    };
+
+    const handleCancel = () => {
+      cleanup();
+      reject(new Error("已取消本地验证"));
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Enter") {
+        handleConfirm();
+      } else if (event.key === "Escape") {
+        handleCancel();
+      }
+    };
+
+    confirmPinButton.addEventListener("click", handleConfirm);
+    cancelPinButton.addEventListener("click", handleCancel);
+    verifyPinInput.addEventListener("keydown", handleKeyDown);
   });
+}
+
+async function verifyPin(pin) {
+  if (!pin || !localPinSalt || !localPinHash) {
+    return false;
+  }
+
+  const hash = await hashPin(pin, localPinSalt);
+  return hash === localPinHash;
+}
+
+function validatePin(pin) {
+  if (pin.length < MIN_PIN_LENGTH || pin.length > MAX_PIN_LENGTH) {
+    throw new Error("PIN 需要为 4-12 位");
+  }
+}
+
+function createSalt() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return bytesToBase64(bytes);
+}
+
+async function hashPin(pin, salt) {
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(pin),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: base64ToBytes(salt),
+      iterations: PIN_HASH_ITERATIONS,
+      hash: "SHA-256"
+    },
+    keyMaterial,
+    256
+  );
+  return bytesToBase64(new Uint8Array(derivedBits));
+}
+
+function bytesToBase64(bytes) {
+  let value = "";
+  bytes.forEach((byte) => {
+    value += String.fromCharCode(byte);
+  });
+  return btoa(value);
+}
+
+function base64ToBytes(value) {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
 }
 
 async function handleButtonClick(commandName) {
@@ -138,10 +371,16 @@ async function handleButtonClick(commandName) {
     showResult(`${command.label}中...`, false);
 
     if (command.method === "SEQUENCE") {
+      validateCommandInputs({ method: "POST" });
+      await requireProtectedCommand(commandName);
       await runFindPhoneSequence();
       saveLastSuccessAt();
       showResult(command.success, false);
     } else {
+      if (PROTECTED_COMMANDS.has(commandName)) {
+        validateCommandInputs(command);
+        await requireProtectedCommand(commandName);
+      }
       const { body } = await sendCheckedRequest(command);
       if (command.method === "GET") {
         showResult(body ? formatStatus(body) : "状态检查成功", false);
@@ -317,6 +556,12 @@ function updateDeviceCard() {
   devicePort.textContent = isValidPort(port) ? port : DEFAULT_PORT;
   deviceTokenStatus.textContent = rememberTokenInput.checked && tokenInput.value ? "已保存" : "未保存";
   lastSuccess.textContent = `上次成功：${lastSuccessAt ? formatDateTime(lastSuccessAt) : "暂无"}`;
+}
+
+function updateProtectionStatus() {
+  protectionStatus.textContent = protectionEnabled ? "已开启" : "未开启";
+  protectionStatus.classList.toggle("enabled", protectionEnabled);
+  disableProtectionButton.disabled = !protectionEnabled;
 }
 
 function saveLastSuccessAt() {

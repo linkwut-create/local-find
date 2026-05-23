@@ -31,6 +31,18 @@
         <button type="button" data-command="stop-all" class="primary-stop">停止全部</button>
       </section>
 
+      <section class="protection-card" aria-label="Local protection lock">
+        <div class="protection-header">
+          <span>本地保护锁</span>
+          <strong id="protection-status">未开启</strong>
+        </div>
+        <div class="pin-row">
+          <input id="local-pin" name="local-pin" type="password" minlength="4" maxlength="12" inputmode="numeric" autocomplete="off" placeholder="设置 4-12 位 PIN">
+          <button id="set-local-pin" type="button">设置本地保护 PIN</button>
+        </div>
+        <button id="disable-protection" type="button" class="text-action">关闭保护锁</button>
+      </section>
+
       <section class="fields" aria-label="Connection settings">
         <label class="field">
           <span>Host</span>
@@ -66,6 +78,18 @@
 
       <output id="result" class="result" role="status" aria-live="polite">未连接</output>
     </main>
+
+    <div id="pin-modal" class="pin-modal hidden" role="dialog" aria-modal="true" aria-labelledby="pin-modal-title">
+      <div class="pin-dialog">
+        <h2 id="pin-modal-title">本地 PIN 验证</h2>
+        <p id="pin-modal-message">请输入本地保护 PIN。</p>
+        <input id="verify-pin" type="password" minlength="4" maxlength="12" inputmode="numeric" autocomplete="off">
+        <div class="pin-actions">
+          <button id="confirm-pin" type="button">验证</button>
+          <button id="cancel-pin" type="button" class="secondary-action">取消</button>
+        </div>
+      </div>
+    </div>
 
     <script src="popup.js"></script>
   </body>
