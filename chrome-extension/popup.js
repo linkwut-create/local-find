@@ -1,4 +1,4 @@
-const DEFAULT_PORT = "8888";
+﻿const DEFAULT_PORT = "8888";
 const FIND_PHONE_STEPS = [
   { method: "POST", path: "/command/ring/start", label: "响铃" },
   { method: "POST", path: "/command/flash/strobe/start", label: "闪光" }
@@ -237,10 +237,13 @@ async function deleteDevice(deviceId) {
     return;
   }
 
-  const confirmed = window.confirm(
-    `删除已配对手机“${device.name || "Android Phone"}”？这只会删除 Chrome 插件本地保存的设备和 token，不会撤销手机端授权。`
-  );
+  const deviceName = device.name || "Android Phone";
+  const canRevoke = Boolean(device.controllerId && device.host && isValidPort(device.port) && device.token);
+  const confirmMessage = canRevoke
+    ? `删除已配对手机"${deviceName}"？\n\n将先尝试撤销手机端授权，然后删除本地记录。`
+    : `删除已配对手机"${deviceName}"？\n\n该旧记录缺少撤销所需信息（controllerId/host/port/token），将仅删除本地记录。`;
 
+  const confirmed = window.confirm(confirmMessage);
   if (!confirmed) {
     return;
   }
@@ -248,22 +251,47 @@ async function deleteDevice(deviceId) {
   try {
     await requireSensitiveVerification("验证后才能删除已配对手机。");
 
+    if (canRevoke) {
+      const revoked = await tryRevokeDevice(device);
+      if (!revoked) {
+        const localOnly = window.confirm(
+          "无法撤销手机端授权（手机可能离线或 token 已失效），是否仅删除本地记录？"
+        );
+        if (!localOnly) {
+          return;
+        }
+      }
+    }
+
     devices = devices.filter((candidate) => candidate.id !== deviceId);
     if (selectedDeviceId === deviceId) {
       selectedDeviceId = devices[0]?.id || "";
     }
 
-    await setStorage({
-      devices,
-      selectedDeviceId
-    });
-
+    await setStorage({ devices, selectedDeviceId });
     updateEndpointPreview();
     updateDeviceCard();
     updatePairedDevicesList();
-    showResult("已删除已配对手机", false);
+    showResult(canRevoke ? "已撤销手机端授权并删除本地设备" : "已删除本地设备", false);
   } catch (error) {
     showResult(getFriendlyErrorMessage(error), true);
+  }
+}
+
+async function tryRevokeDevice(device) {
+  const url = `http://${device.host}:${device.port}/pairing/revoke`;
+  try {
+    const { body } = await sendJsonRequest(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-LocalFind-Token": device.token
+      },
+      body: JSON.stringify({ controllerId: device.controllerId })
+    });
+    return body?.ok === true && body?.revoked === true;
+  } catch (error) {
+    return false;
   }
 }
 
@@ -454,6 +482,7 @@ async function saveAcceptedDevice(pairingResult, target) {
     host: pairedDevice.host || target.host,
     port: String(pairedDevice.port || target.port || DEFAULT_PORT),
     token: controlToken,
+    controllerId: controllerId || "",
     pairedAt: now,
     lastSuccessAt: ""
   };
@@ -495,6 +524,7 @@ function normalizeDevices(value) {
       host: device.host || "",
       port: String(device.port || DEFAULT_PORT),
       token: device.token || "",
+      controllerId: device.controllerId || "",
       pairedAt: device.pairedAt || "",
       lastSuccessAt: device.lastSuccessAt || ""
     }));

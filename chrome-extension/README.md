@@ -1,8 +1,8 @@
-# Local Find Chrome Extension MVP-L.3
+# Local Find Chrome Extension MVP-L.4
 
 This directory contains the minimal Chrome extension control entry for the Local Find Android HTTP service.
 
-L.3 adds the Chrome extension paired-phone history list and current target switching. The user still enters a phone IP address when pairing a new phone, confirms the request on the phone, and then selects a saved paired phone as the command target.
+L.4 adds remote revocation: deleting a paired phone in the extension now calls the Android `/pairing/revoke` endpoint first so the phone-side paired token is invalidated. The user still enters a phone IP address when pairing a new phone, confirms the request on the phone, and then selects a saved paired phone as the command target.
 
 ## Scope
 
@@ -54,7 +54,7 @@ The current device card shows the selected paired device name, `host:port`, pair
 
 The `已配对手机` list reads from `chrome.storage.local.devices[]`. Each item shows name, `host:port`, `pairedAt`, `lastSuccessAt`, and whether it is the current target. Clicking an item or `设为当前` updates `selectedDeviceId`; later commands use that device token when host, port, and token are available.
 
-The `删除` button removes that paired phone from Chrome extension local storage, including the saved control token. If the deleted phone was the current target, the extension selects the next saved phone when available; otherwise it falls back to manual mode. This local delete does not revoke the Android-side token.
+The `删除` button revokes the Android-side paired token via `POST /pairing/revoke` before removing the device from Chrome extension local storage. If the phone is offline or the revoke request fails, the user can choose to delete only the local record. If the device record is missing `controllerId` (pre-L.4 pairing), revoke is skipped and only local deletion is performed.
 
 ## Pairing
 
@@ -64,7 +64,7 @@ The `删除` button removes that paired phone from Chrome extension local storag
 - `请求配对` calls `POST /pairing/request` with the persistent `controllerId`, `controllerName: "Chrome on Windows"`, `controllerType: "chrome_extension"`, and a nonce.
 - The popup polls `GET /pairing/status?requestId=...` until the request is accepted, rejected, or expired.
 - On acceptance, the popup saves or updates the device in `chrome.storage.local.devices[]`, sets `selectedDeviceId`, and refreshes the paired-phone list.
-- L.3 provides local paired-phone deletion in the Chrome extension. Android-side token revocation, re-pair buttons, sorting, QR code pairing, and automatic LAN scanning are still out of scope.
+- L.3 provides local paired-phone deletion in the Chrome extension. L.4 adds remote revocation via `POST /pairing/revoke` during deletion so the Android-side paired token is invalidated.
 
 ## Local Protection PIN
 
