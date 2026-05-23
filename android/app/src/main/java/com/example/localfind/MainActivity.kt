@@ -31,6 +31,7 @@ import com.example.localfind.server.NsdDiscoveryManager
 import com.example.localfind.server.DiscoveryStatus
 import com.example.localfind.server.DiscoveredDevice
 import com.example.localfind.auth.RemoteDeviceTokenStore
+import com.example.localfind.model.PairingRequest
 import com.example.localfind.ui.MainScreen
 import com.example.localfind.util.NetworkUtil
 
@@ -51,6 +52,11 @@ class MainActivity : FragmentActivity() {
     private var nsdStatusState by mutableStateOf(NsdStatus.IDLE)
     private var nsdServiceTypeState by mutableStateOf("_localfind._tcp.")
     private var pairingTokenState by mutableStateOf("")
+    private var localDeviceIdState by mutableStateOf("")
+    private var localDeviceNameState by mutableStateOf("")
+    private var pairingModeActiveState by mutableStateOf(false)
+    private var pairingModeExpiresAtState by mutableStateOf(0L)
+    private var pendingPairingRequestsState by mutableStateOf(listOf<PairingRequest>())
 
     // NSD Discovery 状态
     private lateinit var nsdDiscoveryManager: NsdDiscoveryManager
@@ -77,6 +83,7 @@ class MainActivity : FragmentActivity() {
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
+            foregroundService?.setStatusChangeListener(null)
             isServiceBound = false
             foregroundService = null
             isServiceRunningState = false
@@ -95,6 +102,12 @@ class MainActivity : FragmentActivity() {
             nsdStatusState = service.getNsdStatus()
             nsdServiceTypeState = service.getNsdServiceType()
             pairingTokenState = service.getPairingToken()
+            val identity = service.getLocalDeviceIdentity()
+            localDeviceIdState = identity.id
+            localDeviceNameState = identity.name
+            pairingModeActiveState = service.isPairingModeActive()
+            pairingModeExpiresAtState = service.getPairingModeExpiresAt()
+            pendingPairingRequestsState = service.getPendingPairingRequests()
             deviceIpState = service.getLocalIp()
         }
     }
@@ -141,6 +154,11 @@ class MainActivity : FragmentActivity() {
                             discoveryStatus = discoveryStatusState,
                             discoveredDevices = discoveredDevicesState,
                             pairingToken = pairingTokenState,
+                            localDeviceId = localDeviceIdState,
+                            localDeviceName = localDeviceNameState,
+                            pairingModeActive = pairingModeActiveState,
+                            pairingModeExpiresAt = pairingModeExpiresAtState,
+                            pendingPairingRequests = pendingPairingRequestsState,
                             remoteTokenStore = remoteTokenStore,
                             onStartService = { startAndBindService() },
                             onStopService = { shutdownService() },
@@ -189,6 +207,22 @@ class MainActivity : FragmentActivity() {
                             if (isServiceBound) {
                                 foregroundService?.stopAll()
                             }
+                        },
+                        onEnablePairingMode = {
+                            foregroundService?.enablePairingMode()
+                            syncServiceStatus()
+                        },
+                        onDisablePairingMode = {
+                            foregroundService?.disablePairingMode()
+                            syncServiceStatus()
+                        },
+                        onAcceptPairingRequest = { requestId ->
+                            foregroundService?.acceptPairingRequest(requestId)
+                            syncServiceStatus()
+                        },
+                        onRejectPairingRequest = { requestId ->
+                            foregroundService?.rejectPairingRequest(requestId)
+                            syncServiceStatus()
                         },
                         onRequestPermission = { checkAndRequestPermissions() },
                         onOpenBatterySettings = { openBatteryOptimizationSettings() },
@@ -306,6 +340,7 @@ class MainActivity : FragmentActivity() {
 
     private fun shutdownService() {
         if (isServiceBound) {
+            foregroundService?.setStatusChangeListener(null)
             foregroundService?.stopService()
             unbindService(serviceConnection)
             isServiceBound = false
@@ -328,6 +363,7 @@ class MainActivity : FragmentActivity() {
     override fun onDestroy() {
         nsdDiscoveryManager.stopDiscovery()
         if (isServiceBound) {
+            foregroundService?.setStatusChangeListener(null)
             unbindService(serviceConnection)
             isServiceBound = false
         }

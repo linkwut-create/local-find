@@ -45,9 +45,11 @@ import com.example.localfind.server.DiscoveredDevice
 import com.example.localfind.server.RemoteControlClient
 import com.example.localfind.server.ControlResult
 import com.example.localfind.auth.RemoteDeviceTokenStore
+import com.example.localfind.model.PairingRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import kotlin.math.max
 
 enum class RemoteConnectionStatus {
     IDLE,          // 未检测
@@ -78,6 +80,11 @@ fun MainScreen(
     discoveryStatus: DiscoveryStatus,
     discoveredDevices: List<DiscoveredDevice>,
     pairingToken: String,
+    localDeviceId: String,
+    localDeviceName: String,
+    pairingModeActive: Boolean,
+    pairingModeExpiresAt: Long,
+    pendingPairingRequests: List<PairingRequest>,
     remoteTokenStore: RemoteDeviceTokenStore,
     onStartService: () -> Unit,
     onStopService: () -> Unit,
@@ -92,6 +99,10 @@ fun MainScreen(
     onTestFlashStrobe: () -> Unit,
     onTestFlashStop: () -> Unit,
     onStopAll: () -> Unit,
+    onEnablePairingMode: () -> Unit,
+    onDisablePairingMode: () -> Unit,
+    onAcceptPairingRequest: (String) -> Unit,
+    onRejectPairingRequest: (String) -> Unit,
     onRequestPermission: () -> Unit,
     onOpenBatterySettings: () -> Unit,
     onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit
@@ -144,6 +155,11 @@ fun MainScreen(
                     nsdStatus = nsdStatus,
                     nsdServiceType = nsdServiceType,
                     pairingToken = pairingToken,
+                    localDeviceId = localDeviceId,
+                    localDeviceName = localDeviceName,
+                    pairingModeActive = pairingModeActive,
+                    pairingModeExpiresAt = pairingModeExpiresAt,
+                    pendingPairingRequests = pendingPairingRequests,
                     onStartService = onStartService,
                     onStopService = onStopService,
                     onRestartServer = onRestartServer,
@@ -153,6 +169,10 @@ fun MainScreen(
                     onTestFlashStrobe = onTestFlashStrobe,
                     onTestFlashStop = onTestFlashStop,
                     onStopAll = onStopAll,
+                    onEnablePairingMode = onEnablePairingMode,
+                    onDisablePairingMode = onDisablePairingMode,
+                    onAcceptPairingRequest = onAcceptPairingRequest,
+                    onRejectPairingRequest = onRejectPairingRequest,
                     onRequestPermission = onRequestPermission,
                     onOpenBatterySettings = onOpenBatterySettings,
                     onAuthenticate = onAuthenticate
@@ -187,6 +207,11 @@ fun FinderModeScreen(
     nsdStatus: NsdStatus,
     nsdServiceType: String,
     pairingToken: String,
+    localDeviceId: String,
+    localDeviceName: String,
+    pairingModeActive: Boolean,
+    pairingModeExpiresAt: Long,
+    pendingPairingRequests: List<PairingRequest>,
     onStartService: () -> Unit,
     onStopService: () -> Unit,
     onRestartServer: () -> Unit,
@@ -196,6 +221,10 @@ fun FinderModeScreen(
     onTestFlashStrobe: () -> Unit,
     onTestFlashStop: () -> Unit,
     onStopAll: () -> Unit,
+    onEnablePairingMode: () -> Unit,
+    onDisablePairingMode: () -> Unit,
+    onAcceptPairingRequest: (String) -> Unit,
+    onRejectPairingRequest: (String) -> Unit,
     onRequestPermission: () -> Unit,
     onOpenBatterySettings: () -> Unit,
     onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit
@@ -388,6 +417,90 @@ fun FinderModeScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f), contentColor = MaterialTheme.colorScheme.error)
                 ) {
                     Text("重置 Token", fontSize = 12.sp)
+                }
+            }
+        }
+
+        // 2.1 Formal Pairing Mode Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f)
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text("电脑插件配对模式", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                StatusRow("设备名称:", localDeviceName.ifBlank { android.os.Build.MODEL })
+                StatusRow("设备 ID:", localDeviceId.ifBlank { "服务启动后生成" })
+                StatusRow("配对模式:", if (pairingModeActive) "已开启" else "已关闭")
+                
+                if (pairingModeActive) {
+                    var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+                    LaunchedEffect(pairingModeActive) {
+                        while (pairingModeActive) {
+                            delay(1000)
+                            currentTime = System.currentTimeMillis()
+                        }
+                    }
+                    val remainingSeconds = max(0L, (pairingModeExpiresAt - currentTime) / 1000L)
+                    StatusRow("剩余时间:", "${remainingSeconds / 60}分${remainingSeconds % 60}秒")
+                }
+
+                Text("配对模式只在用户开启后短时间有效；电脑发起配对后，必须在手机端确认。当前不使用二维码，也不需要云账号。", style = MaterialTheme.typography.bodySmall)
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = onEnablePairingMode,
+                        modifier = Modifier.weight(1f),
+                        enabled = isServiceRunning
+                    ) {
+                        Text(if (pairingModeActive) "重新开启 5 分钟" else "开启配对模式", fontSize = 12.sp)
+                    }
+                    OutlinedButton(
+                        onClick = onDisablePairingMode,
+                        modifier = Modifier.weight(1f),
+                        enabled = isServiceRunning && pairingModeActive
+                    ) {
+                        Text("关闭配对模式", fontSize = 12.sp)
+                    }
+                }
+
+                if (pendingPairingRequests.isNotEmpty()) {
+                    Divider(modifier = Modifier.padding(vertical = 4.dp))
+                    Text("待确认的配对请求", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                    pendingPairingRequests.forEach { request ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(request.controllerName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                            Text("类型: ${request.controllerType}", style = MaterialTheme.typography.bodySmall)
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(
+                                    onClick = { onAcceptPairingRequest(request.requestId) },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                                ) {
+                                    Text("接受", fontSize = 12.sp)
+                                }
+                                OutlinedButton(
+                                    onClick = { onRejectPairingRequest(request.requestId) },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("拒绝", fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Text("暂无待确认请求。", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

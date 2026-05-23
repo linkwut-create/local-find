@@ -4,6 +4,10 @@ import android.util.Log
 import com.example.localfind.auth.PairingTokenManager
 import com.example.localfind.hardware.FlashlightController
 import com.example.localfind.hardware.RingController
+import com.example.localfind.model.PairingRequest
+import com.example.localfind.store.LocalDeviceIdentityStore
+import com.example.localfind.store.PairedControllerTokenStore
+import com.example.localfind.store.PairingRequestStore
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -14,6 +18,7 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
@@ -25,6 +30,7 @@ import kotlinx.serialization.json.put
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 enum class ServerStatus {
     STOPPED,
@@ -37,6 +43,9 @@ class HttpServerManager(
     private val ringController: RingController,
     private val flashlightController: FlashlightController,
     private val tokenManager: PairingTokenManager,
+    private val localDeviceIdentityStore: LocalDeviceIdentityStore,
+    private val pairingRequestStore: PairingRequestStore,
+    private val pairedControllerTokenStore: PairedControllerTokenStore,
     private val onStatusChange: () -> Unit,
 ) {
     @Volatile
@@ -52,6 +61,9 @@ class HttpServerManager(
     @Volatile
     var lastServerError: String? = null
         private set
+
+    @Volatile
+    private var pairingModeExpiresAt: Long = 0L
 
     val isRingActive: Boolean get() = commandDispatcher.isRingActive()
     val flashMode: String get() = commandDispatcher.getFlashMode()
@@ -70,6 +82,116 @@ class HttpServerManager(
                 // GET /ping - Minimal connectivity test, no locks or tokens
                 get("/ping") {
                     call.respond(buildJsonObject { put("ok", true) })
+                }
+
+                // GET /device-info - Public device identity for explicit user-driven pairing.
+                get("/device-info") {
+                    val identity = localDeviceIdentityStore.getOrCreate()
+                    call.respond(
+                        buildJsonObject {
+                            put("id", identity.id)
+                            put("name", identity.name)
+                            put("type", identity.type)
+                            put("port", getPort())
+                            put("pairingMode", isPairingModeActive())
+                            put("service", "running")
+                        }
+                    )
+                }
+
+                get("/pairing/status") {
+                    val requestId = call.request.queryParameters["requestId"]
+                    if (requestId.isNullOrBlank()) {
+                        call.respond(buildJsonObject { put("pairingMode", isPairingModeActive()) })
+                        return@get
+                    }
+
+                    val request = pairingRequestStore.get(requestId)
+                    if (request == null) {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            buildJsonObject {
+                                put("pairingMode", isPairingModeActive())
+                                put("requestId", requestId)
+                                put("status", PairingRequestStore.STATUS_EXPIRED)
+                                put("message", "Pairing request not found")
+                            }
+                        )
+                        return@get
+                    }
+
+                    call.respond(pairingStatusJson(request))
+                }
+
+                post("/pairing/request") {
+                    if (!isPairingModeActive()) {
+                        call.respond(
+                            HttpStatusCode.Forbidden,
+                            buildJsonObject {
+                                put("ok", false)
+                                put("message", "Pairing mode is not enabled")
+                            }
+                        )
+                        return@post
+                    }
+
+                    val rawBody = try {
+                        call.receiveText()
+                    } catch (e: Exception) {
+                        Log.e("HttpServerManager", "Failed to receive text from pairing request", e)
+                        ""
+                    }
+
+                    val body = try {
+                        if (rawBody.isBlank()) {
+                            throw IllegalArgumentException("Empty body")
+                        }
+                        JSONObject(rawBody)
+                    } catch (e: Exception) {
+                        Log.e("HttpServerManager", "Invalid pairing request body: '$rawBody'", e)
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            buildJsonObject {
+                                put("ok", false)
+                                put("message", "Invalid pairing request body")
+                                put("error", e.message ?: "unknown")
+                            }
+                        )
+                        return@post
+                    }
+
+                    val controllerId = body.optString("controllerId").trim()
+                    val controllerName = body.optString("controllerName").trim().ifBlank { "Chrome Extension" }
+                    val controllerType = body.optString("controllerType").trim().ifBlank { "chrome_extension" }
+                    val nonce = body.optString("nonce").trim()
+
+                    if (controllerId.isBlank() || nonce.isBlank()) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            buildJsonObject {
+                                put("ok", false)
+                                put("message", "controllerId and nonce are required")
+                            }
+                        )
+                        return@post
+                    }
+
+                    val request = pairingRequestStore.create(
+                        controllerId = controllerId,
+                        controllerName = controllerName,
+                        controllerType = controllerType,
+                        nonce = nonce,
+                        ttlMillis = PAIRING_MODE_TTL_MILLIS,
+                    )
+                    onStatusChange()
+
+                    call.respond(
+                        buildJsonObject {
+                            put("ok", true)
+                            put("requestId", request.requestId)
+                            put("status", request.status)
+                        }
+                    )
                 }
 
                 // GET / - Browser control page
@@ -334,7 +456,10 @@ class HttpServerManager(
         val queryToken = call.request.queryParameters["token"]
         val validToken = tokenManager.getToken()
 
-        if (validToken != null && (headerToken == validToken || queryToken == validToken)) {
+        val matchesGlobalToken = validToken != null && (headerToken == validToken || queryToken == validToken)
+        val matchesPairedControllerToken = pairedControllerTokenStore.isValidToken(headerToken)
+
+        if (matchesGlobalToken || matchesPairedControllerToken) {
             body()
         } else {
             call.respond(
@@ -344,6 +469,68 @@ class HttpServerManager(
                     put("message", "Unauthorized: Invalid or missing token")
                 }
             )
+        }
+    }
+
+    fun enablePairingMode(ttlMillis: Long = PAIRING_MODE_TTL_MILLIS) {
+        pairingModeExpiresAt = System.currentTimeMillis() + ttlMillis
+        pairingRequestStore.expireOldRequests()
+        onStatusChange()
+    }
+
+    fun disablePairingMode() {
+        pairingModeExpiresAt = 0L
+        onStatusChange()
+    }
+
+    fun isPairingModeActive(): Boolean {
+        val active = pairingModeExpiresAt > System.currentTimeMillis()
+        if (!active && pairingModeExpiresAt != 0L) {
+            pairingModeExpiresAt = 0L
+            pairingRequestStore.expireOldRequests()
+            onStatusChange()
+        }
+        return active
+    }
+
+    fun getPairingModeExpiresAt(): Long = if (isPairingModeActive()) pairingModeExpiresAt else 0L
+
+    fun getPendingPairingRequests(): List<PairingRequest> = pairingRequestStore.getPending()
+
+    fun acceptPairingRequest(requestId: String): PairingRequest? {
+        val request = pairingRequestStore.get(requestId)
+        if (request == null || request.status != PairingRequestStore.STATUS_PENDING) return request
+
+        val controlToken = pairedControllerTokenStore.issueToken(
+            controllerId = request.controllerId,
+            controllerName = request.controllerName,
+            controllerType = request.controllerType,
+        )
+        val updated = pairingRequestStore.accept(requestId, controlToken)
+        onStatusChange()
+        return updated
+    }
+
+    fun rejectPairingRequest(requestId: String): PairingRequest? {
+        val updated = pairingRequestStore.reject(requestId)
+        onStatusChange()
+        return updated
+    }
+
+    private fun pairingStatusJson(request: PairingRequest) = buildJsonObject {
+        put("pairingMode", isPairingModeActive())
+        put("requestId", request.requestId)
+        put("status", request.status)
+
+        if (request.status == PairingRequestStore.STATUS_ACCEPTED && !request.controlToken.isNullOrBlank()) {
+            val identity = localDeviceIdentityStore.getOrCreate()
+            put("device", buildJsonObject {
+                put("id", identity.id)
+                put("name", identity.name)
+                put("type", identity.type)
+                put("port", getPort())
+            })
+            put("controlToken", request.controlToken)
         }
     }
 
@@ -430,5 +617,9 @@ class HttpServerManager(
     @Deprecated("Use stopServerOnly() or shutdownAll()", ReplaceWith("stopServerOnly()"))
     fun stop() {
         stopServerOnly()
+    }
+
+    companion object {
+        const val PAIRING_MODE_TTL_MILLIS = 5 * 60 * 1000L
     }
 }

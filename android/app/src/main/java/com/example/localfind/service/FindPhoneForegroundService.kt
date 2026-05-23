@@ -25,10 +25,15 @@ import com.example.localfind.MainActivity
 import com.example.localfind.auth.PairingTokenManager
 import com.example.localfind.hardware.FlashlightController
 import com.example.localfind.hardware.RingController
+import com.example.localfind.model.LocalDeviceIdentity
+import com.example.localfind.model.PairingRequest
 import com.example.localfind.server.HttpServerManager
 import com.example.localfind.server.NsdAdvertiser
 import com.example.localfind.server.NsdStatus
 import com.example.localfind.server.ServerStatus
+import com.example.localfind.store.LocalDeviceIdentityStore
+import com.example.localfind.store.PairedControllerTokenStore
+import com.example.localfind.store.PairingRequestStore
 import com.example.localfind.util.NetworkUtil
 
 class FindPhoneForegroundService : Service() {
@@ -40,6 +45,9 @@ class FindPhoneForegroundService : Service() {
     private var httpServerManager: HttpServerManager? = null
     private var nsdAdvertiser: NsdAdvertiser? = null
     private lateinit var pairingTokenManager: PairingTokenManager
+    private lateinit var localDeviceIdentityStore: LocalDeviceIdentityStore
+    private lateinit var pairingRequestStore: PairingRequestStore
+    private lateinit var pairedControllerTokenStore: PairedControllerTokenStore
     private lateinit var connectivityManager: ConnectivityManager
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var wakeLock: PowerManager.WakeLock? = null
@@ -72,9 +80,19 @@ class FindPhoneForegroundService : Service() {
         ringController = RingController(this)
         flashlightController = FlashlightController(this)
         pairingTokenManager = PairingTokenManager(this)
+        localDeviceIdentityStore = LocalDeviceIdentityStore(this)
+        pairingRequestStore = PairingRequestStore(this)
+        pairedControllerTokenStore = PairedControllerTokenStore(this)
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         
-        httpServerManager = HttpServerManager(ringController, flashlightController, pairingTokenManager) {
+        httpServerManager = HttpServerManager(
+            ringController,
+            flashlightController,
+            pairingTokenManager,
+            localDeviceIdentityStore,
+            pairingRequestStore,
+            pairedControllerTokenStore,
+        ) {
             onStatusChangeListener?.invoke()
         }
 
@@ -210,6 +228,8 @@ class FindPhoneForegroundService : Service() {
             httpServerManager?.restart()
         } else {
             Log.d("ForegroundService", "Watchdog check: Server is $status")
+            // Periodically trigger expiration check and UI sync
+            httpServerManager?.isPairingModeActive()
         }
     }
 
@@ -284,6 +304,27 @@ class FindPhoneForegroundService : Service() {
         val newToken = pairingTokenManager.regenerateToken()
         onStatusChangeListener?.invoke()
         return newToken
+    }
+
+    fun getLocalDeviceIdentity(): LocalDeviceIdentity = localDeviceIdentityStore.getOrCreate()
+    fun isPairingModeActive(): Boolean = httpServerManager?.isPairingModeActive() ?: false
+    fun getPairingModeExpiresAt(): Long = httpServerManager?.getPairingModeExpiresAt() ?: 0L
+    fun getPendingPairingRequests(): List<PairingRequest> = httpServerManager?.getPendingPairingRequests().orEmpty()
+
+    fun enablePairingMode() {
+        httpServerManager?.enablePairingMode()
+    }
+
+    fun disablePairingMode() {
+        httpServerManager?.disablePairingMode()
+    }
+
+    fun acceptPairingRequest(requestId: String) {
+        httpServerManager?.acceptPairingRequest(requestId)
+    }
+
+    fun rejectPairingRequest(requestId: String) {
+        httpServerManager?.rejectPairingRequest(requestId)
     }
 
     fun setStatusChangeListener(listener: (() -> Unit)?) {
