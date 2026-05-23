@@ -82,6 +82,125 @@ h1 {
   gap: 8px;
 }
 
+.paired-devices-card {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.paired-devices-header {
+  color: #202124;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.paired-devices-list {
+  display: grid;
+  gap: 8px;
+}
+
+.paired-devices-empty {
+  margin: 0;
+  color: #5f6368;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.paired-device-item {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #e0e3e7;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fafafa;
+  cursor: pointer;
+}
+
+.paired-device-item:hover {
+  background: #f1f5fb;
+}
+
+.paired-device-item:focus {
+  border-color: #1a73e8;
+  outline: 2px solid rgba(26, 115, 232, 0.18);
+}
+
+.paired-device-item.selected {
+  border-color: #1a73e8;
+  background: #eef5ff;
+}
+
+.paired-device-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.paired-device-summary strong {
+  min-width: 0;
+  color: #202124;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.paired-device-status {
+  flex: 0 0 auto;
+  color: #5f6368;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.paired-device-status.selected {
+  color: #188038;
+}
+
+.paired-device-address {
+  color: #3c4043;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.paired-device-meta {
+  display: grid;
+  gap: 3px;
+  color: #5f6368;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.paired-device-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.set-current-device,
+.delete-paired-device {
+  justify-self: start;
+  min-height: 30px;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+.set-current-device:disabled {
+  cursor: default;
+}
+
+.delete-paired-device {
+  border-color: #f3c6c2;
+  background: #fce8e6;
+  color: #a50e0e;
+}
+
+.delete-paired-device:hover {
+  background: #fad2cf;
+}
+
 .pairing-card {
   display: grid;
   gap: 10px;
@@ -229,6 +348,27 @@ select:focus {
 .fields {
   display: grid;
   gap: 10px;
+}
+
+.manual-compat-card {
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #ffffff;
+}
+
+.manual-compat-card summary {
+  color: #3c4043;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.manual-compat-note {
+  margin: 8px 0 10px;
+  color: #5f6368;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .field {

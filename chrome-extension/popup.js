@@ -42,6 +42,7 @@ const deviceName = document.getElementById("device-name");
 const deviceAddress = document.getElementById("device-address");
 const deviceTokenStatus = document.getElementById("device-token-status");
 const lastSuccess = document.getElementById("last-success");
+const pairedDevicesList = document.getElementById("paired-devices-list");
 const pairingHostInput = document.getElementById("pairing-host");
 const pairingPortInput = document.getElementById("pairing-port");
 const checkPhoneButton = document.getElementById("check-phone");
@@ -125,6 +126,7 @@ function init() {
       protectionMethodSelect.value = protectionMethod;
       updateEndpointPreview();
       updateDeviceCard();
+      updatePairedDevicesList();
       updateProtectionStatus();
       updateWebAuthnStatus();
       updateProtectionMethodOptions();
@@ -137,6 +139,8 @@ function init() {
   tokenInput.addEventListener("input", saveTokenIfRemembered);
   rememberTokenInput.addEventListener("change", handleRememberTokenChange);
   clearSavedTokenButton.addEventListener("click", clearSavedToken);
+  pairedDevicesList.addEventListener("click", handlePairedDevicesClick);
+  pairedDevicesList.addEventListener("keydown", handlePairedDevicesKeyDown);
   pairingHostInput.addEventListener("input", handlePairingInput);
   pairingHostInput.addEventListener("blur", normalizePairingFields);
   pairingPortInput.addEventListener("input", handlePairingInput);
@@ -176,6 +180,91 @@ function normalizeConnectionFields() {
   updateEndpointPreview();
   saveConnectionSettings();
   updateDeviceCard();
+}
+
+async function handlePairedDevicesClick(event) {
+  const deleteButton = event.target.closest("[data-delete-device-id]");
+  if (deleteButton) {
+    event.stopPropagation();
+    await deleteDevice(deleteButton.dataset.deleteDeviceId);
+    return;
+  }
+
+  const button = event.target.closest("[data-select-device-id]");
+  if (!button) {
+    return;
+  }
+
+  await selectDevice(button.dataset.selectDeviceId);
+}
+
+async function handlePairedDevicesKeyDown(event) {
+  if (event.target.closest("[data-delete-device-id]")) {
+    return;
+  }
+
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  const item = event.target.closest("[data-select-device-id]");
+  if (!item) {
+    return;
+  }
+
+  event.preventDefault();
+  await selectDevice(item.dataset.selectDeviceId);
+}
+
+async function selectDevice(deviceId) {
+  if (!devices.some((device) => device.id === deviceId)) {
+    showResult("设备不存在", true);
+    return;
+  }
+
+  selectedDeviceId = deviceId;
+  await setStorage({ selectedDeviceId });
+  updateEndpointPreview();
+  updateDeviceCard();
+  updatePairedDevicesList();
+  showResult("已切换当前手机", false);
+}
+
+async function deleteDevice(deviceId) {
+  const device = devices.find((candidate) => candidate.id === deviceId);
+  if (!device) {
+    showResult("设备不存在", true);
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `删除已配对手机“${device.name || "Android Phone"}”？这只会删除 Chrome 插件本地保存的设备和 token，不会撤销手机端授权。`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    await requireSensitiveVerification("验证后才能删除已配对手机。");
+
+    devices = devices.filter((candidate) => candidate.id !== deviceId);
+    if (selectedDeviceId === deviceId) {
+      selectedDeviceId = devices[0]?.id || "";
+    }
+
+    await setStorage({
+      devices,
+      selectedDeviceId
+    });
+
+    updateEndpointPreview();
+    updateDeviceCard();
+    updatePairedDevicesList();
+    showResult("已删除已配对手机", false);
+  } catch (error) {
+    showResult(getFriendlyErrorMessage(error), true);
+  }
 }
 
 function handlePairingInput() {
@@ -384,6 +473,7 @@ async function saveAcceptedDevice(pairingResult, target) {
 
   updateEndpointPreview();
   updateDeviceCard();
+  updatePairedDevicesList();
 }
 
 function upsertDevice(currentDevices, nextDevice) {
@@ -1156,6 +1246,81 @@ function updateDeviceCard() {
   lastSuccess.textContent = `上次成功：${lastSuccessAt ? formatDateTime(lastSuccessAt) : "暂无"}`;
 }
 
+function updatePairedDevicesList() {
+  pairedDevicesList.replaceChildren();
+
+  if (devices.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "paired-devices-empty";
+    empty.textContent = "暂无已配对手机。请在手机 App 开启电脑插件配对模式后添加。";
+    pairedDevicesList.append(empty);
+    return;
+  }
+
+  devices.forEach((device) => {
+    const isSelected = device.id === selectedDeviceId;
+    const item = document.createElement("div");
+    item.className = "paired-device-item";
+    item.classList.toggle("selected", isSelected);
+    item.dataset.selectDeviceId = device.id;
+    item.tabIndex = 0;
+    item.setAttribute("role", "button");
+    item.setAttribute("aria-current", isSelected ? "true" : "false");
+
+    const summary = document.createElement("div");
+    summary.className = "paired-device-summary";
+
+    const title = document.createElement("strong");
+    title.textContent = device.name || "Android Phone";
+
+    const status = document.createElement("span");
+    status.className = "paired-device-status";
+    status.classList.toggle("selected", isSelected);
+    status.textContent = isSelected ? "当前" : "未选中";
+
+    summary.append(title, status);
+
+    const address = document.createElement("div");
+    address.className = "paired-device-address";
+    address.textContent = formatAddress(device.host, device.port);
+
+    const meta = document.createElement("div");
+    meta.className = "paired-device-meta";
+    meta.append(
+      createDeviceMetaLine("配对", device.pairedAt),
+      createDeviceMetaLine("上次成功", device.lastSuccessAt)
+    );
+
+    const actions = document.createElement("div");
+    actions.className = "paired-device-actions";
+
+    const selectAction = document.createElement("button");
+    selectAction.type = "button";
+    selectAction.className = "set-current-device";
+    selectAction.dataset.selectDeviceId = device.id;
+    selectAction.disabled = isSelected;
+    selectAction.textContent = isSelected ? "当前设备" : "设为当前";
+
+    const deleteAction = document.createElement("button");
+    deleteAction.type = "button";
+    deleteAction.className = "delete-paired-device";
+    deleteAction.dataset.deleteDeviceId = device.id;
+    deleteAction.textContent = "删除";
+    deleteAction.setAttribute("aria-label", `删除 ${device.name || "Android Phone"}`);
+
+    actions.append(selectAction, deleteAction);
+
+    item.append(summary, address, meta, actions);
+    pairedDevicesList.append(item);
+  });
+}
+
+function createDeviceMetaLine(label, value) {
+  const line = document.createElement("span");
+  line.textContent = `${label}: ${value ? formatDateTime(value) : "暂无"}`;
+  return line;
+}
+
 function formatAddress(host, port) {
   const displayHost = host || "未设置";
   const displayPort = isValidPort(port) ? port : DEFAULT_PORT;
@@ -1205,6 +1370,7 @@ function saveLastSuccessAt() {
   }
 
   updateDeviceCard();
+  updatePairedDevicesList();
 }
 
 function formatDateTime(value) {

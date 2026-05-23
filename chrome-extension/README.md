@@ -1,14 +1,16 @@
-# Local Find Chrome Extension MVP-L.2
+# Local Find Chrome Extension MVP-L.3
 
 This directory contains the minimal Chrome extension control entry for the Local Find Android HTTP service.
 
-L.2 adds one-phone pairing from the Chrome extension using the Android pairing mode endpoints. The user still enters the phone IP address once, confirms the request on the phone, and the extension saves the paired phone in `devices[]` for later commands.
+L.3 adds the Chrome extension paired-phone history list and current target switching. The user still enters a phone IP address when pairing a new phone, confirms the request on the phone, and then selects a saved paired phone as the command target.
 
 ## Scope
 
 - Adds only a Chrome extension popup.
 - Uses the existing Android HTTP protocol.
 - Supports adding one Android phone through phone-side pairing mode and confirmation.
+- Shows historical paired phones from `chrome.storage.local.devices[]`.
+- Supports switching `selectedDeviceId` from the paired-phone list.
 - Does not implement automatic discovery, QR codes, Native Messaging, a local PC service, cloud services, accounts, location, or background scanning.
 - Keeps legacy host/port/token storage for compatibility.
 
@@ -16,7 +18,7 @@ L.2 adds one-phone pairing from the Chrome extension using the Android pairing m
 
 - `manifest.json` - Manifest V3 extension declaration.
 - `popup.html` - Popup UI.
-- `popup.js` - Request handling, pairing flow, local host/port compatibility, and selected-device persistence.
+- `popup.js` - Request handling, pairing flow, paired-device list rendering, switching, local host/port compatibility, and selected-device persistence.
 - `popup.css` - Popup styling.
 
 ## Permissions
@@ -37,9 +39,10 @@ It does not request `history`, `cookies`, `tabs`, `scripting`, `webRequest`, `cl
 5. In the popup's `添加手机` section, enter the phone host and port, then click `检查手机`.
 6. Click `请求配对`, then accept the request on the phone.
 7. After acceptance, the extension stores the phone in `devices[]` and uses it as `selectedDeviceId`.
-8. Recommended path: open the extension, click `一键找手机`, let the phone ring and flash, then click `停止全部` after finding the phone.
-9. Use `开始闪光` when visual feedback is useful.
-10. Use `打开诊断页` to open the Android service page in the browser.
+8. Use `已配对手机` to review saved paired phones and switch the current target.
+9. Recommended path: open the extension, click `一键找手机`, let the phone ring and flash, then click `停止全部` after finding the phone.
+10. Use `开始闪光` when visual feedback is useful.
+11. Use `打开诊断页` to open the Android service page in the browser.
 
 `一键找手机` is equivalent to starting ring plus strobe flash in sequence.
 
@@ -49,15 +52,19 @@ The host field accepts plain hosts such as `192.168.1.108` and also tolerates pa
 
 The current device card shows the selected paired device name, `host:port`, pairing/token status, and per-device `lastSuccessAt`. If no selected paired device is available, it shows the current manual host/port mode.
 
+The `已配对手机` list reads from `chrome.storage.local.devices[]`. Each item shows name, `host:port`, `pairedAt`, `lastSuccessAt`, and whether it is the current target. Clicking an item or `设为当前` updates `selectedDeviceId`; later commands use that device token when host, port, and token are available.
+
+The `删除` button removes that paired phone from Chrome extension local storage, including the saved control token. If the deleted phone was the current target, the extension selects the next saved phone when available; otherwise it falls back to manual mode. This local delete does not revoke the Android-side token.
+
 ## Pairing
 
-- L.2 uses manual seed discovery: the user enters the phone IP address and port once.
+- L.3 keeps manual seed discovery: the user enters the phone IP address and port when adding a phone.
 - `检查手机` calls `GET /device-info` and shows device name, device id, `pairingMode`, and service state.
 - If `pairingMode=false`, the popup prompts the user to enable computer plugin pairing mode in the phone app.
 - `请求配对` calls `POST /pairing/request` with the persistent `controllerId`, `controllerName: "Chrome on Windows"`, `controllerType: "chrome_extension"`, and a nonce.
 - The popup polls `GET /pairing/status?requestId=...` until the request is accepted, rejected, or expired.
-- On acceptance, the popup saves or updates the device in `chrome.storage.local.devices[]` and sets `selectedDeviceId`.
-- L.2 does not provide full multi-device switching, delete UI, sorting, QR code pairing, or automatic LAN scanning.
+- On acceptance, the popup saves or updates the device in `chrome.storage.local.devices[]`, sets `selectedDeviceId`, and refreshes the paired-phone list.
+- L.3 provides local paired-phone deletion in the Chrome extension. Android-side token revocation, re-pair buttons, sorting, QR code pairing, and automatic LAN scanning are still out of scope.
 
 ## Local Protection PIN
 
@@ -88,6 +95,7 @@ The current device card shows the selected paired device name, `host:port`, pair
 - Use `清除已保存 Token` to clear the input, remove `savedToken`, and turn off `rememberToken`.
 - If the phone token is reset, enter the new token and check `记住此电脑上的 Token` again if you still want this computer to remember it.
 - Paired-device `controlToken` is saved in `devices[]` after phone-side acceptance so commands can target the selected paired phone.
+- The folded `高级：手动 Host/Token 兼容模式` section is only a fallback for old 8-character Token compatibility or temporary debugging. Paired devices are preferred whenever the selected device has host, port, and token.
 
 ## Troubleshooting
 
