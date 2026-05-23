@@ -215,6 +215,57 @@ class HttpServerManager(
                     }
                 }
 
+                post("/pairing/revoke") {
+                    authenticate {
+                        val rawBody = try {
+                            call.receiveText()
+                        } catch (e: Exception) {
+                            Log.e("HttpServerManager", "Failed to receive text from revoke request", e)
+                            ""
+                        }
+
+                        val controllerId = try {
+                            if (rawBody.isBlank()) {
+                                ""
+                            } else {
+                                JSONObject(rawBody).optString("controllerId").trim()
+                            }
+                        } catch (e: Exception) {
+                            Log.e("HttpServerManager", "Invalid revoke request body: '$rawBody'", e)
+                            call.respond(
+                                HttpStatusCode.BadRequest,
+                                buildJsonObject {
+                                    put("ok", false)
+                                    put("message", "Invalid revoke request body")
+                                    put("error", e.message ?: "unknown")
+                                }
+                            )
+                            return@authenticate
+                        }
+
+                        if (controllerId.isBlank()) {
+                            call.respond(
+                                HttpStatusCode.BadRequest,
+                                buildJsonObject {
+                                    put("ok", false)
+                                    put("message", "controllerId is required")
+                                }
+                            )
+                            return@authenticate
+                        }
+
+                        val revoked = pairedControllerTokenStore.revokeByControllerId(controllerId)
+                        onStatusChange()
+
+                        call.respond(
+                            buildJsonObject {
+                                put("ok", true)
+                                put("revoked", revoked)
+                            }
+                        )
+                    }
+                }
+
                 // GET / - Browser control page
                 get("/") {
                     val deviceName = android.os.Build.MODEL

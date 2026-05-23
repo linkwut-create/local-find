@@ -35,6 +35,16 @@ class PairedControllerTokenStore(context: Context) {
     @Synchronized
     fun getAll(): List<PairedControllerToken> = loadAll()
 
+    @Synchronized
+    fun revokeByControllerId(controllerId: String): Boolean {
+        if (controllerId.isBlank()) return false
+        val existing = loadAll()
+        val updated = existing.filterNot { it.controllerId == controllerId }
+        if (updated.size == existing.size) return false
+        saveAll(updated)
+        return true
+    }
+
     private fun generateControlToken(): String {
         val bytes = ByteArray(32)
         secureRandom.nextBytes(bytes)
