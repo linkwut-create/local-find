@@ -40,15 +40,23 @@
           <input id="local-pin" name="local-pin" type="password" minlength="4" maxlength="12" inputmode="numeric" autocomplete="off" placeholder="设置 4-12 位 PIN">
           <button id="set-local-pin" type="button">设置本地保护 PIN</button>
         </div>
+        <label class="protection-method">
+          <span>保护方式</span>
+          <select id="protection-method" name="protection-method">
+            <option value="pin">本地 PIN</option>
+            <option value="webauthn">系统验证</option>
+            <option value="webauthn-or-pin">系统验证失败时使用本地 PIN</option>
+          </select>
+        </label>
         <button id="disable-protection" type="button" class="text-action">关闭保护锁</button>
       </section>
 
-      <section class="webauthn-card" aria-label="Experimental system verification">
+      <section class="webauthn-card" aria-label="System verification">
         <div class="webauthn-header">
-          <span>实验：系统验证</span>
+          <span>系统验证</span>
           <strong id="webauthn-status">未注册</strong>
         </div>
-        <p>这是实验功能，不替代本地 PIN。</p>
+        <p>可作为保护方式，本地 PIN 仍保留。</p>
         <p>可能触发 Windows Hello / 平台认证器。</p>
         <p>不保存系统密码。</p>
         <div class="webauthn-actions">

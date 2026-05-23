@@ -7,6 +7,9 @@ const PROTECTED_COMMANDS = new Set(["find-phone", "flash-start"]);
 const MIN_PIN_LENGTH = 4;
 const MAX_PIN_LENGTH = 12;
 const PIN_HASH_ITERATIONS = 100000;
+const PROTECTION_METHOD_PIN = "pin";
+const PROTECTION_METHOD_WEBAUTHN = "webauthn";
+const PROTECTION_METHOD_WEBAUTHN_OR_PIN = "webauthn-or-pin";
 
 const COMMANDS = {
   status: { method: "GET", path: "/status", label: "检查状态" },
@@ -27,6 +30,7 @@ const clearSavedTokenButton = document.getElementById("clear-saved-token");
 const localPinInput = document.getElementById("local-pin");
 const setLocalPinButton = document.getElementById("set-local-pin");
 const disableProtectionButton = document.getElementById("disable-protection");
+const protectionMethodSelect = document.getElementById("protection-method");
 const registerWebAuthnButton = document.getElementById("register-webauthn");
 const testWebAuthnButton = document.getElementById("test-webauthn");
 const resultOutput = document.getElementById("result");
@@ -51,6 +55,7 @@ let localPinSalt = "";
 let localPinHash = "";
 let webauthnEnabled = false;
 let webauthnCredentialId = "";
+let protectionMethod = PROTECTION_METHOD_PIN;
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -66,7 +71,8 @@ function init() {
       localPinSalt: "",
       localPinHash: "",
       webauthnEnabled: false,
-      webauthnCredentialId: ""
+      webauthnCredentialId: "",
+      protectionMethod: PROTECTION_METHOD_PIN
     },
     ({
       host,
@@ -78,7 +84,8 @@ function init() {
       localPinSalt: savedLocalPinSalt,
       localPinHash: savedLocalPinHash,
       webauthnEnabled: savedWebAuthnEnabled,
-      webauthnCredentialId: savedWebAuthnCredentialId
+      webauthnCredentialId: savedWebAuthnCredentialId,
+      protectionMethod: savedProtectionMethod
     }) => {
       hostInput.value = host || "";
       portInput.value = String(port || DEFAULT_PORT);
@@ -91,10 +98,13 @@ function init() {
       localPinHash = savedLocalPinHash || "";
       webauthnEnabled = savedWebAuthnEnabled === true;
       webauthnCredentialId = savedWebAuthnCredentialId || "";
+      protectionMethod = normalizeProtectionMethod(savedProtectionMethod);
+      protectionMethodSelect.value = protectionMethod;
       updateEndpointPreview();
       updateDeviceCard();
       updateProtectionStatus();
       updateWebAuthnStatus();
+      updateProtectionMethodOptions();
     }
   );
 
@@ -106,6 +116,7 @@ function init() {
   clearSavedTokenButton.addEventListener("click", clearSavedToken);
   setLocalPinButton.addEventListener("click", setLocalPin);
   disableProtectionButton.addEventListener("click", disableProtection);
+  protectionMethodSelect.addEventListener("change", handleProtectionMethodChange);
   registerWebAuthnButton.addEventListener("click", registerWebAuthn);
   testWebAuthnButton.addEventListener("click", testWebAuthn);
 
@@ -143,7 +154,7 @@ async function handleRememberTokenChange() {
   const shouldRemember = rememberTokenInput.checked;
 
   try {
-    await requireLocalVerification("验证后才能修改 Token 保存设置。");
+    await requireSensitiveVerification("验证后才能修改 Token 保存设置。");
 
     if (shouldRemember) {
       rememberTokenState = true;
@@ -173,7 +184,7 @@ async function saveTokenIfRemembered() {
   }
 
   try {
-    await requireLocalVerification("验证后才能保存 Token。");
+    await requireSensitiveVerification("验证后才能保存 Token。");
     chrome.storage.local.set({
       rememberToken: true,
       savedToken: tokenInput.value
@@ -186,7 +197,7 @@ async function saveTokenIfRemembered() {
 
 async function clearSavedToken() {
   try {
-    await requireLocalVerification("验证后才能清除已保存 Token。");
+    await requireSensitiveVerification("验证后才能清除已保存 Token。");
     tokenInput.value = "";
     rememberTokenInput.checked = false;
     rememberTokenState = false;
@@ -206,7 +217,7 @@ async function setLocalPin() {
 
   try {
     if (protectionEnabled) {
-      await requireLocalVerification("验证当前 PIN 后才能更新保护 PIN。");
+      await requireSensitiveVerification("验证当前 PIN 后才能更新保护 PIN。");
     }
 
     validatePin(pin);
@@ -235,7 +246,7 @@ async function disableProtection() {
   }
 
   try {
-    await requireLocalVerification("请输入当前 PIN 以关闭保护锁。");
+    await requireSensitiveVerification("请输入当前 PIN 以关闭保护锁。");
     protectionEnabled = false;
     localPinSalt = "";
     localPinHash = "";
@@ -248,6 +259,20 @@ async function disableProtection() {
   } catch (error) {
     showResult(getFriendlyErrorMessage(error), true);
   }
+}
+
+async function handleProtectionMethodChange() {
+  const nextMethod = normalizeProtectionMethod(protectionMethodSelect.value);
+
+  if (requiresWebAuthn(nextMethod) && !hasWebAuthnCredential()) {
+    protectionMethodSelect.value = protectionMethod;
+    showResult("请先注册系统验证", true);
+    return;
+  }
+
+  protectionMethod = nextMethod;
+  chrome.storage.local.set({ protectionMethod });
+  showResult(`保护方式已设置为：${getProtectionMethodLabel(protectionMethod)}`, false);
 }
 
 async function registerWebAuthn() {
@@ -288,6 +313,7 @@ async function registerWebAuthn() {
       webauthnCredentialId
     });
     updateWebAuthnStatus();
+    updateProtectionMethodOptions();
     showResult("系统验证已注册", false);
   } catch (error) {
     showResult(getWebAuthnErrorMessage(error, "系统验证注册失败"), true);
@@ -301,19 +327,7 @@ async function testWebAuthn() {
       throw new Error("请先注册系统验证");
     }
 
-    await navigator.credentials.get({
-      publicKey: {
-        challenge: randomBytes(32),
-        allowCredentials: [
-          {
-            type: "public-key",
-            id: base64UrlToBytes(webauthnCredentialId)
-          }
-        ],
-        userVerification: "required",
-        timeout: 60000
-      }
-    });
+    await performWebAuthnVerification();
 
     showResult("系统验证通过", false);
   } catch (error) {
@@ -327,12 +341,100 @@ function ensureWebAuthnSupport() {
   }
 }
 
+async function performWebAuthnVerification() {
+  ensureWebAuthnSupport();
+  if (!hasWebAuthnCredential()) {
+    throw new Error("请先注册系统验证");
+  }
+
+  await navigator.credentials.get({
+    publicKey: {
+      challenge: randomBytes(32),
+      allowCredentials: [
+        {
+          type: "public-key",
+          id: base64UrlToBytes(webauthnCredentialId)
+        }
+      ],
+      userVerification: "required",
+      timeout: 60000
+    }
+  });
+}
+
+function hasWebAuthnCredential() {
+  return webauthnEnabled && Boolean(webauthnCredentialId);
+}
+
+function requiresWebAuthn(method) {
+  return method === PROTECTION_METHOD_WEBAUTHN || method === PROTECTION_METHOD_WEBAUTHN_OR_PIN;
+}
+
+function normalizeProtectionMethod(method) {
+  if (
+    method === PROTECTION_METHOD_WEBAUTHN ||
+    method === PROTECTION_METHOD_WEBAUTHN_OR_PIN ||
+    method === PROTECTION_METHOD_PIN
+  ) {
+    return method;
+  }
+
+  return PROTECTION_METHOD_PIN;
+}
+
+function getProtectionMethodLabel(method) {
+  if (method === PROTECTION_METHOD_WEBAUTHN) {
+    return "系统验证";
+  }
+
+  if (method === PROTECTION_METHOD_WEBAUTHN_OR_PIN) {
+    return "系统验证失败时使用本地 PIN";
+  }
+
+  return "本地 PIN";
+}
+
 async function requireProtectedCommand(commandName) {
   if (!PROTECTED_COMMANDS.has(commandName)) {
     return;
   }
 
-  await requireLocalVerification("请输入本地保护 PIN 以继续。");
+  await requireSensitiveVerification("请输入验证以继续。");
+}
+
+async function requireSensitiveVerification(message) {
+  if (!protectionEnabled) {
+    return;
+  }
+
+  if (protectionMethod === PROTECTION_METHOD_WEBAUTHN) {
+    await requireWebAuthnForSensitiveAction();
+    return;
+  }
+
+  if (protectionMethod === PROTECTION_METHOD_WEBAUTHN_OR_PIN) {
+    try {
+      await requireWebAuthnForSensitiveAction();
+      return;
+    } catch {
+      await requireLocalVerification("系统验证未通过，可输入本地 PIN 继续。");
+      return;
+    }
+  }
+
+  await requireLocalVerification(message || "请输入本地保护 PIN 以继续。");
+}
+
+async function requireWebAuthnForSensitiveAction() {
+  if (!hasWebAuthnCredential()) {
+    throw new Error("请先注册系统验证");
+  }
+
+  try {
+    await performWebAuthnVerification();
+  } catch (error) {
+    throw new Error(getWebAuthnErrorMessage(error, "系统验证失败"));
+  }
 }
 
 async function requireLocalVerification(message) {
@@ -676,8 +778,23 @@ function updateProtectionStatus() {
 }
 
 function updateWebAuthnStatus() {
-  webauthnStatus.textContent = webauthnEnabled && webauthnCredentialId ? "已注册" : "未注册";
-  webauthnStatus.classList.toggle("enabled", webauthnEnabled && Boolean(webauthnCredentialId));
+  webauthnStatus.textContent = hasWebAuthnCredential() ? "已注册" : "未注册";
+  webauthnStatus.classList.toggle("enabled", hasWebAuthnCredential());
+}
+
+function updateProtectionMethodOptions() {
+  const hasCredential = hasWebAuthnCredential();
+  Array.from(protectionMethodSelect.options).forEach((option) => {
+    if (requiresWebAuthn(option.value)) {
+      option.disabled = !hasCredential;
+    }
+  });
+
+  if (requiresWebAuthn(protectionMethod) && !hasCredential) {
+    protectionMethod = PROTECTION_METHOD_PIN;
+    protectionMethodSelect.value = protectionMethod;
+    chrome.storage.local.set({ protectionMethod });
+  }
 }
 
 function saveLastSuccessAt() {

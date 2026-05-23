@@ -116,6 +116,31 @@ h1 {
   gap: 8px;
 }
 
+.protection-method {
+  display: grid;
+  gap: 5px;
+  color: #3c4043;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+select {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #dadce0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #ffffff;
+  color: #202124;
+  font: inherit;
+  font-weight: 400;
+}
+
+select:focus {
+  border-color: #1a73e8;
+  outline: 2px solid rgba(26, 115, 232, 0.18);
+}
+
 .webauthn-card {
   display: grid;
   gap: 8px;

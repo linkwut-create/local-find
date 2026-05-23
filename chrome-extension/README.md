@@ -1,8 +1,8 @@
-# Local Find Chrome Extension MVP-K.5
+# Local Find Chrome Extension MVP-K.6
 
 This directory contains the minimal Chrome extension control entry for the Local Find Android HTTP service.
 
-K.5 focuses on the home, dorm, and office scenario: before going out, when the Android phone cannot be found nearby, open the computer's Chrome extension and click one primary action to make the phone ring and flash. On a trusted private computer, the user can explicitly choose to remember the token and protect sensitive actions with a local PIN. K.5 also adds an isolated WebAuthn / platform-authenticator experiment.
+K.6 focuses on the home, dorm, and office scenario: before going out, when the Android phone cannot be found nearby, open the computer's Chrome extension and click one primary action to make the phone ring and flash. On a trusted private computer, the user can explicitly choose to remember the token and protect sensitive actions with a local PIN, WebAuthn system verification, or WebAuthn with local PIN fallback.
 
 ## Scope
 
@@ -48,23 +48,23 @@ The current device card shows host, port, token saved status, and the last succe
 
 ## Local Protection PIN
 
-- The K.4 protection lock is a Chrome extension local PIN, not the Windows or macOS system password.
+- The local PIN protection lock is a Chrome extension local PIN, not the Windows or macOS system password.
 - PIN is not saved in plain text. The extension uses Web Crypto PBKDF2 with a generated salt and saves `localPinSalt`, `localPinHash`, and `protectionEnabled`.
-- Chrome extensions do not have a general system password verification API. True system-level verification would require a later WebAuthn or Native Messaging design.
 - Protection is off by default. Setting a PIN turns `protectionEnabled` on.
-- After protection is enabled, `一键找手机`, `开始闪光`, saved-token changes, and `清除已保存 Token` require local PIN verification. `停止全部` stays immediately available so the user can stop the phone after finding it.
-- After protection is enabled, every sensitive action requires entering the local PIN again.
-- Closing the protection lock requires entering the current PIN.
+- After protection is enabled, `一键找手机`, `开始闪光`, saved-token changes, and `清除已保存 Token` require the selected protection method. `停止全部` stays immediately available so the user can stop the phone after finding it.
+- After protection is enabled, every sensitive action requires fresh verification.
+- Closing the protection lock requires the selected protection method.
 
-## WebAuthn Experiment
+## Protection Methods
 
-- K.5 adds an experimental `系统验证` section to test whether the Chrome extension popup can use WebAuthn / a platform authenticator.
-- WebAuthn / Windows Hello is not the computer login password. It is a browser platform-authenticator capability.
-- Registration may trigger Windows Hello or another platform authenticator, depending on the browser and operating system.
-- The experiment stores only the minimal credential reference fields, including `webauthnEnabled` and `webauthnCredentialId`.
-- It does not save any system password.
-- It is currently only a test path and does not protect real commands.
-- The K.4 local PIN remains the formal protection path for Local Find commands and token operations.
+- K.6 supports three protection methods: local PIN, system verification, and system verification with local PIN fallback.
+- Local PIN remains the default, so existing users continue with the K.4 behavior.
+- System verification uses WebAuthn / the browser platform authenticator. It is not the Windows or macOS login password.
+- Registration or verification may trigger Windows Hello or another platform authenticator, depending on the browser and operating system.
+- System verification stores only the minimal credential reference fields, including `webauthnEnabled`, `webauthnCredentialId`, and `protectionMethod`.
+- It does not save any system password and does not connect WebAuthn to any network service.
+- Every sensitive action triggers a fresh verification; no verified state is saved.
+- `停止全部` always stays immediately available and does not require PIN or system verification.
 
 ## Token Storage
 
