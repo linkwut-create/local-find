@@ -14,6 +14,8 @@ const NETWORK_ERROR_MESSAGE = "无法连接手机服务。请检查手机和电�
 const hostInput = document.getElementById("host");
 const portInput = document.getElementById("port");
 const tokenInput = document.getElementById("token");
+const rememberTokenInput = document.getElementById("remember-token");
+const clearSavedTokenButton = document.getElementById("clear-saved-token");
 const resultOutput = document.getElementById("result");
 const endpointPreview = document.getElementById("endpoint-preview");
 const buttons = Array.from(document.querySelectorAll("[data-command]"));
@@ -21,15 +23,23 @@ const buttons = Array.from(document.querySelectorAll("[data-command]"));
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
-  chrome.storage.local.get({ host: "", port: DEFAULT_PORT }, ({ host, port }) => {
-    hostInput.value = host || "";
-    portInput.value = String(port || DEFAULT_PORT);
-    updateEndpointPreview();
-  });
+  chrome.storage.local.get(
+    { host: "", port: DEFAULT_PORT, rememberToken: false, savedToken: "" },
+    ({ host, port, rememberToken, savedToken }) => {
+      hostInput.value = host || "";
+      portInput.value = String(port || DEFAULT_PORT);
+      rememberTokenInput.checked = rememberToken === true;
+      tokenInput.value = rememberToken === true ? savedToken || "" : "";
+      updateEndpointPreview();
+    }
+  );
 
   hostInput.addEventListener("input", handleConnectionInput);
   hostInput.addEventListener("blur", normalizeConnectionFields);
   portInput.addEventListener("input", handleConnectionInput);
+  tokenInput.addEventListener("input", saveTokenIfRemembered);
+  rememberTokenInput.addEventListener("change", handleRememberTokenChange);
+  clearSavedTokenButton.addEventListener("click", clearSavedToken);
 
   buttons.forEach((button) => {
     button.addEventListener("click", () => handleButtonClick(button.dataset.command));
@@ -57,6 +67,41 @@ function normalizeConnectionFields() {
   portInput.value = connection.port;
   updateEndpointPreview();
   saveConnectionSettings();
+}
+
+function handleRememberTokenChange() {
+  if (rememberTokenInput.checked) {
+    chrome.storage.local.set({
+      rememberToken: true,
+      savedToken: tokenInput.value
+    });
+    return;
+  }
+
+  chrome.storage.local.set({ rememberToken: false }, () => {
+    chrome.storage.local.remove("savedToken");
+  });
+}
+
+function saveTokenIfRemembered() {
+  if (!rememberTokenInput.checked) {
+    return;
+  }
+
+  chrome.storage.local.set({
+    rememberToken: true,
+    savedToken: tokenInput.value
+  });
+}
+
+function clearSavedToken() {
+  tokenInput.value = "";
+  rememberTokenInput.checked = false;
+  chrome.storage.local.set({ rememberToken: false }, () => {
+    chrome.storage.local.remove("savedToken", () => {
+      showResult("已清除已保存 Token", false);
+    });
+  });
 }
 
 async function handleButtonClick(commandName) {
