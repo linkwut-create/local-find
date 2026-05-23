@@ -18,3 +18,15 @@ coverage/
 # Local machine files
 local.properties
 android/local.properties
+
+# Local LLM and audit artifacts
+.local_llm_out/
+.mcp_audit/
+
+# Release and test directories (outside repo but kept safe)
+local-find-release/
+local-find-release-test/
+
+# Archive and patch files
+*.zip
+*.patch
