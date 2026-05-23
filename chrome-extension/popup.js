@@ -27,6 +27,8 @@ const clearSavedTokenButton = document.getElementById("clear-saved-token");
 const localPinInput = document.getElementById("local-pin");
 const setLocalPinButton = document.getElementById("set-local-pin");
 const disableProtectionButton = document.getElementById("disable-protection");
+const registerWebAuthnButton = document.getElementById("register-webauthn");
+const testWebAuthnButton = document.getElementById("test-webauthn");
 const resultOutput = document.getElementById("result");
 const endpointPreview = document.getElementById("endpoint-preview");
 const deviceHost = document.getElementById("device-host");
@@ -34,6 +36,7 @@ const devicePort = document.getElementById("device-port");
 const deviceTokenStatus = document.getElementById("device-token-status");
 const lastSuccess = document.getElementById("last-success");
 const protectionStatus = document.getElementById("protection-status");
+const webauthnStatus = document.getElementById("webauthn-status");
 const pinModal = document.getElementById("pin-modal");
 const pinModalMessage = document.getElementById("pin-modal-message");
 const verifyPinInput = document.getElementById("verify-pin");
@@ -46,6 +49,8 @@ let rememberTokenState = false;
 let protectionEnabled = false;
 let localPinSalt = "";
 let localPinHash = "";
+let webauthnEnabled = false;
+let webauthnCredentialId = "";
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -59,7 +64,9 @@ function init() {
       lastSuccessAt: "",
       protectionEnabled: false,
       localPinSalt: "",
-      localPinHash: ""
+      localPinHash: "",
+      webauthnEnabled: false,
+      webauthnCredentialId: ""
     },
     ({
       host,
@@ -69,7 +76,9 @@ function init() {
       lastSuccessAt: savedLastSuccessAt,
       protectionEnabled: savedProtectionEnabled,
       localPinSalt: savedLocalPinSalt,
-      localPinHash: savedLocalPinHash
+      localPinHash: savedLocalPinHash,
+      webauthnEnabled: savedWebAuthnEnabled,
+      webauthnCredentialId: savedWebAuthnCredentialId
     }) => {
       hostInput.value = host || "";
       portInput.value = String(port || DEFAULT_PORT);
@@ -80,9 +89,12 @@ function init() {
       protectionEnabled = savedProtectionEnabled === true;
       localPinSalt = savedLocalPinSalt || "";
       localPinHash = savedLocalPinHash || "";
+      webauthnEnabled = savedWebAuthnEnabled === true;
+      webauthnCredentialId = savedWebAuthnCredentialId || "";
       updateEndpointPreview();
       updateDeviceCard();
       updateProtectionStatus();
+      updateWebAuthnStatus();
     }
   );
 
@@ -94,6 +106,8 @@ function init() {
   clearSavedTokenButton.addEventListener("click", clearSavedToken);
   setLocalPinButton.addEventListener("click", setLocalPin);
   disableProtectionButton.addEventListener("click", disableProtection);
+  registerWebAuthnButton.addEventListener("click", registerWebAuthn);
+  testWebAuthnButton.addEventListener("click", testWebAuthn);
 
   buttons.forEach((button) => {
     button.addEventListener("click", () => handleButtonClick(button.dataset.command));
@@ -236,6 +250,83 @@ async function disableProtection() {
   }
 }
 
+async function registerWebAuthn() {
+  try {
+    ensureWebAuthnSupport();
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge: randomBytes(32),
+        rp: {
+          name: "Local Find"
+        },
+        user: {
+          id: randomBytes(32),
+          name: "local-find-extension-user",
+          displayName: "Local Find"
+        },
+        pubKeyCredParams: [
+          { type: "public-key", alg: -7 },
+          { type: "public-key", alg: -257 }
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: "platform",
+          userVerification: "required"
+        },
+        timeout: 60000,
+        attestation: "none"
+      }
+    });
+
+    if (!credential || !credential.rawId) {
+      throw new Error("系统验证注册未返回凭据");
+    }
+
+    webauthnEnabled = true;
+    webauthnCredentialId = arrayBufferToBase64Url(credential.rawId);
+    chrome.storage.local.set({
+      webauthnEnabled: true,
+      webauthnCredentialId
+    });
+    updateWebAuthnStatus();
+    showResult("系统验证已注册", false);
+  } catch (error) {
+    showResult(getWebAuthnErrorMessage(error, "系统验证注册失败"), true);
+  }
+}
+
+async function testWebAuthn() {
+  try {
+    ensureWebAuthnSupport();
+    if (!webauthnEnabled || !webauthnCredentialId) {
+      throw new Error("请先注册系统验证");
+    }
+
+    await navigator.credentials.get({
+      publicKey: {
+        challenge: randomBytes(32),
+        allowCredentials: [
+          {
+            type: "public-key",
+            id: base64UrlToBytes(webauthnCredentialId)
+          }
+        ],
+        userVerification: "required",
+        timeout: 60000
+      }
+    });
+
+    showResult("系统验证通过", false);
+  } catch (error) {
+    showResult(getWebAuthnErrorMessage(error, "系统验证失败"), true);
+  }
+}
+
+function ensureWebAuthnSupport() {
+  if (!navigator.credentials || typeof PublicKeyCredential === "undefined") {
+    throw new Error("当前浏览器/环境不支持 WebAuthn 平台验证");
+  }
+}
+
 async function requireProtectedCommand(commandName) {
   if (!PROTECTED_COMMANDS.has(commandName)) {
     return;
@@ -311,9 +402,7 @@ function validatePin(pin) {
 }
 
 function createSalt() {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return bytesToBase64(bytes);
+  return bytesToBase64(randomBytes(16));
 }
 
 async function hashPin(pin, salt) {
@@ -352,6 +441,28 @@ function base64ToBytes(value) {
     bytes[index] = binary.charCodeAt(index);
   }
   return bytes;
+}
+
+function randomBytes(length) {
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return bytes;
+}
+
+function arrayBufferToBase64Url(buffer) {
+  return bytesToBase64Url(new Uint8Array(buffer));
+}
+
+function bytesToBase64Url(bytes) {
+  return bytesToBase64(bytes)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function base64UrlToBytes(value) {
+  const padded = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  return base64ToBytes(padded);
 }
 
 async function handleButtonClick(commandName) {
@@ -564,6 +675,11 @@ function updateProtectionStatus() {
   disableProtectionButton.disabled = !protectionEnabled;
 }
 
+function updateWebAuthnStatus() {
+  webauthnStatus.textContent = webauthnEnabled && webauthnCredentialId ? "已注册" : "未注册";
+  webauthnStatus.classList.toggle("enabled", webauthnEnabled && Boolean(webauthnCredentialId));
+}
+
 function saveLastSuccessAt() {
   lastSuccessAt = new Date().toISOString();
   chrome.storage.local.set({ lastSuccessAt });
@@ -665,4 +781,18 @@ function getFriendlyErrorMessage(error) {
   }
 
   return message || "请求失败。请检查 IP、端口和手机服务状态。";
+}
+
+function getWebAuthnErrorMessage(error, fallback) {
+  const message = error?.message || "";
+
+  if (message === "当前浏览器/环境不支持 WebAuthn 平台验证" || message === "请先注册系统验证") {
+    return message;
+  }
+
+  if (error?.name === "NotAllowedError") {
+    return "已取消系统验证";
+  }
+
+  return `${fallback}：${message || error?.name || "未知错误"}`;
 }

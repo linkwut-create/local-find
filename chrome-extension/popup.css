@@ -116,6 +116,47 @@ h1 {
   gap: 8px;
 }
 
+.webauthn-card {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.webauthn-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #202124;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.webauthn-header strong {
+  color: #5f6368;
+  font-size: 12px;
+}
+
+.webauthn-header strong.enabled {
+  color: #188038;
+}
+
+.webauthn-card p {
+  margin: 0;
+  color: #5f6368;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.webauthn-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .fields {
   display: grid;
   gap: 10px;
