@@ -182,6 +182,9 @@ fun MainScreen(
                     discoveryStatus = discoveryStatus,
                     discoveredDevices = discoveredDevices,
                     tokenStore = remoteTokenStore,
+                    localDeviceId = localDeviceId,
+                    localIp = localIp,
+                    localPort = port,
                     onStartDiscovery = onStartDiscovery,
                     onStopDiscovery = onStopDiscovery,
                     onOpenBrowser = onOpenDevice,
@@ -288,7 +291,63 @@ fun FinderModeScreen(
             }
         }
 
-        // 1. Service Status Card
+        // 1. Service Controls Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                val statusColor by animateColorAsState(
+                    targetValue = if (isServiceRunning) Color(0xFF4CAF50) else Color(0xFFF44336),
+                    label = "serviceControlStatusColor"
+                )
+
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Surface(shape = androidx.compose.foundation.shape.CircleShape, color = statusColor, modifier = Modifier.size(12.dp)) {}
+                    Text(
+                        text = if (isServiceRunning) "正在监听 (Running)" else "未运行 (Stopped)",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(
+                        onClick = { onRequestPermission(); onStartService() },
+                        modifier = Modifier.weight(1f),
+                        enabled = !isServiceRunning
+                    ) {
+                        Text("启动服务", fontWeight = FontWeight.Bold)
+                    }
+                    Button(
+                        onClick = onStopService,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                        enabled = isServiceRunning
+                    ) {
+                        Text("停止服务", fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                if (isServiceRunning) {
+                    OutlinedButton(
+                        onClick = onRestartServer,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("重启 HTTP 服务 (手动故障恢复)", fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+
+        // 2. Service Status Detail Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -614,36 +673,7 @@ fun FinderModeScreen(
             }
         }
 
-        // 4. Service Controls
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(
-                onClick = { onRequestPermission(); onStartService() },
-                modifier = Modifier.weight(1f),
-                enabled = !isServiceRunning
-            ) {
-                Text("启动服务", fontWeight = FontWeight.Bold)
-            }
-            Button(
-                onClick = onStopService,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                enabled = isServiceRunning
-            ) {
-                Text("停止服务", fontWeight = FontWeight.Bold)
-            }
-        }
-        
-        if (isServiceRunning) {
-            OutlinedButton(
-                onClick = onRestartServer,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text("重启 HTTP 服务 (手动故障恢复)", fontSize = 12.sp)
-            }
-        }
-
-        // 4. Hardware Test Card
+        // 5. Hardware Test Card
         Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("硬件寻机外设测试 (本地)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
@@ -674,6 +704,9 @@ fun ControllerModeScreen(
     discoveryStatus: DiscoveryStatus,
     discoveredDevices: List<DiscoveredDevice>,
     tokenStore: RemoteDeviceTokenStore,
+    localDeviceId: String,
+    localIp: String?,
+    localPort: Int,
     onStartDiscovery: () -> Unit,
     onStopDiscovery: () -> Unit,
     onOpenBrowser: (DiscoveredDevice) -> Unit,
@@ -682,10 +715,18 @@ fun ControllerModeScreen(
 ) {
     var selectedDevice by remember { mutableStateOf<DiscoveredDevice?>(null) }
     var recentDevice by remember { mutableStateOf(tokenStore.getRecentDevice()) }
+    var savedDevices by remember { mutableStateOf(tokenStore.getSavedDevices()) }
     var isScanning by remember { mutableStateOf(false) }
     var initialScannedToken by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    val filteredDevices = remember(discoveredDevices, localDeviceId, localIp, localPort) {
+        discoveredDevices.filter { device ->
+            val isSameIpAndPort = localIp != null && device.host == localIp && device.port == localPort
+            !isSameIpAndPort
+        }
+    }
 
     // Manual Connection States
     var manualHost by remember { mutableStateOf("") }
@@ -698,11 +739,11 @@ fun ControllerModeScreen(
             device = selectedDevice!!,
             tokenStore = tokenStore,
             initialToken = initialScannedToken,
-            onBack = { 
-                selectedDevice = null 
+            onBack = {
+                selectedDevice = null
                 initialScannedToken = ""
-                // Refresh recent device when coming back
                 recentDevice = tokenStore.getRecentDevice()
+                savedDevices = tokenStore.getSavedDevices()
             },
             onAuthenticate = onAuthenticate
         )
@@ -750,8 +791,61 @@ fun ControllerModeScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 1. Recent Device Card
-                recentDevice?.let { device ->
+                // 1. Saved Devices List
+                if (savedDevices.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("已保存设备", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+
+                            savedDevices.forEach { saved ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(saved.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                        Text("${saved.host}:${saved.port}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                    }
+                                    Button(
+                                        onClick = {
+                                            val device = DiscoveredDevice(
+                                                name = saved.name,
+                                                host = saved.host,
+                                                port = saved.port,
+                                                controlUrl = "http://${saved.host}:${saved.port}"
+                                            )
+                                            tokenStore.saveRecentDevice(saved.name, saved.host, saved.port)
+                                            selectedDevice = device
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        contentPadding = PaddingValues(horizontal = 12.dp),
+                                        modifier = Modifier.height(32.dp)
+                                    ) {
+                                        Text("连接", fontSize = 11.sp)
+                                    }
+                                    TextButton(
+                                        onClick = {
+                                            tokenStore.removeSavedDevice(saved.host, saved.port)
+                                            tokenStore.clearToken(saved.host, saved.port)
+                                            recentDevice = tokenStore.getRecentDevice()
+                                            savedDevices = tokenStore.getSavedDevices()
+                                        },
+                                        contentPadding = PaddingValues(horizontal = 4.dp),
+                                        modifier = Modifier.height(32.dp)
+                                    ) {
+                                        Text("删除", fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if (recentDevice != null) {
+                    val device = recentDevice!!
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
@@ -759,29 +853,33 @@ fun ControllerModeScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("最近连接", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
-                            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(device.name, fontWeight = FontWeight.Bold)
                                     Text("${device.host}:${device.port}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                                 }
                                 Button(
-                                    onClick = { 
+                                    onClick = {
                                         tokenStore.saveRecentDevice(device.name, device.host, device.port)
-                                        selectedDevice = device 
+                                        selectedDevice = device
                                     },
                                     shape = RoundedCornerShape(8.dp),
                                     contentPadding = PaddingValues(horizontal = 12.dp),
                                     modifier = Modifier.height(32.dp)
                                 ) {
-                                    Text("快速进入", fontSize = 11.sp)
+                                    Text("连接", fontSize = 11.sp)
+                                }
+                                TextButton(
+                                    onClick = {
+                                        tokenStore.clearRecentDevice()
+                                        recentDevice = null
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 4.dp),
+                                    modifier = Modifier.height(32.dp)
+                                ) {
+                                    Text("删除", fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
                                 }
                             }
-                            
-                            Text(
-                                "提示：如果连接失败，请检查两台手机是否在同一 Wi-Fi，且被寻找端的寻机服务已启动。IP 地址可能会因 Wi-Fi变动而失效。此外，请确保被寻找端没有被系统冻结后台连接。",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.Gray
-                            )
                         }
                     }
                 }
@@ -908,22 +1006,22 @@ fun ControllerModeScreen(
                 }
 
                 // 4. Discovered Devices List
-                if (discoveredDevices.isEmpty()) {
+                if (filteredDevices.isEmpty()) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("未发现局域网设备", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                        Text("未发现其他设备", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
                         Text(
-                            "请确认两台手机在同一 Wi-Fi。如果仍无法发现，请尝试下方的“手动连接”。", 
-                            color = Color.Gray, 
+                            "请确认两台手机在同一 Wi-Fi。本机不会出现在列表中。如果仍无法发现，请尝试下方的“手动连接”。",
+                            color = Color.Gray,
                             style = MaterialTheme.typography.labelSmall,
                             textAlign = TextAlign.Center
                         )
                     }
                 } else {
-                    discoveredDevices.forEach { device ->
+                    filteredDevices.forEach { device ->
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
@@ -993,6 +1091,7 @@ fun RemoteControlPanel(
     }
 
     fun handleSuccessfulCommand(usedToken: String) {
+        tokenStore.saveDevice(device.name, device.host, device.port)
         if (usedToken == inputToken) {
             tokenStore.saveToken(device.host, device.port, inputToken)
             inputToken = ""
