@@ -2,25 +2,25 @@
 
 Plan date: 2026-05-25
 
-Scope: asset planning for Chrome Web Store submission readiness. This document is planning-only and does not add icons, screenshots, promotional images, packages, or uploads.
+Scope: asset planning for Chrome Web Store submission readiness. CWS.3 added readiness icons and the manifest `icons` field; screenshots, promotional images, packages, and uploads remain out of scope.
 
 ## Required Before Submission
 
 The following assets must be prepared before Chrome Web Store submission:
 
-- 128x128 extension icon.
+- 128x128 extension icon. Added in CWS.3.
 - At least one Chrome Web Store screenshot.
 - Optional promotional tile assets if the store listing strategy needs them.
 
-Current CWS.0 status:
+Current CWS.3 status:
 
-- No extension icon files were found under `chrome-extension/`.
+- Extension package icons exist under `chrome-extension/icons/`.
 - No Chrome Web Store screenshots were found.
-- `chrome-extension/manifest.json` does not currently include an `icons` field.
+- `chrome-extension/manifest.json` includes an `icons` field.
 
 ## Extension Package Icon Plan
 
-Future extension package icon files:
+Extension package icon files added in CWS.3:
 
 ```text
 chrome-extension/icons/icon-16.png
@@ -29,15 +29,15 @@ chrome-extension/icons/icon-48.png
 chrome-extension/icons/icon-128.png
 ```
 
-The icon should be simple at small sizes, visually distinct from the Android app assets if needed, and recognizable as the Local Find browser controller.
+The icon should remain simple at small sizes, visually distinct from the Android app assets if needed, and recognizable as the Local Find browser controller.
 
-This CWS.1 plan does not add real PNG, JPEG, or SVG files.
+The CWS.3 icons are readiness icons and can be replaced later if a final brand-design pass is desired.
 
 ## Manifest Plan
 
-Future CWS.2 or CWS.3 work can add the extension icon declarations to `chrome-extension/manifest.json` after real icon files exist.
+CWS.3 added the extension icon declarations to `chrome-extension/manifest.json`.
 
-Planned manifest block:
+Current manifest block:
 
 ```json
 "icons": {
@@ -48,7 +48,7 @@ Planned manifest block:
 }
 ```
 
-Do not modify `manifest.json` during CWS.1.
+Do not change unrelated manifest fields when replacing or redesigning icons later.
 
 ## Screenshot Plan
 
@@ -70,7 +70,7 @@ Minimum submission path:
 
 Promotional tile assets are optional for the current readiness path.
 
-Prepare them only after the required icon and screenshot assets are complete, and only if the Chrome Web Store listing strategy benefits from them.
+Prepare them only after the required screenshot assets are complete, and only if the Chrome Web Store listing strategy benefits from them.
 
 ## Asset Hygiene
 
@@ -90,7 +90,7 @@ Use representative placeholder values when a screenshot needs host, port, device
 
 When packaging begins in a later CWS phase, include only extension assets required by the Chrome extension package.
 
-Expected package additions once created:
+Expected package icon files:
 
 - `chrome-extension/icons/icon-16.png`
 - `chrome-extension/icons/icon-32.png`
