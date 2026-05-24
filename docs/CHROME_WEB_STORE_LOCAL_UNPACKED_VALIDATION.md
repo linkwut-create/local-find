@@ -165,3 +165,54 @@ Chrome Web Store upload remains blocked by:
 Recommended next phase:
 
 - CWS.8: owner-assisted manual unpacked validation result capture, or final screenshot/contact/privacy resolution before any packaging/upload step.
+
+## CWS.8 Manual Validation Result
+
+### Manual Validation Summary
+
+Manual validation was completed by the owner/tester.
+
+Recorded observations:
+
+- Chrome unpacked extension loaded manually by owner/tester.
+- Popup opened successfully.
+- Popup UI rendered.
+- Language selector visible.
+- Host/port and paired-device UI visible.
+- Popup DevTools Console opened successfully.
+- Console showed no red errors.
+- Console showed no yellow warnings.
+- DevTools showed No Issues.
+- No real Android phone control was performed.
+- No real pairing flow was performed.
+
+### Result
+
+Manual unpacked validation result: PASS
+
+### Evidence Notes
+
+- Validation was based on owner-provided screenshots and observation.
+- Screenshot showed popup DevTools at `chrome-extension://.../popup.html`.
+- Console panel was empty.
+- DevTools header showed No Issues.
+- Earlier popup screenshot showed Local Find UI rendering with current device card, control buttons, paired phone section, and language selector.
+
+### Known Limitations
+
+- This does not prove Chrome Web Store acceptance.
+- This does not test uploaded zip behavior.
+- This does not test real Android control.
+- This does not test fresh-user first-run flow.
+- This does not test reviewer environment.
+- This does not resolve screenshots/support email/privacy URL blockers.
+
+### Remaining Blockers Before Upload
+
+Chrome Web Store upload remains blocked by:
+
+- Real Chrome Web Store screenshots still missing.
+- Support email still TODO.
+- Public privacy policy URL still TODO / owner decision.
+- Final extension zip not generated.
+- Chrome Web Store developer account/upload not done.

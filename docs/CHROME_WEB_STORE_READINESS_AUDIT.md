@@ -302,3 +302,26 @@ Current CWS.7 status:
 Upload remains blocked by missing real Chrome Web Store screenshots, TODO support email, TODO public privacy policy URL / owner decision, missing final extension zip, and no Chrome Web Store developer account/upload step.
 
 CWS.7 did not launch Chrome automatically, generate a zip, upload to Chrome Web Store, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, modify Android code, move tags, or modify the `mvp-u5-ok` GitHub Release.
+
+## CWS.8 Manual Unpacked Validation Result Note
+
+CWS.8 updated:
+
+- `docs/CHROME_WEB_STORE_LOCAL_UNPACKED_VALIDATION.md`
+
+Manual unpacked validation result: PASS.
+
+Owner/tester reported:
+
+- Chrome unpacked extension loaded manually.
+- Popup rendered.
+- Popup DevTools Console opened.
+- No console errors were observed.
+- No console warnings were observed.
+- DevTools showed No Issues.
+- Real Android control was not tested.
+- Real pairing flow was not tested.
+
+Upload remains blocked by missing real Chrome Web Store screenshots, TODO support email, TODO public privacy policy URL / owner decision, missing final extension zip, and no Chrome Web Store developer account/upload step.
+
+CWS.8 did not modify Chrome extension code, modify Android code, change `host_permissions`, generate a zip, upload to Chrome Web Store, move tags, or modify the `mvp-u5-ok` GitHub Release.
