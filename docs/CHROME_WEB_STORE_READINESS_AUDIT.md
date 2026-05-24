@@ -343,3 +343,23 @@ Current CWS.9 status:
 Upload remains blocked by missing final Chrome Web Store screenshots, TODO support email, TODO public privacy policy URL / owner decision, missing final extension zip, and no Chrome Web Store developer account/upload step.
 
 CWS.9 did not modify Chrome extension code, modify Android code, change `host_permissions`, add real screenshot assets, generate a zip, upload to Chrome Web Store, move tags, or modify the `mvp-u5-ok` GitHub Release.
+
+## CWS.10 Screenshot Capture Strategy Note
+
+CWS.10 added:
+
+- `docs/CHROME_WEB_STORE_SCREENSHOT_CAPTURE_STRATEGY.md`
+
+Current CWS.10 status:
+
+- screenshot strategy selected;
+- chosen strategy is a separate clean Chrome profile for final screenshot capture;
+- current owner/tester screenshots remain validation evidence only, not store assets;
+- safe demo values and before-capture checklist were recorded;
+- target screenshot directory remains `store-assets/chrome-web-store/screenshots/en-US/`;
+- target screenshot files remain `01-popup-paired-device.png`, `02-controller-actions.png`, `03-pairing-or-manual-host.png`, and `04-language-switching.png`;
+- CWS.10 does not generate final screenshot assets.
+
+Upload remains blocked by missing final Chrome Web Store screenshots, TODO support email, TODO public privacy policy URL / owner decision, missing final extension zip, and no Chrome Web Store developer account/upload step.
+
+CWS.10 did not modify Chrome extension code, modify Android code, change `host_permissions`, add real screenshot assets, generate a zip, upload to Chrome Web Store, move tags, or modify the `mvp-u5-ok` GitHub Release.

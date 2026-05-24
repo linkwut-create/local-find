@@ -155,6 +155,22 @@ Do not add these files until the owner chooses a safe capture strategy and appro
 - Do not generate final screenshot assets in CWS.9.
 - Proceed to CWS.10 only after owner chooses screenshot capture strategy.
 
+## CWS.10 Decision
+
+CWS.10 selected the final screenshot capture strategy:
+
+- use a separate clean Chrome profile for final screenshot capture.
+
+Decision record:
+
+- `docs/CHROME_WEB_STORE_SCREENSHOT_CAPTURE_STRATEGY.md`
+
+The demo-state checklist moved to the CWS.10 strategy document.
+
+Current owner/tester screenshots remain validation evidence only and must not be used as store assets because they include real device name and real LAN IP.
+
+CWS.10 does not generate final screenshots, commit PNG/JPEG files, generate a zip, upload to Chrome Web Store, or modify extension code.
+
 ## Remaining Blockers Before Upload
 
 Chrome Web Store upload remains blocked by:
