@@ -1,7 +1,7 @@
 ﻿const DEFAULT_PORT = "8888";
 const FIND_PHONE_STEPS = [
-  { method: "POST", path: "/command/ring/start", label: "响铃" },
-  { method: "POST", path: "/command/flash/strobe/start", label: "闪光" }
+  { method: "POST", path: "/command/ring/start", label: "Ring" },
+  { method: "POST", path: "/command/flash/strobe/start", label: "Flash" }
 ];
 const PROTECTED_COMMANDS = new Set(["find-phone", "flash-start"]);
 const MIN_PIN_LENGTH = 4;
@@ -15,15 +15,15 @@ const CONTROLLER_TYPE = "chrome_extension";
 const PAIRING_POLL_INTERVAL_MS = 2000;
 
 const COMMANDS = {
-  status: { method: "GET", path: "/status", label: "检查状态" },
-  "find-phone": { method: "SEQUENCE", label: "一键找手机", success: "已开始一键找手机：响铃 + 闪光" },
-  "ring-stop": { method: "POST", path: "/command/ring/stop", label: "停止响铃", success: "已停止响铃" },
-  "flash-start": { method: "POST", path: "/command/flash/strobe/start", label: "开始闪光", success: "已开始闪光" },
-  "flash-stop": { method: "POST", path: "/command/flash/stop", label: "停止闪光", success: "已停止闪光" },
-  "stop-all": { method: "POST", path: "/command/stop-all", label: "停止全部", success: "已停止全部" }
+  status: { method: "GET", path: "/status", label: "Check Status" },
+  "find-phone": { method: "SEQUENCE", label: "Find Phone", success: "Find Phone: Ring + Flash" },
+  "ring-stop": { method: "POST", path: "/command/ring/stop", label: "Stop Ring", success: "Ring stopped" },
+  "flash-start": { method: "POST", path: "/command/flash/strobe/start", label: "Flash", success: "Flash started" },
+  "flash-stop": { method: "POST", path: "/command/flash/stop", label: "Stop Flash", success: "Flash stopped" },
+  "stop-all": { method: "POST", path: "/command/stop-all", label: "Stop All Alerts", success: "All alerts stopped" }
 };
 
-const NETWORK_ERROR_MESSAGE = "无法连接手机服务。请检查手机和电脑是否在同一 Wi-Fi、手机服务是否启动、IP/端口是否正确。";
+const NETWORK_ERROR_MESSAGE = "Cannot reach phone. Check Wi-Fi, service status, IP, and port.";
 
 const hostInput = document.getElementById("host");
 const portInput = document.getElementById("port");
@@ -218,7 +218,7 @@ async function handlePairedDevicesKeyDown(event) {
 
 async function selectDevice(deviceId) {
   if (!devices.some((device) => device.id === deviceId)) {
-    showResult("设备不存在", true);
+    showResult("Device not found", true);
     return;
   }
 
@@ -227,21 +227,21 @@ async function selectDevice(deviceId) {
   updateEndpointPreview();
   updateDeviceCard();
   updatePairedDevicesList();
-  showResult("已切换当前手机", false);
+  showResult("Switched current phone", false);
 }
 
 async function deleteDevice(deviceId) {
   const device = devices.find((candidate) => candidate.id === deviceId);
   if (!device) {
-    showResult("设备不存在", true);
+    showResult("Device not found", true);
     return;
   }
 
   const deviceName = device.name || "Android Phone";
   const canRevoke = Boolean(device.controllerId && device.host && isValidPort(device.port) && device.token);
   const confirmMessage = canRevoke
-    ? `删除已配对手机"${deviceName}"？\n\n将先尝试撤销手机端授权，然后删除本地记录。`
-    : `删除已配对手机"${deviceName}"？\n\n该旧记录缺少撤销所需信息（controllerId/host/port/token），将仅删除本地记录。`;
+    ? "Remove paired phone \"" + deviceName + "\"?\n\nPhone-side authorization will be revoked, then local record deleted."
+    : "Remove paired phone \"" + deviceName + "\"?\n\nThis record lacks revocation info (controllerId/host/port/token). Local delete only.";
 
   const confirmed = window.confirm(confirmMessage);
   if (!confirmed) {
@@ -249,13 +249,13 @@ async function deleteDevice(deviceId) {
   }
 
   try {
-    await requireSensitiveVerification("验证后才能删除已配对手机。");
+    await requireSensitiveVerification("Verify to remove paired phone.");
 
     if (canRevoke) {
       const revoked = await tryRevokeDevice(device);
       if (!revoked) {
         const localOnly = window.confirm(
-          "无法撤销手机端授权（手机可能离线或 token 已失效），是否仅删除本地记录？"
+          "Cannot revoke phone-side authorization (phone offline or token invalid). Delete local record only?"
         );
         if (!localOnly) {
           return;
@@ -272,7 +272,7 @@ async function deleteDevice(deviceId) {
     updateEndpointPreview();
     updateDeviceCard();
     updatePairedDevicesList();
-    showResult(canRevoke ? "已撤销手机端授权并删除本地设备" : "已删除本地设备", false);
+    showResult(canRevoke ? "Revoked phone authorization and removed local device" : "Local device removed", false);
   } catch (error) {
     showResult(getFriendlyErrorMessage(error), true);
   }
@@ -344,11 +344,11 @@ async function requestPairing() {
     });
 
     if (!body?.requestId) {
-      throw new Error("配对请求未返回 requestId");
+      throw new Error("Pairing request did not return requestId");
     }
 
     pairingStatusOutput.classList.remove("error");
-    pairingStatusOutput.textContent = "等待手机确认";
+    pairingStatusOutput.textContent = "Waiting for phone confirmation";
     pollPairingStatus(target, body.requestId);
   } catch (error) {
     setPairingBusy(false);
@@ -369,7 +369,7 @@ function pollPairingStatus(target, requestId) {
 
       if (status === "pending") {
         pairingStatusOutput.classList.remove("error");
-        pairingStatusOutput.textContent = "等待手机确认";
+        pairingStatusOutput.textContent = "Waiting for phone confirmation";
         pairingPollTimer = window.setTimeout(run, PAIRING_POLL_INTERVAL_MS);
         return;
       }
@@ -380,7 +380,7 @@ function pollPairingStatus(target, requestId) {
       if (status === "accepted") {
         await saveAcceptedDevice(body, target);
         pairingStatusOutput.classList.remove("error");
-        pairingStatusOutput.textContent = "配对成功，已保存设备";
+        pairingStatusOutput.textContent = "Paired successfully, device saved";
         return;
       }
 
@@ -433,21 +433,21 @@ function validateConnectionTarget(target) {
   }
 
   if (missing.length > 0) {
-    throw new Error(`请补全 ${missing.join("、")}`);
+    throw new Error(`Missing:  ${missing.join("、")}`);
   }
 }
 
 function formatDeviceInfo(info) {
   const pairingMode = info?.pairingMode === true;
   const lines = [
-    `device name: ${info?.name || "未返回"}`,
-    `device id: ${info?.id || "未返回"}`,
+    `device name: ${info?.name || "No response"}`,
+    `device id: ${info?.id || "No response"}`,
     `pairingMode: ${pairingMode ? "true" : "false"}`,
-    `service: ${info?.service || "未返回"}`
+    `service: ${info?.service || "No response"}`
   ];
 
   if (!pairingMode) {
-    lines.push("请先在手机 App 中开启电脑插件配对模式。");
+    lines.push("Enable pairing mode on the phone first.");
   }
 
   pairingStatusOutput.classList.remove("error");
@@ -456,14 +456,14 @@ function formatDeviceInfo(info) {
 
 function getPairingTerminalMessage(status) {
   if (status === "rejected") {
-    return "手机已拒绝";
+    return "Phone rejected";
   }
 
   if (status === "expired") {
-    return "配对请求已过期";
+    return "Pairing request expired";
   }
 
-  return `配对请求已结束：${status || "未知状态"}`;
+  return `Pairing request ended: ：${status || "unknown"}`;
 }
 
 async function saveAcceptedDevice(pairingResult, target) {
@@ -471,7 +471,7 @@ async function saveAcceptedDevice(pairingResult, target) {
   const controlToken = pairingResult?.controlToken || "";
 
   if (!pairedDevice.id || !controlToken) {
-    throw new Error("配对成功响应缺少 device 或 controlToken");
+    throw new Error("Pairing response missing device or controlToken");
   }
 
   const now = new Date().toISOString();
@@ -618,7 +618,7 @@ async function handleRememberTokenChange() {
   const shouldRemember = rememberTokenInput.checked;
 
   try {
-    await requireSensitiveVerification("验证后才能修改 Token 保存设置。");
+    await requireSensitiveVerification("Verify to change token save setting.");
 
     if (shouldRemember) {
       rememberTokenState = true;
@@ -648,7 +648,7 @@ async function saveTokenIfRemembered() {
   }
 
   try {
-    await requireSensitiveVerification("验证后才能保存 Token。");
+    await requireSensitiveVerification("Verify to save token.");
     chrome.storage.local.set({
       rememberToken: true,
       savedToken: tokenInput.value
@@ -661,14 +661,14 @@ async function saveTokenIfRemembered() {
 
 async function clearSavedToken() {
   try {
-    await requireSensitiveVerification("验证后才能清除已保存 Token。");
+    await requireSensitiveVerification("Verify to clear saved token.");
     tokenInput.value = "";
     rememberTokenInput.checked = false;
     rememberTokenState = false;
     chrome.storage.local.set({ rememberToken: false }, () => {
       chrome.storage.local.remove("savedToken", () => {
         updateDeviceCard();
-        showResult("已清除已保存 Token", false);
+        showResult("ClearedSaved Token", false);
       });
     });
   } catch (error) {
@@ -681,7 +681,7 @@ async function setLocalPin() {
 
   try {
     if (protectionEnabled) {
-      await requireSensitiveVerification("验证当前 PIN 后才能更新保护 PIN。");
+      await requireSensitiveVerification("Verify current PIN to update protection PIN.");
     }
 
     validatePin(pin);
@@ -697,7 +697,7 @@ async function setLocalPin() {
     });
     localPinInput.value = "";
     updateProtectionStatus();
-    showResult("已开启本地保护锁", false);
+    showResult("Protection enabled", false);
   } catch (error) {
     showResult(getFriendlyErrorMessage(error), true);
   }
@@ -705,19 +705,19 @@ async function setLocalPin() {
 
 async function disableProtection() {
   if (!protectionEnabled) {
-    showResult("本地保护锁未开启", false);
+    showResult("Protection disabled", false);
     return;
   }
 
   try {
-    await requireSensitiveVerification("请输入当前 PIN 以关闭保护锁。");
+    await requireSensitiveVerification("Enter current PIN to disable protection.");
     protectionEnabled = false;
     localPinSalt = "";
     localPinHash = "";
     chrome.storage.local.set({ protectionEnabled: false }, () => {
       chrome.storage.local.remove(["localPinSalt", "localPinHash"], () => {
         updateProtectionStatus();
-        showResult("已关闭本地保护锁", false);
+        showResult("Protection lock disabled", false);
       });
     });
   } catch (error) {
@@ -730,13 +730,13 @@ async function handleProtectionMethodChange() {
 
   if (requiresWebAuthn(nextMethod) && !hasWebAuthnCredential()) {
     protectionMethodSelect.value = protectionMethod;
-    showResult("请先注册系统验证", true);
+    showResult("Register WebAuthn first", true);
     return;
   }
 
   protectionMethod = nextMethod;
   chrome.storage.local.set({ protectionMethod });
-  showResult(`保护方式已设置为：${getProtectionMethodLabel(protectionMethod)}`, false);
+  showResult(`Protection method set to: ${getProtectionMethodLabel(protectionMethod)}`, false);
 }
 
 async function registerWebAuthn() {
@@ -767,7 +767,7 @@ async function registerWebAuthn() {
     });
 
     if (!credential || !credential.rawId) {
-      throw new Error("系统验证注册未返回凭据");
+      throw new Error("WebAuthn registration returned no credential");
     }
 
     webauthnEnabled = true;
@@ -778,9 +778,9 @@ async function registerWebAuthn() {
     });
     updateWebAuthnStatus();
     updateProtectionMethodOptions();
-    showResult("系统验证已注册", false);
+    showResult("WebAuthnRegistered", false);
   } catch (error) {
-    showResult(getWebAuthnErrorMessage(error, "系统验证注册失败"), true);
+    showResult(getWebAuthnErrorMessage(error, "WebAuthn registration failed"), true);
   }
 }
 
@@ -788,27 +788,27 @@ async function testWebAuthn() {
   try {
     ensureWebAuthnSupport();
     if (!webauthnEnabled || !webauthnCredentialId) {
-      throw new Error("请先注册系统验证");
+      throw new Error("Register WebAuthn first");
     }
 
     await performWebAuthnVerification();
 
-    showResult("系统验证通过", false);
+    showResult("WebAuthn verified", false);
   } catch (error) {
-    showResult(getWebAuthnErrorMessage(error, "系统验证失败"), true);
+    showResult(getWebAuthnErrorMessage(error, "WebAuthn verification failed"), true);
   }
 }
 
 function ensureWebAuthnSupport() {
   if (!navigator.credentials || typeof PublicKeyCredential === "undefined") {
-    throw new Error("当前浏览器/环境不支持 WebAuthn 平台验证");
+    throw new Error("WebAuthn not supported in this browser");
   }
 }
 
 async function performWebAuthnVerification() {
   ensureWebAuthnSupport();
   if (!hasWebAuthnCredential()) {
-    throw new Error("请先注册系统验证");
+    throw new Error("Register WebAuthn first");
   }
 
   await navigator.credentials.get({
@@ -848,14 +848,14 @@ function normalizeProtectionMethod(method) {
 
 function getProtectionMethodLabel(method) {
   if (method === PROTECTION_METHOD_WEBAUTHN) {
-    return "系统验证";
+    return "WebAuthn";
   }
 
   if (method === PROTECTION_METHOD_WEBAUTHN_OR_PIN) {
-    return "系统验证失败时使用本地 PIN";
+    return "WebAuthn, fallback to PIN";
   }
 
-  return "本地 PIN";
+  return "Local PIN";
 }
 
 async function requireProtectedCommand(commandName) {
@@ -863,7 +863,7 @@ async function requireProtectedCommand(commandName) {
     return;
   }
 
-  await requireSensitiveVerification("请输入验证以继续。");
+  await requireSensitiveVerification("Verify to continue.");
 }
 
 async function requireSensitiveVerification(message) {
@@ -881,23 +881,23 @@ async function requireSensitiveVerification(message) {
       await requireWebAuthnForSensitiveAction();
       return;
     } catch {
-      await requireLocalVerification("系统验证未通过，可输入本地 PIN 继续。");
+      await requireLocalVerification("WebAuthn failed. Enter local PIN to continue.");
       return;
     }
   }
 
-  await requireLocalVerification(message || "请输入本地保护 PIN 以继续。");
+  await requireLocalVerification(message || "Enter protection PIN to continue.");
 }
 
 async function requireWebAuthnForSensitiveAction() {
   if (!hasWebAuthnCredential()) {
-    throw new Error("请先注册系统验证");
+    throw new Error("Register WebAuthn first");
   }
 
   try {
     await performWebAuthnVerification();
   } catch (error) {
-    throw new Error(getWebAuthnErrorMessage(error, "系统验证失败"));
+    throw new Error(getWebAuthnErrorMessage(error, "WebAuthn verification failed"));
   }
 }
 
@@ -909,12 +909,12 @@ async function requireLocalVerification(message) {
   const pin = await promptForPin(message);
   const isValid = await verifyPin(pin);
   if (!isValid) {
-    throw new Error("本地验证失败");
+    throw new Error("Local verification failed");
   }
 }
 
 function promptForPin(message) {
-  pinModalMessage.textContent = message || "请输入本地保护 PIN。";
+  pinModalMessage.textContent = message || "Enter your protection PIN.";
   verifyPinInput.value = "";
   pinModal.classList.remove("hidden");
   verifyPinInput.focus();
@@ -935,7 +935,7 @@ function promptForPin(message) {
 
     const handleCancel = () => {
       cleanup();
-      reject(new Error("已取消本地验证"));
+      reject(new Error("Local verification cancelled"));
     };
 
     const handleKeyDown = (event) => {
@@ -963,7 +963,7 @@ async function verifyPin(pin) {
 
 function validatePin(pin) {
   if (pin.length < MIN_PIN_LENGTH || pin.length > MAX_PIN_LENGTH) {
-    throw new Error("PIN 需要为 4-12 位");
+    throw new Error("PIN must be 4-12 digits");
   }
 }
 
@@ -1039,13 +1039,13 @@ async function handleButtonClick(commandName) {
 
   const command = COMMANDS[commandName];
   if (!command) {
-    showResult("未知命令", true);
+    showResult("Unknown command", true);
     return;
   }
 
   try {
     setBusy(true);
-    showResult(`${command.label}中...`, false);
+    showResult(`${command.label}...`, false);
 
     if (command.method === "SEQUENCE") {
       validateCommandInputs({ method: "POST" });
@@ -1060,10 +1060,10 @@ async function handleButtonClick(commandName) {
       }
       const { body } = await sendCheckedRequest(command);
       if (command.method === "GET") {
-        showResult(body ? formatStatus(body) : "状态检查成功", false);
+        showResult(body ? formatStatus(body) : "Status OK", false);
       } else {
         saveLastSuccessAt();
-        showResult(command.success || `${command.label}成功`, false);
+        showResult(command.success || `${command.label} succeeded`, false);
       }
     }
   } catch (error) {
@@ -1079,13 +1079,13 @@ async function runFindPhoneSequence() {
   try {
     await sendCheckedRequest(FIND_PHONE_STEPS[0]);
   } catch (error) {
-    throw new Error(`响铃启动失败：${getFriendlyErrorMessage(error)}`);
+    throw new Error(`Ring start failed: ${getFriendlyErrorMessage(error)}`);
   }
 
   try {
     await sendCheckedRequest(FIND_PHONE_STEPS[1]);
   } catch (error) {
-    throw new Error(`响铃已开始，但闪光启动失败：${getFriendlyErrorMessage(error)}`);
+    throw new Error(`Ring started, but flash failed: ${getFriendlyErrorMessage(error)}`);
   }
 }
 
@@ -1128,9 +1128,9 @@ async function sendRequest(command) {
 function openDiagnosticsPage() {
   try {
     window.open(`${getBaseUrl()}/`, "_blank", "noopener");
-    showResult("已打开诊断页", false);
+    showResult("Diagnostics page opened", false);
   } catch (error) {
-    showResult(error.message || "无法打开诊断页", true);
+    showResult(error.message || "Cannot open diagnostics page", true);
   }
 }
 
@@ -1142,11 +1142,11 @@ function getBaseUrlForTarget(target) {
   const { host, port } = target;
 
   if (!host) {
-    throw new Error("请输入 host");
+    throw new Error("Enter host");
   }
 
   if (!isValidPort(port)) {
-    throw new Error("请输入有效端口");
+    throw new Error("Enter valid port");
   }
 
   return `http://${host}:${port}`;
@@ -1196,7 +1196,7 @@ function validateCommandInputs(command, target = getCommandTarget(command)) {
   }
 
   if (missing.length > 0) {
-    throw new Error(`请补全 ${missing.join("、")}`);
+    throw new Error(`Missing:  ${missing.join("、")}`);
   }
 }
 
@@ -1264,16 +1264,16 @@ function updateDeviceCard() {
   if (selectedDevice) {
     deviceName.textContent = selectedDevice.name || "Android Phone";
     deviceAddress.textContent = formatAddress(selectedDevice.host, selectedDevice.port);
-    deviceTokenStatus.textContent = selectedDevice.token ? "已配对" : "缺少 token";
-    lastSuccess.textContent = `上次成功：${selectedDevice.lastSuccessAt ? formatDateTime(selectedDevice.lastSuccessAt) : "暂无"}`;
+    deviceTokenStatus.textContent = selectedDevice.token ? "Paired" : "Missing token";
+    lastSuccess.textContent = "Last Connected: " + (selectedDevice.lastSuccessAt ? formatDateTime(selectedDevice.lastSuccessAt) : "--");
     return;
   }
 
   const { host, port } = parseConnectionInput();
-  deviceName.textContent = "手动模式";
-  deviceAddress.textContent = host ? formatAddress(host, port) : "未设置";
-  deviceTokenStatus.textContent = rememberTokenInput.checked && tokenInput.value ? "旧 Token 已保存" : "手动 host/port/token";
-  lastSuccess.textContent = `上次成功：${lastSuccessAt ? formatDateTime(lastSuccessAt) : "暂无"}`;
+  deviceName.textContent = "Manual";
+  deviceAddress.textContent = host ? formatAddress(host, port) : "N/A";
+  deviceTokenStatus.textContent = rememberTokenInput.checked && tokenInput.value ? "Legacy token saved" : "Manual host/port/token";
+  lastSuccess.textContent = `Last Connected:${lastSuccessAt ? formatDateTime(lastSuccessAt) : "--"}`;
 }
 
 function updatePairedDevicesList() {
@@ -1282,7 +1282,7 @@ function updatePairedDevicesList() {
   if (devices.length === 0) {
     const empty = document.createElement("p");
     empty.className = "paired-devices-empty";
-    empty.textContent = "暂无已配对手机。请在手机 App 开启电脑插件配对模式后添加。";
+    empty.textContent = "No paired phones. Enable pairing mode on the phone to add one.";
     pairedDevicesList.append(empty);
     return;
   }
@@ -1306,7 +1306,7 @@ function updatePairedDevicesList() {
     const status = document.createElement("span");
     status.className = "paired-device-status";
     status.classList.toggle("selected", isSelected);
-    status.textContent = isSelected ? "当前" : "未选中";
+    status.textContent = isSelected ? "Current" : "Inactive";
 
     summary.append(title, status);
 
@@ -1317,8 +1317,8 @@ function updatePairedDevicesList() {
     const meta = document.createElement("div");
     meta.className = "paired-device-meta";
     meta.append(
-      createDeviceMetaLine("配对", device.pairedAt),
-      createDeviceMetaLine("上次成功", device.lastSuccessAt)
+      createDeviceMetaLine("Paired", device.pairedAt),
+      createDeviceMetaLine("Last success", device.lastSuccessAt)
     );
 
     const actions = document.createElement("div");
@@ -1329,14 +1329,14 @@ function updatePairedDevicesList() {
     selectAction.className = "set-current-device";
     selectAction.dataset.selectDeviceId = device.id;
     selectAction.disabled = isSelected;
-    selectAction.textContent = isSelected ? "当前设备" : "设为当前";
+    selectAction.textContent = isSelected ? "Current" : "Set Current";
 
     const deleteAction = document.createElement("button");
     deleteAction.type = "button";
     deleteAction.className = "delete-paired-device";
     deleteAction.dataset.deleteDeviceId = device.id;
-    deleteAction.textContent = "删除";
-    deleteAction.setAttribute("aria-label", `删除 ${device.name || "Android Phone"}`);
+    deleteAction.textContent = "Delete";
+    deleteAction.setAttribute("aria-label", `Delete ${device.name || "Android Phone"}`);
 
     actions.append(selectAction, deleteAction);
 
@@ -1347,24 +1347,24 @@ function updatePairedDevicesList() {
 
 function createDeviceMetaLine(label, value) {
   const line = document.createElement("span");
-  line.textContent = `${label}: ${value ? formatDateTime(value) : "暂无"}`;
+  line.textContent = `${label}: ${value ? formatDateTime(value) : "--"}`;
   return line;
 }
 
 function formatAddress(host, port) {
-  const displayHost = host || "未设置";
+  const displayHost = host || "N/A";
   const displayPort = isValidPort(port) ? port : DEFAULT_PORT;
   return `${displayHost}:${displayPort}`;
 }
 
 function updateProtectionStatus() {
-  protectionStatus.textContent = protectionEnabled ? "已开启" : "未开启";
+  protectionStatus.textContent = protectionEnabled ? "On" : "Off";
   protectionStatus.classList.toggle("enabled", protectionEnabled);
   disableProtectionButton.disabled = !protectionEnabled;
 }
 
 function updateWebAuthnStatus() {
-  webauthnStatus.textContent = hasWebAuthnCredential() ? "已注册" : "未注册";
+  webauthnStatus.textContent = hasWebAuthnCredential() ? "Registered" : "Not registered";
   webauthnStatus.classList.toggle("enabled", hasWebAuthnCredential());
 }
 
@@ -1406,7 +1406,7 @@ function saveLastSuccessAt() {
 function formatDateTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return "暂无";
+    return "--";
   }
 
   const year = date.getFullYear();
@@ -1450,7 +1450,7 @@ function formatStatus(status) {
   const flash = status.flash_mode || "off";
 
   return [
-    "状态检查成功",
+    "Status OK",
     `service: ${service}`,
     `ring_active: ${ring}`,
     `flash_mode: ${flash}`
@@ -1459,35 +1459,35 @@ function formatStatus(status) {
 
 function formatRingStatus(value) {
   if (value === true) {
-    return "true (响铃中)";
+    return "true (Ringing)";
   }
 
   if (value === false) {
-    return "false (未响铃)";
+    return "false (Silent)";
   }
 
-  return "未返回";
+  return "No response";
 }
 
 function getHttpErrorMessage(response, body, bodyText) {
   if (response.status === 401) {
-    return "Token 错误或手机 Token 已重置。";
+    return "Token incorrect or phone token was reset.";
   }
 
   if (response.status === 404) {
-    return "接口不存在 (404)。请确认手机服务已启动，并且当前 Android 版本支持该控制接口。";
+    return "Endpoint not found (404). Check phone service is running.";
   }
 
   if (response.status === 403 && (body?.message || "").includes("Pairing mode")) {
-    return "请先在手机 App 中开启电脑插件配对模式。";
+    return "Enable pairing mode on the phone first.";
   }
 
   if (response.status >= 500) {
-    return `手机服务返回错误 (${response.status})。请确认手机端 Local Find 服务状态，或打开诊断页查看。`;
+    return `Phone service error (${response.status})。Check phone Local Find service status, or open diagnostics.`;
   }
 
-  const serverMessage = body?.message || body?.error || bodyText || response.statusText || "请求未完成";
-  return `请求失败 (${response.status})。${serverMessage}`;
+  const serverMessage = body?.message || body?.error || bodyText || response.statusText || "Request incomplete";
+  return `Request failed (${response.status})。${serverMessage}`;
 }
 
 function getFriendlyErrorMessage(error) {
@@ -1501,19 +1501,19 @@ function getFriendlyErrorMessage(error) {
     return NETWORK_ERROR_MESSAGE;
   }
 
-  return message || "请求失败。请检查 IP、端口和手机服务状态。";
+  return message || "Request failed. Check IP, port, and phone service status.";
 }
 
 function getWebAuthnErrorMessage(error, fallback) {
   const message = error?.message || "";
 
-  if (message === "当前浏览器/环境不支持 WebAuthn 平台验证" || message === "请先注册系统验证") {
+  if (message === "WebAuthn not supported in this browser" || message === "Register WebAuthn first") {
     return message;
   }
 
   if (error?.name === "NotAllowedError") {
-    return "已取消系统验证";
+    return "WebAuthn cancelled";
   }
 
-  return `${fallback}：${message || error?.name || "未知错误"}`;
+  return `${fallback}：${message || error?.name || "Unknown error"}`;
 }

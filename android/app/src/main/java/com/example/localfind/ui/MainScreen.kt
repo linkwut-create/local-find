@@ -1,4 +1,4 @@
-package com.example.localfind.ui
+﻿package com.example.localfind.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -56,15 +56,15 @@ import org.json.JSONObject
 import kotlin.math.max
 
 enum class RemoteConnectionStatus {
-    IDLE,          // 未检测
-    CONNECTING,    // 连接中
-    ONLINE,        // 在线
-    OFFLINE,       // 离线 / 服务未启动
-    TIMEOUT,       // 请求超时
-    UNAUTHORIZED,  // Token 错误
-    SEARCHING,     // 正在寻找手机
-    PARTIAL_SUCCESS, // 部分成功
-    STOPPED        // 已停止
+    IDLE,          // Idle
+    CONNECTING,    // Connecting
+    ONLINE,        // Online
+    OFFLINE,       // Offline / Service down
+    TIMEOUT,       // Timeout
+    UNAUTHORIZED,  // Token error
+    SEARCHING,     // Searching
+    PARTIAL_SUCCESS, // Partial success
+    STOPPED        // Stopped
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -112,7 +112,7 @@ fun MainScreen(
     onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("被寻找端", "控制端")
+    val tabs = listOf("Find Me", "Controller")
 
     Scaffold(
         topBar = {
@@ -243,8 +243,8 @@ fun FinderModeScreen(
     if (showRegenerateDialog) {
         AlertDialog(
             onDismissRequest = { showRegenerateDialog = false },
-            title = { Text("确认重置 Token？") },
-            text = { Text("重置后，所有已连接的浏览器控制页将失效，需要重新输入新 Token 才能继续控制。") },
+            title = { Text("Reset Token?") },
+            text = { Text("All paired controllers will be disconnected. They will need the new token to reconnect.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -252,12 +252,12 @@ fun FinderModeScreen(
                         showRegenerateDialog = false
                     }
                 ) {
-                    Text("确认重置", color = MaterialTheme.colorScheme.error)
+                    Text("Reset", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRegenerateDialog = false }) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             }
         )
@@ -279,14 +279,13 @@ fun FinderModeScreen(
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("如何寻找这台手机", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("How to Use", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 
                 val steps = listOf(
-                    "第一步：点击下方按钮“启动服务”",
-                    "第二步：保持本手机与控制端在同一 Wi-Fi / 局域网",
-                    "第三步：在控制端扫描设备，或手动输入 IP:8888",
-                    "第四步：在控制端输入本页面显示的 8 位 Token",
-                    "第五步：在控制端点击“开始寻找手机”触发响铃和闪烁"
+                    "1. Tap Start Service.",
+                    "2. Keep both devices on the same Wi-Fi or LAN.",
+                    "3. On the controller, scan the QR code or enter the address shown here.",
+                    "4. On the controller, tap Find Phone to ring or flash this phone."
                 )
                 
                 steps.forEach { step ->
@@ -315,7 +314,7 @@ fun FinderModeScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Surface(shape = androidx.compose.foundation.shape.CircleShape, color = statusColor, modifier = Modifier.size(12.dp)) {}
                     Text(
-                        text = if (isServiceRunning) "正在监听 (Running)" else "未运行 (Stopped)",
+                        text = if (isServiceRunning) "Running" else "Stopped",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -327,7 +326,7 @@ fun FinderModeScreen(
                         modifier = Modifier.weight(1f),
                         enabled = !isServiceRunning
                     ) {
-                        Text("启动服务", fontWeight = FontWeight.Bold)
+                        Text("Start Service", fontWeight = FontWeight.Bold)
                     }
                     Button(
                         onClick = onStopService,
@@ -335,7 +334,7 @@ fun FinderModeScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                         enabled = isServiceRunning
                     ) {
-                        Text("停止服务", fontWeight = FontWeight.Bold)
+                        Text("Stop Service", fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -345,7 +344,7 @@ fun FinderModeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("重启 HTTP 服务 (手动故障恢复)", fontSize = 12.sp)
+                        Text("Restart HTTP Server", fontSize = 12.sp)
                     }
                 }
             }
@@ -371,7 +370,7 @@ fun FinderModeScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Surface(shape = androidx.compose.foundation.shape.CircleShape, color = statusColor, modifier = Modifier.size(12.dp)) {}
                     Text(
-                        text = if (isServiceRunning) "正在监听 (Running)" else "未运行 (Stopped)",
+                        text = if (isServiceRunning) "Running" else "Stopped",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -379,26 +378,26 @@ fun FinderModeScreen(
 
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
 
-                StatusRow("服务状态:", when(serverStatus) {
-                    ServerStatus.STOPPED -> "已停止"
-                    ServerStatus.STARTING -> "正在启动..."
-                    ServerStatus.LISTENING -> "正在监听"
-                    ServerStatus.FAILED -> "启动失败"
+                StatusRow("Service Status:", when(serverStatus) {
+                    ServerStatus.STOPPED -> "Stopped"
+                    ServerStatus.STARTING -> "Starting..."
+                    ServerStatus.LISTENING -> "Listening"
+                    ServerStatus.FAILED -> "Failed"
                 })
                 if (lastServerError != null) {
-                    StatusRow("最近服务错误:", lastServerError)
+                    StatusRow("Last Error:", lastServerError)
                 }
-                StatusRow("手机局域网 IP:", localIp ?: "未连接")
-                StatusRow("监听端口:", port.toString())
-                StatusRow("NSD 状态:", when(nsdStatus) {
-                    NsdStatus.IDLE -> "未广播"
-                    NsdStatus.ADVERTISING -> "广播中"
-                    NsdStatus.ADVERTISED -> "已广播"
-                    NsdStatus.FAILED -> "广播失败"
+                StatusRow("LAN Address:", localIp ?: "Offline")
+                StatusRow("Port:", port.toString())
+                StatusRow("NSD:", when(nsdStatus) {
+                    NsdStatus.IDLE -> "Idle"
+                    NsdStatus.ADVERTISING -> "Advertising"
+                    NsdStatus.ADVERTISED -> "Advertised"
+                    NsdStatus.FAILED -> "Failed"
                 })
-                StatusRow("WakeLock:", if (wakeLockHeld) "已持有 (CPU 唤醒)" else "未持有")
-                StatusRow("WifiLock:", if (wifiLockHeld) "已持有 (网络活跃)" else "未持有")
-                StatusRow("服务类型:", nsdServiceType)
+                StatusRow("Wake Lock:", if (wakeLockHeld) "Held (CPU)" else "Not held")
+                StatusRow("Wi-Fi Lock:", if (wifiLockHeld) "Held (Wi-Fi)" else "Not held")
+                StatusRow("Service Type:", nsdServiceType)
 
                 if (isServiceRunning && localIp != null) {
                     val controlUrl = "http://$localIp:$port"
@@ -410,8 +409,8 @@ fun FinderModeScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("电脑浏览器远程控制 (无需安装):", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                        Text("在电脑浏览器打开下方地址，即可在同 Wi-Fi 下寻找手机。", style = MaterialTheme.typography.bodySmall)
+                        Text("Remote Control in Browser:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Text("Open in a browser on the same Wi-Fi to control this phone.", style = MaterialTheme.typography.bodySmall)
                         
                         Row(
                             modifier = Modifier
@@ -426,7 +425,7 @@ fun FinderModeScreen(
                                 onClick = { clipboardManager.setText(AnnotatedString(controlUrl)) },
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                             ) {
-                                Text("复制地址", fontSize = 12.sp)
+                                Text("Copy", fontSize = 12.sp)
                             }
                         }
                     }
@@ -446,7 +445,7 @@ fun FinderModeScreen(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("本地配对与鉴权", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                Text("Pairing & Authorization", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
                 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -454,9 +453,9 @@ fun FinderModeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("当前配对 Token:", style = MaterialTheme.typography.labelSmall)
+                        Text("Pairing Token:", style = MaterialTheme.typography.labelSmall)
                         Text(
-                            text = if (isTokenVisible) pairingToken.ifEmpty { "未生成" } else "********",
+                            text = if (isTokenVisible) pairingToken.ifEmpty { "N/A" } else "********",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.ExtraBold,
                             fontFamily = FontFamily.Monospace,
@@ -465,10 +464,10 @@ fun FinderModeScreen(
                     }
                     Row {
                         TextButton(onClick = { isTokenVisible = !isTokenVisible }) {
-                            Text(if (isTokenVisible) "隐藏" else "显示", fontSize = 12.sp)
+                            Text(if (isTokenVisible) "Hide" else "Show", fontSize = 12.sp)
                         }
                         TextButton(onClick = { clipboardManager.setText(AnnotatedString(pairingToken)) }) {
-                            Text("复制", fontSize = 12.sp)
+                            Text("Copy", fontSize = 12.sp)
                         }
                     }
                 }
@@ -479,7 +478,7 @@ fun FinderModeScreen(
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f), contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("重置 Token", fontSize = 12.sp)
+                    Text("Reset Token", fontSize = 12.sp)
                 }
             }
         }
@@ -496,10 +495,10 @@ fun FinderModeScreen(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text("电脑插件配对模式", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                StatusRow("设备名称:", localDeviceName.ifBlank { android.os.Build.MODEL })
-                StatusRow("设备 ID:", localDeviceId.ifBlank { "服务启动后生成" })
-                StatusRow("配对模式:", if (pairingModeActive) "已开启" else "已关闭")
+                Text("Controller Pairing Mode", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                StatusRow("Device:", localDeviceName.ifBlank { android.os.Build.MODEL })
+                StatusRow("Device ID:", localDeviceId.ifBlank { "Generated after service start" })
+                StatusRow("Pairing Mode:", if (pairingModeActive) "Enabled" else "Disabled")
                 
                 if (pairingModeActive) {
                     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -510,10 +509,10 @@ fun FinderModeScreen(
                         }
                     }
                     val remainingSeconds = max(0L, (pairingModeExpiresAt - currentTime) / 1000L)
-                    StatusRow("剩余时间:", "${remainingSeconds / 60}分${remainingSeconds % 60}秒")
+                    StatusRow("Remaining:", "${remainingSeconds / 60}m${remainingSeconds % 60}s")
                 }
 
-                Text("配对模式只在用户开启后短时间有效；电脑发起配对后，必须在手机端确认。当前不使用二维码，也不需要云账号。", style = MaterialTheme.typography.bodySmall)
+                Text("Pairing mode is active for a short window. Requests must be confirmed on this phone.", style = MaterialTheme.typography.bodySmall)
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
@@ -521,20 +520,20 @@ fun FinderModeScreen(
                         modifier = Modifier.weight(1f),
                         enabled = isServiceRunning
                     ) {
-                        Text(if (pairingModeActive) "重新开启 5 分钟" else "开启配对模式", fontSize = 12.sp)
+                        Text(if (pairingModeActive) "Renew 5 min" else "Enable Pairing", fontSize = 12.sp)
                     }
                     OutlinedButton(
                         onClick = onDisablePairingMode,
                         modifier = Modifier.weight(1f),
                         enabled = isServiceRunning && pairingModeActive
                     ) {
-                        Text("关闭配对模式", fontSize = 12.sp)
+                        Text("Disable Pairing", fontSize = 12.sp)
                     }
                 }
 
                 if (pendingPairingRequests.isNotEmpty()) {
                     Divider(modifier = Modifier.padding(vertical = 4.dp))
-                    Text("待确认的配对请求", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                    Text("Pending Requests", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                     pendingPairingRequests.forEach { request ->
                         Column(
                             modifier = Modifier
@@ -544,26 +543,26 @@ fun FinderModeScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(request.controllerName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                            Text("类型: ${request.controllerType}", style = MaterialTheme.typography.bodySmall)
+                            Text("Type: ${request.controllerType}", style = MaterialTheme.typography.bodySmall)
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Button(
                                     onClick = { onAcceptPairingRequest(request.requestId) },
                                     modifier = Modifier.weight(1f),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                                 ) {
-                                    Text("接受", fontSize = 12.sp)
+                                    Text("Accept", fontSize = 12.sp)
                                 }
                                 OutlinedButton(
                                     onClick = { onRejectPairingRequest(request.requestId) },
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    Text("拒绝", fontSize = 12.sp)
+                                    Text("Reject", fontSize = 12.sp)
                                 }
                             }
                         }
                     }
                 } else {
-                    Text("暂无待确认请求。", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("No pending requests.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -612,10 +611,10 @@ fun FinderModeScreen(
                     }
 
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("配对二维码", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Text("• 控制端扫码后可快速连接", style = MaterialTheme.typography.labelSmall)
-                        Text("• 二维码只在局域网内使用", style = MaterialTheme.typography.labelSmall)
-                        Text("• 如果泄露，请重置 Token", style = MaterialTheme.typography.labelSmall)
+                        Text("Pairing QR Code", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text("• Scan from controller to pair", style = MaterialTheme.typography.labelSmall)
+                        Text("• QR code is LAN-only", style = MaterialTheme.typography.labelSmall)
+                        Text("• Reset token if compromised", style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -630,10 +629,10 @@ fun FinderModeScreen(
             )
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("安全与隐私提示", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                Text("• Token 仅用于局域网内授权控制，不会上传云端。", style = MaterialTheme.typography.labelSmall)
-                Text("• 请勿将 Token 提供给不可信的人员。", style = MaterialTheme.typography.labelSmall)
-                Text("• 如果怀疑 Token 泄露，请重置 Token。", style = MaterialTheme.typography.labelSmall)
+                Text("Security & Privacy", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                Text("• Tokens are LAN-only. Nothing is uploaded to the cloud.", style = MaterialTheme.typography.labelSmall)
+                Text("• Do not share tokens with untrusted parties.", style = MaterialTheme.typography.labelSmall)
+                Text("• Reset the token if you suspect it has leaked.", style = MaterialTheme.typography.labelSmall)
             }
         }
 
@@ -649,20 +648,20 @@ fun FinderModeScreen(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("保持后台运行", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Background Running", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    "服务正在以前台模式运行，但在某些系统（如小米、华为、OPPO）锁屏后可能限制后台网络或冻结服务，需要允许后台运行/忽略电池优化。",
+                    "The service runs as a foreground service. Some devices (Xiaomi, Huawei, Oppo) may restrict background network after screen lock.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    "建议：请在系统中将本应用设置为“不优化电池使用”或“允许后台活动”。",
+                    "Set this app to \"Don't optimize\" or \"Allow background activity\" in system settings.",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    "注意：部分设备锁屏后会切断 Wi-Fi，请在系统设置中允许“锁屏后保持 Wi-Fi 连接”。",
+                    "Some devices disable Wi-Fi on screen lock. Enable \"Keep Wi-Fi on during sleep\" in system settings.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -672,7 +671,7 @@ fun FinderModeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("打开系统电池优化设置", fontSize = 12.sp)
+                    Text("Battery Optimization Settings", fontSize = 12.sp)
                 }
             }
         }
@@ -680,23 +679,23 @@ fun FinderModeScreen(
         // 5. Hardware Test Card
         Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("硬件寻机外设测试 (本地)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text("Device Test", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    IndicatorBox("音频响铃", if (ringActive) "鸣叫中" else "静音", ringActive, Modifier.weight(1f))
-                    IndicatorBox("手电筒", when(flashMode) { "steady" -> "常亮"; "strobe" -> "爆闪"; else -> "关闭" }, flashMode != "off", Modifier.weight(1f))
+                    IndicatorBox("Ring", if (ringActive) "Ringing" else "Silent", ringActive, Modifier.weight(1f))
+                    IndicatorBox("Flash", when(flashMode) { "steady" -> "Steady"; "strobe" -> "Strobe"; else -> "Off" }, flashMode != "off", Modifier.weight(1f))
                 }
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onTestRingToggle, modifier = Modifier.weight(1f)) { Text(if (ringActive) "停止响铃" else "测试响铃", fontSize = 12.sp) }
-                    OutlinedButton(onClick = onTestFlashSteady, modifier = Modifier.weight(1f)) { Text("测试常亮", fontSize = 12.sp) }
+                    OutlinedButton(onClick = onTestRingToggle, modifier = Modifier.weight(1f)) { Text(if (ringActive) "Stop Ring" else "Test Ring", fontSize = 12.sp) }
+                    OutlinedButton(onClick = onTestFlashSteady, modifier = Modifier.weight(1f)) { Text("Test Flash", fontSize = 12.sp) }
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onTestFlashStrobe, modifier = Modifier.weight(1f)) { Text("测试闪烁", fontSize = 12.sp) }
-                    OutlinedButton(onClick = onTestFlashStop, modifier = Modifier.weight(1f)) { Text("关闭手电", fontSize = 12.sp) }
+                    OutlinedButton(onClick = onTestFlashStrobe, modifier = Modifier.weight(1f)) { Text("Test Strobe", fontSize = 12.sp) }
+                    OutlinedButton(onClick = onTestFlashStop, modifier = Modifier.weight(1f)) { Text("Turn Flash Off", fontSize = 12.sp) }
                 }
                 Button(onClick = onStopAll, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)) {
-                    Text("一键停止全部动作", fontWeight = FontWeight.Bold)
+                    Text("Stop All Alerts", fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -773,11 +772,11 @@ fun ControllerModeScreen(
                         initialScannedToken = token
                         isScanning = false
                     } else {
-                        scope.launch { snackbarHostState.showSnackbar("不是有效的 Local Find 配对码") }
+                        scope.launch { snackbarHostState.showSnackbar("Not a valid Local Find pairing code") }
                         isScanning = false
                     }
                 } catch (_: Exception) {
-                    scope.launch { snackbarHostState.showSnackbar("扫码解析失败") }
+                    scope.launch { snackbarHostState.showSnackbar("QR parse failed") }
                     isScanning = false
                 }
             },
@@ -803,7 +802,7 @@ fun ControllerModeScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f))
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("已保存设备", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                            Text("Saved Devices", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
 
                             savedDevices.forEach { saved ->
                                 Row(
@@ -830,7 +829,7 @@ fun ControllerModeScreen(
                                         contentPadding = PaddingValues(horizontal = 12.dp),
                                         modifier = Modifier.height(32.dp)
                                     ) {
-                                        Text("连接", fontSize = 11.sp)
+                                        Text("Connect", fontSize = 11.sp)
                                     }
                                     TextButton(
                                         onClick = {
@@ -842,7 +841,7 @@ fun ControllerModeScreen(
                                         contentPadding = PaddingValues(horizontal = 4.dp),
                                         modifier = Modifier.height(32.dp)
                                     ) {
-                                        Text("删除", fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
+                                        Text("Delete", fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
                                     }
                                 }
                             }
@@ -856,7 +855,7 @@ fun ControllerModeScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f))
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("最近连接", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                            Text("Recent", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
                             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(device.name, fontWeight = FontWeight.Bold)
@@ -871,7 +870,7 @@ fun ControllerModeScreen(
                                     contentPadding = PaddingValues(horizontal = 12.dp),
                                     modifier = Modifier.height(32.dp)
                                 ) {
-                                    Text("连接", fontSize = 11.sp)
+                                    Text("Connect", fontSize = 11.sp)
                                 }
                                 TextButton(
                                     onClick = {
@@ -881,7 +880,7 @@ fun ControllerModeScreen(
                                     contentPadding = PaddingValues(horizontal = 4.dp),
                                     modifier = Modifier.height(32.dp)
                                 ) {
-                                    Text("删除", fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
+                                    Text("Delete", fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
                                 }
                             }
                         }
@@ -895,23 +894,38 @@ fun ControllerModeScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.1f))
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("发现局域网设备 (NSD Scanner)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
+                        Text("Device Discovery (NSD)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
                         
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = "状态: " + when(discoveryStatus) {
-                                    DiscoveryStatus.IDLE -> "未扫描"
-                                    DiscoveryStatus.SCANNING -> "扫描中..."
-                                    DiscoveryStatus.FAILED -> "扫描失败"
-                                    DiscoveryStatus.STOPPED -> "已停止"
+                                text = "Status: " + when(discoveryStatus) {
+                                    DiscoveryStatus.IDLE -> "Idle"
+                                    DiscoveryStatus.SCANNING -> "Scanning..."
+                                    DiscoveryStatus.FAILED -> "Scan Failed"
+                                    DiscoveryStatus.STOPPED -> "Stopped"
                                 },
                                 fontWeight = FontWeight.Bold,
-                                color = if (discoveryStatus == DiscoveryStatus.SCANNING) Color(0xFF1976D2) else Color.Gray
+                                color = if (discoveryStatus == DiscoveryStatus.SCANNING) Color(0xFF1976D2) else Color.Gray,
+                                modifier = Modifier.weight(1f)
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = onStartDiscovery, enabled = discoveryStatus != DiscoveryStatus.SCANNING) { Text("开始扫描", fontSize = 12.sp) }
-                                OutlinedButton(onClick = onStopDiscovery, enabled = discoveryStatus == DiscoveryStatus.SCANNING) { Text("停止", fontSize = 12.sp) }
-                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Button(
+                                onClick = onStartDiscovery,
+                                enabled = discoveryStatus != DiscoveryStatus.SCANNING,
+                                modifier = Modifier.height(40.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp)
+                            ) { Text("Scan", maxLines = 1, softWrap = false, fontSize = 12.sp) }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            OutlinedButton(
+                                onClick = onStopDiscovery,
+                                enabled = discoveryStatus == DiscoveryStatus.SCANNING,
+                                modifier = Modifier.height(40.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp)
+                            ) { Text("Stop", maxLines = 1, softWrap = false, fontSize = 12.sp) }
                         }
 
                         Divider(
@@ -928,7 +942,7 @@ fun ControllerModeScreen(
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
                         ) {
-                            Text("扫码连接设备", fontWeight = FontWeight.Bold)
+                            Text("Scan QR Code to Connect", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -939,15 +953,15 @@ fun ControllerModeScreen(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("手动连接 fallback", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text("Manual Connection", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                         
-                        Text("提示：Host 填写被寻找端显示的 IP 地址，端口默认 8888。", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        Text("Enter the target phone IP address. Default port is 8888.", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedTextField(
                                 value = manualHost,
                                 onValueChange = { manualHost = it; manualError = null },
-                                label = { Text("IP 地址") },
+                                label = { Text("IP Address") },
                                 modifier = Modifier.weight(2f),
                                 singleLine = true,
                                 isError = manualError != null && manualHost.isBlank(),
@@ -956,7 +970,7 @@ fun ControllerModeScreen(
                             OutlinedTextField(
                                 value = manualPort,
                                 onValueChange = { manualPort = it; manualError = null },
-                                label = { Text("端口") },
+                                label = { Text("Port") },
                                 modifier = Modifier.weight(1f),
                                 singleLine = true,
                                 isError = manualError != null && manualPort.toIntOrNull() == null,
@@ -967,10 +981,10 @@ fun ControllerModeScreen(
                         OutlinedTextField(
                             value = manualName,
                             onValueChange = { manualName = it },
-                            label = { Text("自定义名称 (可选)") },
+                            label = { Text("Custom Name (optional)") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            placeholder = { Text("例如：我的旧手机") },
+                            placeholder = { Text("e.g. My old phone") },
                             textStyle = MaterialTheme.typography.bodySmall
                         )
 
@@ -984,11 +998,11 @@ fun ControllerModeScreen(
                                 val portInt = manualPort.toIntOrNull()
                                 
                                 if (hostTrimmed.isBlank()) {
-                                    manualError = "请输入 IP 地址"
+                                    manualError = "Enter IP Address"
                                     return@Button
                                 }
                                 if (portInt == null || portInt !in 1..65535) {
-                                    manualError = "端口无效 (1-65535)"
+                                    manualError = "Invalid port (1-65535)"
                                     return@Button
                                 }
 
@@ -1004,7 +1018,7 @@ fun ControllerModeScreen(
                             },
                             modifier = Modifier.align(Alignment.End)
                         ) {
-                            Text("连接到设备")
+                            Text("Connect")
                         }
                     }
                 }
@@ -1016,9 +1030,9 @@ fun ControllerModeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("未发现其他设备", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                        Text("No other devices found", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
                         Text(
-                            "请确认两台手机在同一 Wi-Fi。本机不会出现在列表中。如果仍无法发现，请尝试下方的“手动连接”。",
+                            "Make sure both phones are on the same Wi-Fi. This device is hidden from the list. Try Manual Connection below if discovery fails.",
                             color = Color.Gray,
                             style = MaterialTheme.typography.labelSmall,
                             textAlign = TextAlign.Center
@@ -1047,7 +1061,7 @@ fun ControllerModeScreen(
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                                         modifier = Modifier.height(32.dp)
                                     ) {
-                                        Text("App 内控制", fontSize = 11.sp)
+                                        Text("Open in App", fontSize = 11.sp)
                                     }
                                     OutlinedButton(
                                         onClick = { 
@@ -1058,7 +1072,7 @@ fun ControllerModeScreen(
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                                         modifier = Modifier.height(32.dp)
                                     ) {
-                                        Text("浏览器打开", fontSize = 11.sp)
+                                        Text("Open in Browser", fontSize = 11.sp)
                                     }
                                 }
                             }
@@ -1118,14 +1132,14 @@ fun RemoteControlPanel(
                 }
                 is ControlResult.Timeout -> {
                     connectionStatus = RemoteConnectionStatus.TIMEOUT
-                    snackbarHostState.showSnackbar("请求超时")
+                    snackbarHostState.showSnackbar("Timeout")
                 }
                 is ControlResult.Unauthorized -> {
                     connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
                 }
                 is ControlResult.Error -> {
                     connectionStatus = RemoteConnectionStatus.OFFLINE
-                    val msg = if (result.message == "connection_failed") "离线 / 服务未启动" else "连接失败"
+                    val msg = if (result.message == "connection_failed") "Offline / Service down" else "Connection failed"
                     snackbarHostState.showSnackbar(msg)
                 }
             }
@@ -1136,46 +1150,46 @@ fun RemoteControlPanel(
     fun sendCommand(endpoint: String) {
         val effectiveToken = getEffectiveToken()
         if (effectiveToken == null) {
-            scope.launch { snackbarHostState.showSnackbar("请先输入 Token") }
+            scope.launch { snackbarHostState.showSnackbar("Enter token first") }
             return
         }
-        onAuthenticate("验证身份以发送控制命令", {
+        onAuthenticate("Verify to send command", {
             scope.launch {
                 isLoading = true
                 when (val result = client.sendCommand(device.host, device.port, effectiveToken, endpoint)) {
                     is ControlResult.Success -> {
                         handleSuccessfulCommand(effectiveToken)
-                        snackbarHostState.showSnackbar("命令已发送")
+                        snackbarHostState.showSnackbar("Command sent")
                         refreshStatus()
                     }
                     is ControlResult.Unauthorized -> {
                         connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
-                        snackbarHostState.showSnackbar("Token 错误")
+                        snackbarHostState.showSnackbar("Token error")
                     }
                     is ControlResult.Timeout -> {
                         connectionStatus = RemoteConnectionStatus.TIMEOUT
-                        snackbarHostState.showSnackbar("请求超时")
+                        snackbarHostState.showSnackbar("Timeout")
                     }
                     is ControlResult.Error -> {
                         connectionStatus = RemoteConnectionStatus.OFFLINE
-                        val msg = if (result.message == "connection_failed") "设备离线或服务未启动" else "控制失败"
+                        val msg = if (result.message == "connection_failed") "Device offline or service down" else "Command failed"
                         snackbarHostState.showSnackbar(msg)
                     }
                 }
                 isLoading = false
             }
         }, { error ->
-            scope.launch { snackbarHostState.showSnackbar("本机认证失败: $error") }
+            scope.launch { snackbarHostState.showSnackbar("Local auth failed: $error") }
         })
     }
 
     fun startFinding() {
         val effectiveToken = getEffectiveToken()
         if (effectiveToken == null) {
-            scope.launch { snackbarHostState.showSnackbar("请先输入 Token") }
+            scope.launch { snackbarHostState.showSnackbar("Enter token first") }
             return
         }
-        onAuthenticate("验证身份以寻找手机", {
+        onAuthenticate("Verify to find phone", {
             scope.launch {
                 isLoading = true
                 // 1. Start ring
@@ -1183,17 +1197,17 @@ fun RemoteControlPanel(
                 
                 if (ringResult is ControlResult.Unauthorized) {
                     connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
-                    snackbarHostState.showSnackbar("Token 错误")
+                    snackbarHostState.showSnackbar("Token error")
                     isLoading = false
                     return@launch
                 } else if (ringResult is ControlResult.Timeout) {
                     connectionStatus = RemoteConnectionStatus.TIMEOUT
-                    snackbarHostState.showSnackbar("请求超时")
+                    snackbarHostState.showSnackbar("Timeout")
                     isLoading = false
                     return@launch
                 } else if (ringResult is ControlResult.Error) {
                     connectionStatus = RemoteConnectionStatus.OFFLINE
-                    val msg = if (ringResult.message == "connection_failed") "设备离线或服务未启动" else "控制失败"
+                    val msg = if (ringResult.message == "connection_failed") "Device offline or service down" else "Command failed"
                     snackbarHostState.showSnackbar(msg)
                     isLoading = false
                     return@launch
@@ -1205,55 +1219,55 @@ fun RemoteControlPanel(
                 if (flashResult is ControlResult.Success) {
                     handleSuccessfulCommand(effectiveToken)
                     connectionStatus = RemoteConnectionStatus.SEARCHING
-                    snackbarHostState.showSnackbar("正在寻找手机")
+                    snackbarHostState.showSnackbar("Searching")
                 } else {
                     // Ring succeeded, flash failed
                     connectionStatus = RemoteConnectionStatus.PARTIAL_SUCCESS
-                    snackbarHostState.showSnackbar("部分成功：响铃已启动，但手电控制失败")
+                    snackbarHostState.showSnackbar("Partial success: ring started, flash failed")
                 }
                 
                 refreshStatus()
                 isLoading = false
             }
         }, { error ->
-            scope.launch { snackbarHostState.showSnackbar("本机认证失败: $error") }
+            scope.launch { snackbarHostState.showSnackbar("Local auth failed: $error") }
         })
     }
 
     fun stopFinding() {
         val effectiveToken = getEffectiveToken()
         if (effectiveToken == null) {
-            scope.launch { snackbarHostState.showSnackbar("请先输入 Token") }
+            scope.launch { snackbarHostState.showSnackbar("Enter token first") }
             return
         }
-        onAuthenticate("验证身份以停止寻找", {
+        onAuthenticate("Verify to stop", {
             scope.launch {
                 isLoading = true
                 when (val result = client.sendCommand(device.host, device.port, effectiveToken, "/command/stop-all")) {
                     is ControlResult.Success -> {
                         handleSuccessfulCommand(effectiveToken)
                         connectionStatus = RemoteConnectionStatus.STOPPED
-                        snackbarHostState.showSnackbar("已停止寻找")
+                        snackbarHostState.showSnackbar("Stopped")
                         refreshStatus()
                     }
                     is ControlResult.Unauthorized -> {
                         connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
-                        snackbarHostState.showSnackbar("Token 错误")
+                        snackbarHostState.showSnackbar("Token error")
                     }
                     is ControlResult.Timeout -> {
                         connectionStatus = RemoteConnectionStatus.TIMEOUT
-                        snackbarHostState.showSnackbar("请求超时")
+                        snackbarHostState.showSnackbar("Timeout")
                     }
                     is ControlResult.Error -> {
                         connectionStatus = RemoteConnectionStatus.OFFLINE
-                        val msg = if (result.message == "connection_failed") "设备离线或服务未启动" else "控制失败"
+                        val msg = if (result.message == "connection_failed") "Device offline or service down" else "Command failed"
                         snackbarHostState.showSnackbar(msg)
                     }
                 }
                 isLoading = false
             }
         }, { error ->
-            scope.launch { snackbarHostState.showSnackbar("本机认证失败: $error") }
+            scope.launch { snackbarHostState.showSnackbar("Local auth failed: $error") }
         })
     }
 
@@ -1273,7 +1287,7 @@ fun RemoteControlPanel(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onBack) { Text("← 返回设备列表") }
+                TextButton(onClick = onBack) { Text("Back") }
                 Spacer(modifier = Modifier.weight(1f))
                 if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
             }
@@ -1305,15 +1319,15 @@ fun RemoteControlPanel(
                     Surface(shape = androidx.compose.foundation.shape.CircleShape, color = statusColor, modifier = Modifier.size(10.dp)) {}
                     Text(
                         text = when (connectionStatus) {
-                            RemoteConnectionStatus.IDLE -> "未检测"
-                            RemoteConnectionStatus.CONNECTING -> "连接中..."
-                            RemoteConnectionStatus.ONLINE -> "在线"
-                            RemoteConnectionStatus.OFFLINE -> "离线 / 服务未启动"
-                            RemoteConnectionStatus.TIMEOUT -> "请求超时"
-                            RemoteConnectionStatus.UNAUTHORIZED -> "Token 错误"
-                            RemoteConnectionStatus.SEARCHING -> "正在寻找手机"
-                            RemoteConnectionStatus.PARTIAL_SUCCESS -> "部分成功 (响铃中)"
-                            RemoteConnectionStatus.STOPPED -> "已停止"
+                            RemoteConnectionStatus.IDLE -> "Idle"
+                            RemoteConnectionStatus.CONNECTING -> "Connecting..."
+                            RemoteConnectionStatus.ONLINE -> "Online"
+                            RemoteConnectionStatus.OFFLINE -> "Offline / Service down"
+                            RemoteConnectionStatus.TIMEOUT -> "Timeout"
+                            RemoteConnectionStatus.UNAUTHORIZED -> "Token error"
+                            RemoteConnectionStatus.SEARCHING -> "Searching"
+                            RemoteConnectionStatus.PARTIAL_SUCCESS -> "Partial (ringing)"
+                            RemoteConnectionStatus.STOPPED -> "Stopped"
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
@@ -1337,7 +1351,7 @@ fun RemoteControlPanel(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("开始寻找手机", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, textAlign = TextAlign.Center)
+                        Text("Find Phone", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, textAlign = TextAlign.Center)
                     }
                     Button(
                         onClick = { stopFinding() },
@@ -1345,7 +1359,7 @@ fun RemoteControlPanel(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("停止寻找", fontWeight = FontWeight.Bold)
+                        Text("Stop", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -1353,13 +1367,13 @@ fun RemoteControlPanel(
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(device.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text("控制地址: ${device.controlUrl}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
+                    Text("Address: ${device.controlUrl}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        IndicatorBox("远端响铃", if (ringActive) "鸣叫中" else "静音", ringActive, Modifier.weight(1f))
-                        IndicatorBox("远端手电", when(flashMode) { "steady" -> "常亮"; "strobe" -> "爆闪"; else -> "关闭" }, flashMode != "off", Modifier.weight(1f))
+                        IndicatorBox("Remote Ring", if (ringActive) "Ringing" else "Silent", ringActive, Modifier.weight(1f))
+                        IndicatorBox("Remote Flash", when(flashMode) { "steady" -> "Steady"; "strobe" -> "Strobe"; else -> "Off" }, flashMode != "off", Modifier.weight(1f))
                     }
                 }
             }
@@ -1369,7 +1383,7 @@ fun RemoteControlPanel(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f))
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("配对鉴权", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Authorization", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     
                     if (hasSavedToken) {
                         Surface(
@@ -1384,7 +1398,7 @@ fun RemoteControlPanel(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text("✓", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
-                                    Text("Token 已保存，可直接控制", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                    Text("Token saved", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                                 }
                                 TextButton(
                                     onClick = { 
@@ -1393,7 +1407,7 @@ fun RemoteControlPanel(
                                     },
                                     contentPadding = PaddingValues(0.dp)
                                 ) {
-                                    Text("清除", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                                    Text("Clear", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
                                 }
                             }
                         }
@@ -1402,7 +1416,7 @@ fun RemoteControlPanel(
                     OutlinedTextField(
                         value = inputToken,
                         onValueChange = { inputToken = it },
-                        label = { Text(if (hasSavedToken) "输入新 Token 以更换" else "请输入被寻找端显示的 Token") },
+                        label = { Text(if (hasSavedToken) "New token (optional)" else "Enter token from target phone") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(8.dp),
@@ -1415,23 +1429,23 @@ fun RemoteControlPanel(
                             modifier = Modifier.align(Alignment.End),
                             contentPadding = PaddingValues(0.dp)
                         ) {
-                            Text("清空输入", fontSize = 12.sp)
+                            Text("Clear", fontSize = 12.sp)
                         }
                     }
                 }
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("硬件控制", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Hardware Controls", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { sendCommand("/command/flash/steady/start") }, modifier = Modifier.weight(1f)) { Text("常亮", fontSize = 12.sp) }
-                    Button(onClick = { sendCommand("/command/flash/strobe/start") }, modifier = Modifier.weight(1f)) { Text("爆闪", fontSize = 12.sp) }
+                    Button(onClick = { sendCommand("/command/flash/steady/start") }, modifier = Modifier.weight(1f)) { Text("Steady", fontSize = 12.sp) }
+                    Button(onClick = { sendCommand("/command/flash/strobe/start") }, modifier = Modifier.weight(1f)) { Text("Strobe", fontSize = 12.sp) }
                 }
                 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { sendCommand("/command/flash/stop") }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)) { Text("关闭手电", fontSize = 12.sp) }
-                    Button(onClick = { refreshStatus() }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)) { Text("刷新状态", fontSize = 12.sp) }
+                    Button(onClick = { sendCommand("/command/flash/stop") }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)) { Text("Turn Flash Off", fontSize = 12.sp) }
+                    Button(onClick = { refreshStatus() }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)) { Text("Refresh", fontSize = 12.sp) }
                 }
 
                 Button(
@@ -1439,7 +1453,7 @@ fun RemoteControlPanel(
                     modifier = Modifier.fillMaxWidth(), 
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("一键停止全部动作", fontWeight = FontWeight.Bold)
+                    Text("Stop All Alerts", fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -1451,14 +1465,14 @@ fun RemoteControlPanel(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                 ) {
-                    Text("拉响报警 (会发出声音)", fontWeight = FontWeight.Bold)
+                    Text("Alarm (loud)", fontWeight = FontWeight.Bold)
                 }
                 
                 OutlinedButton(
                     onClick = { sendCommand("/command/ring/stop") },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("停止响铃")
+                    Text("Stop Ring")
                 }
             }
         }
@@ -1576,11 +1590,11 @@ fun QrScannerScreen(
             onClick = onClose,
             modifier = Modifier.align(Alignment.TopStart).padding(16.dp).background(Color.Black.copy(alpha = 0.5f), androidx.compose.foundation.shape.CircleShape)
         ) {
-            Text("关闭", color = Color.White, fontWeight = FontWeight.Bold)
+            Text("Off", color = Color.White, fontWeight = FontWeight.Bold)
         }
         
         Text(
-            "将二维码放入框内即可扫码",
+            "Align QR code inside the frame",
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 64.dp).background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(horizontal = 16.dp, vertical = 8.dp),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium

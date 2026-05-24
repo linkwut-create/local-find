@@ -1,5 +1,5 @@
-<!doctype html>
-<html lang="zh-CN">
+﻿<!doctype html>
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,44 +14,44 @@
       </header>
 
       <section class="device-card" aria-label="Current device">
-        <div class="device-card-title">当前设备</div>
+        <div class="device-card-title">Current Device</div>
         <div class="device-grid">
-          <span>名称</span>
-          <strong id="device-name">手动模式</strong>
-          <span>地址</span>
-          <strong id="device-address">未设置</strong>
-          <span>模式</span>
-          <strong id="device-token-status">未保存</strong>
+          <span>Name</span>
+          <strong id="device-name">Manual mode</strong>
+          <span>Address</span>
+          <strong id="device-address">N/A</strong>
+          <span>Mode</span>
+          <strong id="device-token-status">Not saved</strong>
         </div>
-        <p id="last-success" class="last-success">上次成功：暂无</p>
+        <p id="last-success" class="last-success">Last success: --</p>
       </section>
 
       <section class="primary-controls" aria-label="Find phone">
-        <button type="button" data-command="find-phone" class="find-phone-action">一键找手机</button>
-        <button type="button" data-command="stop-all" class="primary-stop">停止全部</button>
+        <button type="button" data-command="find-phone" class="find-phone-action">Find Phone</button>
+        <button type="button" data-command="stop-all" class="primary-stop">Stop All Alerts</button>
       </section>
 
       <section class="secondary-controls" aria-label="Quick commands">
-        <button type="button" data-command="flash-start" class="secondary-action">开始闪光</button>
-        <button type="button" data-command="flash-stop" class="secondary-action">停止闪光</button>
-        <button type="button" data-command="status" class="secondary-action">检查状态</button>
-        <button type="button" data-command="diagnostics" class="secondary-action">打开诊断页</button>
+        <button type="button" data-command="flash-start" class="secondary-action">Flash</button>
+        <button type="button" data-command="flash-stop" class="secondary-action">Stop Flash</button>
+        <button type="button" data-command="status" class="secondary-action">Status</button>
+        <button type="button" data-command="diagnostics" class="secondary-action">Diagnostics</button>
       </section>
 
       <section class="paired-devices-card" aria-label="Paired phones">
         <div class="paired-devices-header">
-          <span>已配对手机</span>
+          <span>Paired Phones</span>
         </div>
         <div id="paired-devices-list" class="paired-devices-list"></div>
       </section>
 
       <section class="pairing-card" aria-label="Add phone">
         <div class="pairing-header">
-          <span>添加手机</span>
+          <span>Add Phone</span>
         </div>
         <div class="pairing-fields">
           <label class="field">
-            <span>Host</span>
+            <span>IP Address</span>
             <input id="pairing-host" name="pairing-host" type="text" placeholder="192.168.1.108" autocomplete="off" spellcheck="false">
           </label>
           <label class="field">
@@ -60,18 +60,18 @@
           </label>
         </div>
         <div class="pairing-actions">
-          <button id="check-phone" type="button" class="secondary-action">检查手机</button>
-          <button id="request-pairing" type="button">请求配对</button>
+          <button id="check-phone" type="button" class="secondary-action">Check Connection</button>
+          <button id="request-pairing" type="button">Request Pairing</button>
         </div>
-        <output id="pairing-status" class="pairing-status" role="status" aria-live="polite">未检查</output>
+        <output id="pairing-status" class="pairing-status" role="status" aria-live="polite">Not checked</output>
       </section>
 
       <details class="manual-compat-card">
-        <summary>高级：手动 Host/Token 兼容模式</summary>
-        <p class="manual-compat-note">已配对设备优先。手动模式只用于旧 Token fallback 或临时调试。</p>
+        <summary>Manual Host/Token (legacy)</summary>
+        <p class="manual-compat-note">Paired devices are preferred. Manual mode is for legacy token fallback or temporary debugging.</p>
         <section class="fields" aria-label="Connection settings">
           <label class="field">
-            <span>Host</span>
+            <span>IP Address</span>
             <input id="host" name="host" type="text" placeholder="192.168.1.108" autocomplete="off" spellcheck="false">
           </label>
 
@@ -88,62 +88,62 @@
           <div class="token-options">
             <label class="remember-token">
               <input id="remember-token" name="remember-token" type="checkbox">
-              <span>记住此电脑上的 Token</span>
+              <span>Remember token on this computer</span>
             </label>
-            <button id="clear-saved-token" type="button" class="text-action">清除已保存 Token</button>
+            <button id="clear-saved-token" type="button" class="text-action">Clear Saved Token</button>
           </div>
         </section>
       </details>
 
       <section class="actions quiet-actions" aria-label="Other commands">
-        <button type="button" data-command="ring-stop" class="secondary-action">停止响铃</button>
+        <button type="button" data-command="ring-stop" class="secondary-action">Stop Ring</button>
       </section>
 
       <section class="protection-card" aria-label="Local protection lock">
         <div class="protection-header">
-          <span>本地保护锁</span>
-          <strong id="protection-status">未开启</strong>
+          <span>Access Protection</span>
+          <strong id="protection-status">Off</strong>
         </div>
         <div class="pin-row">
-          <input id="local-pin" name="local-pin" type="password" minlength="4" maxlength="12" inputmode="numeric" autocomplete="off" placeholder="设置 4-12 位 PIN">
-          <button id="set-local-pin" type="button">设置本地保护 PIN</button>
+          <input id="local-pin" name="local-pin" type="password" minlength="4" maxlength="12" inputmode="numeric" autocomplete="off" placeholder="Set 4-12 digit PIN">
+          <button id="set-local-pin" type="button">Set Protection PIN</button>
         </div>
         <label class="protection-method">
-          <span>保护方式</span>
+          <span>Protection Method</span>
           <select id="protection-method" name="protection-method">
-            <option value="pin">本地 PIN</option>
-            <option value="webauthn">系统验证</option>
-            <option value="webauthn-or-pin">系统验证失败时使用本地 PIN</option>
+            <option value="pin">Local PIN</option>
+            <option value="webauthn">WebAuthn</option>
+            <option value="webauthn-or-pin">WebAuthn, fallback to PIN</option>
           </select>
         </label>
-        <button id="disable-protection" type="button" class="text-action">关闭保护锁</button>
+        <button id="disable-protection" type="button" class="text-action">Disable Protection</button>
       </section>
 
       <section class="webauthn-card" aria-label="System verification">
         <div class="webauthn-header">
-          <span>系统验证</span>
-          <strong id="webauthn-status">未注册</strong>
+          <span>WebAuthn</span>
+          <strong id="webauthn-status">Not registered</strong>
         </div>
-        <p>可作为保护方式，本地 PIN 仍保留。</p>
-        <p>可能触发 Windows Hello / 平台认证器。</p>
-        <p>不保存系统密码。</p>
+        <p>Can be used as a protection method. Local PIN is kept as fallback.</p>
+        <p>May trigger Windows Hello / platform authenticator.</p>
+        <p>No system password is stored.</p>
         <div class="webauthn-actions">
-          <button id="register-webauthn" type="button">注册系统验证</button>
-          <button id="test-webauthn" type="button" class="secondary-action">测试系统验证</button>
+          <button id="register-webauthn" type="button">Register WebAuthn</button>
+          <button id="test-webauthn" type="button" class="secondary-action">Test WebAuthn</button>
         </div>
       </section>
 
-      <output id="result" class="result" role="status" aria-live="polite">未连接</output>
+      <output id="result" class="result" role="status" aria-live="polite">Not connected</output>
     </main>
 
     <div id="pin-modal" class="pin-modal hidden" role="dialog" aria-modal="true" aria-labelledby="pin-modal-title">
       <div class="pin-dialog">
-        <h2 id="pin-modal-title">本地 PIN 验证</h2>
-        <p id="pin-modal-message">请输入本地保护 PIN。</p>
+        <h2 id="pin-modal-title">Local PIN Verify</h2>
+        <p id="pin-modal-message">Enter your protection PIN.</p>
         <input id="verify-pin" type="password" minlength="4" maxlength="12" inputmode="numeric" autocomplete="off">
         <div class="pin-actions">
-          <button id="confirm-pin" type="button">验证</button>
-          <button id="cancel-pin" type="button" class="secondary-action">取消</button>
+          <button id="confirm-pin" type="button">Verify</button>
+          <button id="cancel-pin" type="button" class="secondary-action">Cancel</button>
         </div>
       </div>
     </div>

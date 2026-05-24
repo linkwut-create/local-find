@@ -310,33 +310,33 @@ class HttpServerManager(
                         <body>
                             <div class="card">
                                 <h1>Local Find</h1>
-                                <div class="subtitle">电脑端零安装控制页</div>
-                                
+                                <div class="subtitle">Remote Control in Browser &mdash; no install needed</div>
+
                                 <div class="device-info">
-                                    <div class="info-row"><span class="info-label">当前设备:</span> <span class="info-value" id="device-name">$deviceName</span></div>
-                                    <div class="info-row"><span class="info-label">服务地址:</span> <span class="info-value" id="service-addr">--</span></div>
+                                    <div class="info-row"><span class="info-label">Device:</span> <span class="info-value" id="device-name">$deviceName</span></div>
+                                    <div class="info-row"><span class="info-label">Address:</span> <span class="info-value" id="service-addr">--</span></div>
                                 </div>
 
                                 <div class="status-grid">
-                                    <div class="status-item"><span class="status-label">服务状态</span><span class="status-value active" id="service-status">在线</span></div>
-                                    <div class="status-item"><span class="status-label">可访问性</span><span class="status-value active" id="reachability">可连接</span></div>
-                                    <div class="status-item"><span class="status-label">响铃状态</span><span class="status-value" id="ring-status">--</span></div>
-                                    <div class="status-item"><span class="status-label">闪光模式</span><span class="status-value" id="flash-status">--</span></div>
+                                    <div class="status-item"><span class="status-label">Service</span><span class="status-value active" id="service-status">Online</span></div>
+                                    <div class="status-item"><span class="status-label">Reachable</span><span class="status-value active" id="reachability">Yes</span></div>
+                                    <div class="status-item"><span class="status-label">Ring</span><span class="status-value" id="ring-status">--</span></div>
+                                    <div class="status-item"><span class="status-label">Flash</span><span class="status-value" id="flash-status">--</span></div>
                                 </div>
 
                                 <div class="token-section">
-                                    <label for="token-input">输入 8 位配对 Token</label>
-                                    <input type="password" id="token-input" maxlength="8" placeholder="••••••••">
+                                    <label for="token-input">Enter 8-digit Token</label>
+                                    <input type="password" id="token-input" maxlength="8" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;">
                                 </div>
 
                                 <div class="button-group">
-                                    <button class="btn-main" onclick="startFinding()">开始寻找手机</button>
+                                    <button class="btn-main" onclick="startFinding()">Find Phone</button>
                                     <div class="row">
-                                        <button class="btn-outline" onclick="toggleRing()" id="btn-ring">响铃</button>
-                                        <button class="btn-outline" onclick="toggleFlash()" id="btn-flash">闪光</button>
+                                        <button class="btn-outline" onclick="toggleRing()" id="btn-ring">Ring</button>
+                                        <button class="btn-outline" onclick="toggleFlash()" id="btn-flash">Flash</button>
                                     </div>
-                                    <button class="btn-stop" onclick="callApi('/command/stop-all')">停止寻找 / 全部停止</button>
-                                    <button class="btn-outline" onclick="updateStatus()">刷新状态</button>
+                                    <button class="btn-stop" onclick="callApi('/command/stop-all')">Stop All Alerts</button>
+                                    <button class="btn-outline" onclick="updateStatus()">Refresh</button>
                                 </div>
 
                                 <div id="result-box" class="result-box"></div>
@@ -344,12 +344,19 @@ class HttpServerManager(
 
                             <div class="card" style="padding: 16px;">
                                 <div class="instructions">
-                                    <strong>使用说明:</strong>
+                                    <strong>How to Use</strong>
                                     <ul>
-                                        <li>电脑端无需安装任何软件。</li>
-                                        <li>请确保电脑和手机在同一 Wi-Fi / 局域网。</li>
-                                        <li>控制命令需要被寻找手机当前显示的 8 位 Token。</li>
-                                        <li>Chrome 插件快捷控制将在后续版本提供。</li>
+                                        <li>No software installation needed on your computer.</li>
+                                        <li>Make sure the computer and phone are on the same Wi-Fi / LAN.</li>
+                                        <li>Enter the 8-digit token shown on the phone screen.</li>
+                                        <li>For quick access, use the Chrome extension instead.</li>
+                                    </ul>
+                                    <strong>Security</strong>
+                                    <ul>
+                                        <li>Local Find is intended for trusted local networks only.</li>
+                                        <li>Do not expose this server to the public internet.</li>
+                                        <li>Pair only trusted devices.</li>
+                                        <li>Reset the token if you suspect it has leaked.</li>
                                     </ul>
                                 </div>
                             </div>
@@ -375,28 +382,28 @@ class HttpServerManager(
                                         const res = await fetch('/status');
                                         if (!res.ok) throw new Error('status_error');
                                         const data = await res.json();
-                                        
-                                        document.getElementById('service-status').textContent = '在线';
-                                        document.getElementById('reachability').textContent = '可连接';
-                                        
+
+                                        document.getElementById('service-status').textContent = 'Online';
+                                        document.getElementById('reachability').textContent = 'Yes';
+
                                         const ringStatus = document.getElementById('ring-status');
-                                        ringStatus.textContent = data.ring_active ? '鸣叫中' : '静音';
+                                        ringStatus.textContent = data.ring_active ? 'Ringing' : 'Silent';
                                         ringStatus.className = 'status-value ' + (data.ring_active ? 'active' : 'inactive');
 
                                         const flashStatus = document.getElementById('flash-status');
-                                        flashStatus.textContent = data.flash_mode === 'off' ? '关闭' : (data.flash_mode === 'strobe' ? '爆闪' : '常亮');
+                                        flashStatus.textContent = data.flash_mode === 'off' ? 'Off' : (data.flash_mode === 'strobe' ? 'Strobe' : 'Steady');
                                         flashStatus.className = 'status-value ' + (data.flash_mode !== 'off' ? 'active' : 'inactive');
                                     } catch (e) {
-                                        document.getElementById('service-status').textContent = '未知';
-                                        document.getElementById('reachability').textContent = '连接失败';
-                                        showResult('无法连接到手机，请检查网络', true);
+                                        document.getElementById('service-status').textContent = 'Offline';
+                                        document.getElementById('reachability').textContent = 'No';
+                                        showResult('Cannot reach phone. Check network.', true);
                                     }
                                 }
 
                                 async function callApi(endpoint) {
                                     const token = tokenInput.value;
                                     if (!token) {
-                                        showResult('请输入 Token', true);
+                                        showResult('Enter token', true);
                                         return;
                                     }
                                     try {
@@ -405,29 +412,29 @@ class HttpServerManager(
                                             headers: { 'X-LocalFind-Token': token }
                                         });
                                         if (res.status === 401) {
-                                            showResult('Token 错误或已失效', true);
+                                            showResult('Token incorrect or expired', true);
                                         } else if (res.status === 200) {
-                                            showResult('命令已发送');
+                                            showResult('Command sent');
                                             setTimeout(updateStatus, 500);
                                         } else {
-                                            showResult('操作失败 (' + res.status + ')', true);
+                                            showResult('Failed (' + res.status + ')', true);
                                         }
                                     } catch (e) {
-                                        showResult('网络错误或请求超时', true);
+                                        showResult('Network error or timeout', true);
                                     }
                                 }
 
                                 function startFinding() {
                                     const token = tokenInput.value;
                                     if (!token) {
-                                        showResult('请输入 Token', true);
+                                        showResult('Enter token', true);
                                         return;
                                     }
-                                    showResult('正在发送开始指令...');
+                                    showResult('Sending...');
                                     fetch('/command/ring/start', { method: 'POST', headers: { 'X-LocalFind-Token': token } })
                                         .then(() => fetch('/command/flash/strobe/start', { method: 'POST', headers: { 'X-LocalFind-Token': token } }))
-                                        .then(() => { showResult('开始寻找手机'); setTimeout(updateStatus, 500); })
-                                        .catch(() => showResult('指令发送失败', true));
+                                        .then(() => { showResult('Find Phone started'); setTimeout(updateStatus, 500); })
+                                        .catch(() => showResult('Command failed', true));
                                 }
 
                                 function toggleRing() {

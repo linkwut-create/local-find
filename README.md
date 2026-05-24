@@ -86,6 +86,30 @@ It contains the debug APK, Chrome extension files, and all documentation. Attach
 | [MVP_L_PAIRING_PLAN.md](docs/MVP_L_PAIRING_PLAN.md) | Original L series pairing design plan |
 | [chrome-extension/README.md](chrome-extension/README.md) | Chrome extension details |
 
+## Security Warnings
+
+- Local Find is intended for **trusted local networks only**.
+- **No cloud server** is used. All communication is LAN-only.
+- **Do not expose** the HTTP server to the public internet.
+- **Pair only trusted devices.** Revoke any device you no longer recognize.
+- **Reset the token** if you suspect it has leaked.
+- WebAuthn/PIN protects local browser control where available.
+- Some Android vendors may restrict background service behavior; battery optimization settings may be required.
+
+## Build & Test
+
+```powershell
+# Android
+cd android
+$env:JAVA_HOME = "D:\android studio\jbr"
+.\gradlew.bat assembleDebug
+# APK: android\app\build\outputs\apk\debug\app-debug.apk
+
+# Chrome extension static checks
+node --check chrome-extension\popup.js
+# Load in Chrome: chrome://extensions → Developer mode → Load unpacked → chrome-extension\
+```
+
 ## Roadmap
 
 - **GitHub Release** with attached zip
