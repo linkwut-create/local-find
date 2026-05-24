@@ -280,3 +280,25 @@ Current CWS.6 status:
 - manual browser validation should use Chrome Developer Mode with `chrome-extension/` loaded unpacked.
 
 CWS.6 did not add a validation script, create a zip, upload to Chrome Web Store, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, modify Android code, move tags, or modify the `mvp-u5-ok` GitHub Release.
+
+## CWS.7 Local Unpacked Validation Note
+
+CWS.7 added:
+
+- `docs/CHROME_WEB_STORE_LOCAL_UNPACKED_VALIDATION.md`
+
+Current CWS.7 status:
+
+- local unpacked validation plan was added;
+- repository baseline and static manifest/file checks were recorded;
+- `chrome-extension/manifest.json` parses as JSON;
+- `manifest_version` remains `3`;
+- `permissions` remains `storage` only;
+- `host_permissions` remains `http://*/*`;
+- extension icons and popup files are present;
+- no background service worker, content scripts, or high-risk browser-data permissions were found;
+- `popup.html` loads local `i18n.js` and `popup.js` scripts.
+
+Upload remains blocked by missing real Chrome Web Store screenshots, TODO support email, TODO public privacy policy URL / owner decision, missing final extension zip, and no Chrome Web Store developer account/upload step.
+
+CWS.7 did not launch Chrome automatically, generate a zip, upload to Chrome Web Store, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, modify Android code, move tags, or modify the `mvp-u5-ok` GitHub Release.
