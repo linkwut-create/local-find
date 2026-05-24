@@ -325,3 +325,21 @@ Owner/tester reported:
 Upload remains blocked by missing real Chrome Web Store screenshots, TODO support email, TODO public privacy policy URL / owner decision, missing final extension zip, and no Chrome Web Store developer account/upload step.
 
 CWS.8 did not modify Chrome extension code, modify Android code, change `host_permissions`, generate a zip, upload to Chrome Web Store, move tags, or modify the `mvp-u5-ok` GitHub Release.
+
+## CWS.9 Screenshot Preflight Note
+
+CWS.9 added:
+
+- `docs/CHROME_WEB_STORE_SCREENSHOT_PREFLIGHT.md`
+
+Current CWS.9 status:
+
+- screenshot safety preflight was added;
+- current owner screenshots are validation evidence only, not store assets;
+- current owner screenshots should not be committed or submitted because they show real device name and real LAN IP;
+- final screenshot capture should use a clean Chrome profile if practical, or clean extension storage with safe demo values;
+- CWS.9 does not generate final screenshot assets.
+
+Upload remains blocked by missing final Chrome Web Store screenshots, TODO support email, TODO public privacy policy URL / owner decision, missing final extension zip, and no Chrome Web Store developer account/upload step.
+
+CWS.9 did not modify Chrome extension code, modify Android code, change `host_permissions`, add real screenshot assets, generate a zip, upload to Chrome Web Store, move tags, or modify the `mvp-u5-ok` GitHub Release.

@@ -149,3 +149,19 @@ Before Chrome Web Store upload:
 - Required package icons remain under `chrome-extension/icons/`.
 - No extension zip is generated until the packaging phase explicitly starts.
 - No Chrome Web Store upload is performed until separately approved.
+
+## CWS.9 Screenshot Preflight
+
+CWS.9 added the screenshot safety preflight:
+
+- `docs/CHROME_WEB_STORE_SCREENSHOT_PREFLIGHT.md`
+
+Current owner/tester screenshots are validation evidence only. They must not be committed or submitted as Chrome Web Store assets because they show real device name and real LAN IP.
+
+Before final screenshot capture, choose a safe capture strategy:
+
+- preferred: use a separate clean Chrome profile;
+- fallback: clear extension storage and use safe demo values;
+- avoid: redaction/cropping of current real screenshots unless all sensitive values are fully removed.
+
+Do not generate final screenshot assets until a later CWS phase explicitly approves the capture strategy and asset commit.
