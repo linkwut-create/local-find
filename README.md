@@ -15,6 +15,17 @@ Local-first Android phone finder for trusted nearby devices. Find your phone on 
 - No iOS support. Android only.
 - No Play Store or Chrome Web Store distribution (debug-signed for now).
 
+## Current Release
+
+The current public MVP testing release is **Local Find MVP-U.5**:
+
+- GitHub Release: [Local Find MVP-U.5](https://github.com/linkwut-create/local-find/releases/tag/mvp-u5-ok)
+- Tag: `mvp-u5-ok`
+- Package: `local-find-mvp-u5.zip`
+- SHA256: `81764E96AD9648CCC3369F54CDB6113DCFB342BEBC9A42D314337B2EB59FB371`
+
+This is an MVP testing release. It is not a Play Store production build and the Chrome extension is distributed as an unpacked Manifest V3 extension for testing.
+
 ## Current Capabilities
 
 | Feature | Description |
@@ -51,12 +62,11 @@ docs/                  Design plans, closeouts, install guide
 
 ## Release Package
 
-The current deliverable package is at:
-```
-D:\local-find-release\local-find-mvp-p2.zip    (23.4 MB, 12 files)
-```
+The current public release package is attached to the GitHub Release:
 
-It contains the debug APK, Chrome extension files, and all documentation. Attach this zip to GitHub Releases. See **[docs/MVP_P_RELEASE_CLOSEOUT.md](docs/MVP_P_RELEASE_CLOSEOUT.md)** for the smoke test report.
+**[Local Find MVP-U.5](https://github.com/linkwut-create/local-find/releases/tag/mvp-u5-ok)**
+
+It contains the debug APK, Chrome extension files, README, docs, release manifest, and SHA256SUMS. See **[PROJECT_STATUS.md](PROJECT_STATUS.md)** and **[CHANGELOG.md](CHANGELOG.md)** for the MVP-U.5 release closeout.
 
 ## Security Model
 
@@ -80,6 +90,11 @@ It contains the debug APK, Chrome extension files, and all documentation. Attach
 
 | Document | Contents |
 |----------|----------|
+| [PRIVACY.md](PRIVACY.md) | Privacy model, local storage, and permission scope |
+| [SECURITY.md](SECURITY.md) | Security boundary, token model, and reporting guidance |
+| [LICENSE](LICENSE) | MIT License |
+| [PROJECT_STATUS.md](PROJECT_STATUS.md) | Current project and GitHub release status |
+| [CHANGELOG.md](CHANGELOG.md) | Public release history |
 | [MVP_P_INSTALL_AND_RELEASE.md](docs/MVP_P_INSTALL_AND_RELEASE.md) | Full install, usage, troubleshooting, smoke test |
 | [MVP_P_RELEASE_CLOSEOUT.md](docs/MVP_P_RELEASE_CLOSEOUT.md) | P.3 smoke test results, deliverable status |
 | [MVP_L_CLOSEOUT.md](docs/MVP_L_CLOSEOUT.md) | L series feature closeout, security model, backlog |
@@ -132,3 +147,4 @@ Key tags for this repository:
 | `mvp-l5-ok` | L series pairing + multi-device feature complete |
 | `mvp-p1-ok` | Install and release guide |
 | `mvp-p4-ok` | Release closeout (smoke test passed) |
+| `mvp-u5-ok` | MVP-U.5 public testing release |
