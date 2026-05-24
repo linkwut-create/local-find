@@ -86,6 +86,10 @@ It contains the debug APK, Chrome extension files, and all documentation. Attach
 | [MVP_L_PAIRING_PLAN.md](docs/MVP_L_PAIRING_PLAN.md) | Original L series pairing design plan |
 | [chrome-extension/README.md](chrome-extension/README.md) | Chrome extension details |
 
+## Language
+
+The Android app and Chrome extension support **English** and **简体中文**. Select your language from the dropdown in the app or extension header. The browser remote-control page accepts `?lang=en` or `?lang=zh`.
+
 ## Security Warnings
 
 - Local Find is intended for **trusted local networks only**.
