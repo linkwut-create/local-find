@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.localfind"
+    namespace = "io.github.linkwutcreate.localfind"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.localfind"
+        applicationId = "io.github.linkwutcreate.localfind"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
