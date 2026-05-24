@@ -79,6 +79,21 @@ Do not mix English and Simplified Chinese in the same store listing text. Keep e
 
 Do not modify the existing `mvp-u5-ok` GitHub Release for this listing draft.
 
+## CWS.5 Contact And Privacy Readiness
+
+CWS.5 records support email and public privacy policy URL options in:
+
+- `docs/CHROME_WEB_STORE_CONTACT_AND_PRIVACY_READINESS.md`
+
+The support/contact fields remain TODO until the owner makes final decisions.
+
+Do not submit the Chrome Web Store listing until these fields are final:
+
+- support email;
+- public privacy policy URL.
+
+CWS.5 recommends resolving both fields before any package/upload phase begins.
+
 ## Pre-Submission Copy Checks
 
 - Avoid claiming cloud sync, account recovery, SMS-based features, or web-page awareness.

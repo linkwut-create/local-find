@@ -248,3 +248,18 @@ Recommended CWS.1 tasks:
 5. Prepare a packaging checklist that packages only `chrome-extension/` contents and excludes Android/release/signing/local files.
 
 Do not generate a package, upload to Chrome Web Store, move `mvp-u5-ok`, or modify the existing GitHub Release during CWS.1 planning.
+
+## CWS.5 Contact And Privacy Readiness Note
+
+CWS.5 added:
+
+- `docs/CHROME_WEB_STORE_CONTACT_AND_PRIVACY_READINESS.md`
+
+Current CWS.5 status:
+
+- support email remains a manual owner decision;
+- public privacy policy URL remains a manual owner decision;
+- candidate first-pass privacy URL is `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`, pending owner decision and final public reachability check;
+- Chrome Web Store upload should not start until support email and public privacy policy URL are final.
+
+CWS.5 did not modify `PRIVACY.md`, publish a webpage, generate an extension zip, upload to Chrome Web Store, modify the GitHub Release, or change Chrome/Android code.

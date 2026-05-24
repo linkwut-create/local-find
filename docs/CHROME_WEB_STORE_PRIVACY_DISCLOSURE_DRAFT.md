@@ -82,3 +82,19 @@ You can clear extension storage in Chrome. Where supported by the Local Find And
 - Choose a support email.
 - Ensure the public privacy policy covers both the Android app and Chrome extension behavior, or add a Chrome extension-specific section.
 - Keep the privacy disclosure aligned with the final `host_permissions` decision.
+
+## CWS.5 Public Policy URL Readiness
+
+The public privacy policy URL remains TODO.
+
+Candidate first-pass URL:
+
+```text
+https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md
+```
+
+CWS.5 read-only coverage check found that `PRIVACY.md` covers the local-first model, no cloud account, no Local Find cloud upload, no SMS, no background location tracking, local storage, LAN host/port, paired device metadata, control tokens, browser local protection settings, and user deletion/revocation paths.
+
+The GitHub `PRIVACY.md` URL may be acceptable for the first readiness pass if the owner chooses it and verifies public reachability before submission.
+
+Final public privacy policy URL requires manual owner decision.
