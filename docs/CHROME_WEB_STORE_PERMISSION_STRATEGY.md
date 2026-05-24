@@ -125,3 +125,36 @@ Recommended next phase:
 - CWS.2: decide whether to keep `http://*/*` with store justification or prototype a narrower host-permission model.
 
 Do not modify `chrome-extension/manifest.json` until that decision is explicitly approved.
+
+## CWS.2 Decision
+
+CWS.2 decision document:
+
+- `docs/CHROME_WEB_STORE_HOST_PERMISSION_DECISION.md`
+
+Decision:
+
+- Keep `http://*/*` for the first Chrome Web Store readiness pass.
+- Prepare a precise reviewer justification.
+- Do not change `host_permissions` in CWS.2.
+- Do not modify `chrome-extension/manifest.json` in CWS.2.
+- Do not modify `chrome-extension/popup.js` in CWS.2.
+- Do not attempt optional host permissions until a separate functional design phase.
+
+Reasoning summary:
+
+- Local Find uses the Chrome extension as a popup controller for the Local Find Android app.
+- The Android service address can vary by device, network, local host/IP, and port.
+- Current `popup.js` requests are built from user-entered host/port fields or saved paired-device host/port data.
+- The extension still has no content scripts, no background worker, no high-risk browser-data permissions, and no remote script loading.
+- `http://*/*` is broader than ideal, but changing it safely requires a separate functional design and UX/test pass.
+
+Reviewer justification draft for the first readiness pass:
+
+```text
+Local Find uses host access to send HTTP requests from the extension popup to the Local Find Android app running on a user-entered or paired local network address. The Android service address and port vary by device and network, so the extension needs to support user-entered local HTTP hosts.
+
+The extension does not inject content scripts, does not run a background worker, does not read webpage content, and does not access browsing history, cookies, or tabs. It does not use tabs, history, cookies, webRequest, scripting, or nativeMessaging permissions. Requests are initiated from the popup for local device control.
+```
+
+Revisit this decision if Chrome Web Store review questions the broad host permission, users complain about the permission warning, the pairing model changes, Android supports a more constrained discovery/control path, or optional permissions can be implemented without breaking the popup controller UX.
