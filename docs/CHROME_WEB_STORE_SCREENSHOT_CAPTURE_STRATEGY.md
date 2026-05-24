@@ -123,3 +123,27 @@ Recommended next phase:
 Alternative if the owner does not want image assets committed yet:
 
 - CWS.11: capture screenshots outside the repository and verify manually first.
+
+## CWS.11A Manual Capture Instructions
+
+CWS.11A adds manual clean-profile screenshot capture instructions:
+
+- `docs/CHROME_WEB_STORE_MANUAL_SCREENSHOT_CAPTURE.md`
+
+The chosen strategy remains a separate clean Chrome profile for final screenshot capture.
+
+Draft screenshots should be saved outside the repository first, for example:
+
+```text
+D:\local-find-screenshots-draft\
+```
+
+Do not save initial drafts directly to:
+
+```text
+store-assets/chrome-web-store/screenshots/en-US/
+```
+
+The outside-repository draft location allows owner review for privacy leakage, visual clarity, language consistency, and accidental real device or network identifiers before any image assets are committed.
+
+CWS.11A does not commit screenshots, generate a zip, upload to Chrome Web Store, modify extension code, modify `manifest.json`, or change `host_permissions`.
