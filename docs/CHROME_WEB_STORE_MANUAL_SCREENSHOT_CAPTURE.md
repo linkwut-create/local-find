@@ -10,6 +10,43 @@ Screenshots should be captured in a separate clean Chrome profile so the final l
 
 CWS.11A does not submit images, generate a zip, or upload to Chrome Web Store.
 
+## CWS.11B Helper Script
+
+CWS.11B adds a local helper script:
+
+```text
+tools\open_cws_screenshot_profile.ps1
+```
+
+Run it from the repository root with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\open_cws_screenshot_profile.ps1
+```
+
+The helper only opens a clean Chrome profile and loads the Local Find unpacked extension from:
+
+```text
+D:\local-find\chrome-extension
+```
+
+It also creates or reuses the outside-repository draft locations:
+
+```text
+D:\local-find-cws-chrome-profile
+D:\local-find-screenshots-draft\
+```
+
+The helper does not generate final screenshots, commit screenshots, create a zip, upload to Chrome Web Store, write to `chrome.storage.local`, click the popup, or take screenshots automatically.
+
+Draft screenshots should still be saved first to:
+
+```text
+D:\local-find-screenshots-draft\
+```
+
+Only reviewed and approved screenshots should be moved into the repository in a later screenshot commit phase.
+
 ## Clean Chrome Profile Setup
 
 1. Open the Chrome profile selector.

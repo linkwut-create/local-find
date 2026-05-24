@@ -383,3 +383,25 @@ Current CWS.11A status:
 Upload remains blocked by missing final Chrome Web Store screenshots, TODO support email, TODO public privacy policy URL / owner decision, missing final extension zip, and no Chrome Web Store developer account/upload step.
 
 CWS.11A did not modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, add real screenshot assets, generate a zip, upload to Chrome Web Store, move tags, or modify the `mvp-u5-ok` GitHub Release.
+
+## CWS.11B Screenshot Profile Helper Note
+
+CWS.11B added:
+
+- `tools/open_cws_screenshot_profile.ps1`
+
+CWS.11B updated:
+
+- `docs/CHROME_WEB_STORE_MANUAL_SCREENSHOT_CAPTURE.md`
+
+Current CWS.11B status:
+
+- local helper script was added for opening a clean Chrome profile;
+- the helper is intended to load the Local Find unpacked extension from `D:\local-find\chrome-extension`;
+- the helper creates or reuses `D:\local-find-cws-chrome-profile` and `D:\local-find-screenshots-draft` when manually run;
+- draft screenshots should still be saved outside the repository first;
+- the helper does not write to browser extension storage, click the popup, or take screenshots automatically.
+
+Upload remains blocked by missing final Chrome Web Store screenshots, TODO support email, TODO public privacy policy URL / owner decision, missing final extension zip, and no Chrome Web Store developer account/upload step.
+
+CWS.11B did not modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, add real screenshot assets, generate a zip, upload to Chrome Web Store, move tags, or modify the `mvp-u5-ok` GitHub Release.
