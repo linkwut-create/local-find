@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -12,6 +12,7 @@
         <div class="header-top">
           <h1>Local Find</h1>
           <select id="language-select" class="language-select">
+            <option value="system">System</option>
             <option value="en">English</option>
             <option value="zh">简体中文</option>
           </select>
@@ -20,136 +21,133 @@
       </header>
 
       <section class="device-card" aria-label="Current device">
-        <div class="device-card-title">Current Device</div>
+        <div class="device-card-title" data-l="current_device">Current Device</div>
         <div class="device-grid">
-          <span>Name</span>
-          <strong id="device-name">Manual mode</strong>
-          <span>Address</span>
+          <span data-l="name">Name</span>
+          <strong id="device-name" data-l="manual_mode">Manual</strong>
+          <span data-l="address">Address</span>
           <strong id="device-address">N/A</strong>
-          <span>Mode</span>
-          <strong id="device-token-status">Not saved</strong>
+          <span data-l="mode">Mode</span>
+          <strong id="device-token-status" data-l="not_saved">Not Saved</strong>
         </div>
-        <p id="last-success" class="last-success">Last success: --</p>
+        <p id="last-success" class="last-success">Last Connected: --</p>
       </section>
 
       <section class="primary-controls" aria-label="Find phone">
-        <button type="button" data-command="find-phone" class="find-phone-action">Find Phone</button>
-        <button type="button" data-command="stop-all" class="primary-stop">Stop All Alerts</button>
+        <button type="button" data-command="find-phone" class="find-phone-action" data-l="find_phone">Find Phone</button>
+        <button type="button" data-command="stop-all" class="primary-stop" data-l="stop_all_alerts">Stop All Alerts</button>
       </section>
 
       <section class="secondary-controls" aria-label="Quick commands">
-        <button type="button" data-command="flash-start" class="secondary-action">Flash</button>
-        <button type="button" data-command="flash-stop" class="secondary-action">Stop Flash</button>
-        <button type="button" data-command="status" class="secondary-action">Status</button>
-        <button type="button" data-command="diagnostics" class="secondary-action">Diagnostics</button>
+        <button type="button" data-command="flash-start" class="secondary-action" data-l="flash">Flash</button>
+        <button type="button" data-command="flash-stop" class="secondary-action" data-l="stop_flash">Stop Flash</button>
+        <button type="button" data-command="status" class="secondary-action" data-l="status">Status</button>
+        <button type="button" data-command="diagnostics" class="secondary-action" data-l="diagnostics">Diagnostics</button>
       </section>
 
       <section class="paired-devices-card" aria-label="Paired phones">
         <div class="paired-devices-header">
-          <span>Paired Phones</span>
+          <span data-l="paired_phones">Paired Phones</span>
         </div>
         <div id="paired-devices-list" class="paired-devices-list"></div>
       </section>
 
       <section class="pairing-card" aria-label="Add phone">
         <div class="pairing-header">
-          <span>Add Phone</span>
+          <span data-l="add_phone">Add Phone</span>
         </div>
         <div class="pairing-fields">
           <label class="field">
-            <span>IP Address</span>
+            <span data-l="ip_address">IP Address</span>
             <input id="pairing-host" name="pairing-host" type="text" placeholder="192.168.1.108" autocomplete="off" spellcheck="false">
           </label>
           <label class="field">
-            <span>Port</span>
+            <span data-l="port">Port</span>
             <input id="pairing-port" name="pairing-port" type="number" min="1" max="65535" inputmode="numeric" value="8888">
           </label>
         </div>
         <div class="pairing-actions">
-          <button id="check-phone" type="button" class="secondary-action">Check Connection</button>
-          <button id="request-pairing" type="button">Request Pairing</button>
+          <button id="check-phone" type="button" class="secondary-action" data-l="check_connection">Check Connection</button>
+          <button id="request-pairing" type="button" data-l="send_pairing_request">Send Pairing Request</button>
         </div>
-        <output id="pairing-status" class="pairing-status" role="status" aria-live="polite">Not checked</output>
+        <output id="pairing-status" class="pairing-status" role="status" aria-live="polite" data-l="not_checked">Not Checked</output>
       </section>
 
       <details class="manual-compat-card">
-        <summary>Manual Host/Token (legacy)</summary>
-        <p class="manual-compat-note">Paired devices are preferred. Manual mode is for legacy token fallback or temporary debugging.</p>
+        <summary data-l="manual_legacy_summary">Manual Host/Token (Legacy)</summary>
+        <p class="manual-compat-note" data-l="manual_legacy_note">Paired devices are preferred. Manual mode is for legacy token fallback or temporary debugging.</p>
         <section class="fields" aria-label="Connection settings">
           <label class="field">
-            <span>IP Address</span>
+            <span data-l="ip_address">IP Address</span>
             <input id="host" name="host" type="text" placeholder="192.168.1.108" autocomplete="off" spellcheck="false">
           </label>
-
           <label class="field">
-            <span>Port</span>
+            <span data-l="port">Port</span>
             <input id="port" name="port" type="number" min="1" max="65535" inputmode="numeric" value="8888">
           </label>
-
           <label class="field">
-            <span>Token</span>
+            <span data-l="token">Token</span>
             <input id="token" name="token" type="password" autocomplete="off" spellcheck="false">
           </label>
-
           <div class="token-options">
             <label class="remember-token">
               <input id="remember-token" name="remember-token" type="checkbox">
-              <span>Remember token on this computer</span>
+              <span data-l="remember_token">Remember token on this computer</span>
             </label>
-            <button id="clear-saved-token" type="button" class="text-action">Clear Saved Token</button>
+            <button id="clear-saved-token" type="button" class="text-action" data-l="clear_saved_token">Clear Saved Token</button>
           </div>
         </section>
       </details>
 
       <section class="actions quiet-actions" aria-label="Other commands">
-        <button type="button" data-command="ring-stop" class="secondary-action">Stop Ring</button>
+        <button type="button" data-command="ring-stop" class="secondary-action" data-l="stop_ring">Stop Ring</button>
       </section>
 
       <section class="protection-card" aria-label="Local protection lock">
         <div class="protection-header">
-          <span>Access Protection</span>
-          <strong id="protection-status">Off</strong>
+          <span data-l="access_protection">Access Protection</span>
+          <strong id="protection-status" data-l="off">Off</strong>
         </div>
         <div class="pin-row">
-          <input id="local-pin" name="local-pin" type="password" minlength="4" maxlength="12" inputmode="numeric" autocomplete="off" placeholder="Set 4-12 digit PIN">
-          <button id="set-local-pin" type="button">Set Protection PIN</button>
+          <input id="local-pin" name="local-pin" type="password" minlength="4" maxlength="12" inputmode="numeric" autocomplete="off" data-l-placeholder="set_pin_placeholder" placeholder="Enter a 4–12 digit PIN">
+          <button id="set-local-pin" type="button" data-l="set_protection_pin">Set Protection PIN</button>
         </div>
         <label class="protection-method">
-          <span>Protection Method</span>
+          <span data-l="protection_method">Protection Method</span>
           <select id="protection-method" name="protection-method">
-            <option value="pin">Local PIN</option>
-            <option value="webauthn">WebAuthn</option>
-            <option value="webauthn-or-pin">WebAuthn, fallback to PIN</option>
+            <option value="pin" data-l="pin">Local PIN</option>
+            <option value="webauthn" data-l="webauthn">WebAuthn</option>
+            <option value="webauthn-or-pin" data-l="webauthn_fallback_pin">WebAuthn, with PIN fallback</option>
           </select>
         </label>
-        <button id="disable-protection" type="button" class="text-action">Disable Protection</button>
+        <button id="disable-protection" type="button" class="text-action" data-l="disable_protection">Disable Protection</button>
       </section>
 
       <section class="webauthn-card" aria-label="System verification">
         <div class="webauthn-header">
-          <span>WebAuthn</span>
-          <strong id="webauthn-status">Not registered</strong>
+          <span data-l="webauthn">WebAuthn</span>
+          <strong id="webauthn-status" data-l="not_registered">Not registered</strong>
         </div>
-        <p>Can be used as a protection method. Local PIN is kept as fallback.</p>
-        <p>May trigger Windows Hello / platform authenticator.</p>
-        <p>No system password is stored.</p>
+        <p data-l="webauthn_info1">Can be used as a protection method. The local PIN remains available as a fallback.</p>
+        <p data-l="webauthn_info2">May trigger Windows Hello or your platform authenticator.</p>
+        <p data-l="webauthn_info3">No system password is stored.</p>
         <div class="webauthn-actions">
-          <button id="register-webauthn" type="button">Register WebAuthn</button>
-          <button id="test-webauthn" type="button" class="secondary-action">Test WebAuthn</button>
+          <button id="register-webauthn" type="button" data-l="register_webauthn">Register WebAuthn</button>
+          <button id="test-webauthn" type="button" class="secondary-action" data-l="test_webauthn">Test WebAuthn</button>
         </div>
       </section>
 
-      <output id="result" class="result" role="status" aria-live="polite">Not connected</output>
+      <output id="result" class="result" role="status" aria-live="polite" data-l="not_connected">Not Connected</output>
     </main>
 
     <div id="pin-modal" class="pin-modal hidden" role="dialog" aria-modal="true" aria-labelledby="pin-modal-title">
       <div class="pin-dialog">
-        <h2 id="pin-modal-title">Local PIN Verify</h2>
-        <p id="pin-modal-message">Enter your protection PIN.</p>
+        <h2 id="pin-modal-title" data-l="pin_verify_title">PIN Verification</h2>
+        <p id="pin-modal-message" data-l="pin_verify_message">Enter your protection PIN.</p>
         <input id="verify-pin" type="password" minlength="4" maxlength="12" inputmode="numeric" autocomplete="off">
         <div class="pin-actions">
-          <button id="confirm-pin" type="button">Verify</button>
-          <button id="cancel-pin" type="button" class="secondary-action">Cancel</button>
+          <button id="confirm-pin" type="button" data-l="verify">Verify</button>
+          <button id="cancel-pin" type="button" class="secondary-action" data-l="cancel">Cancel</button>
         </div>
       </div>
     </div>

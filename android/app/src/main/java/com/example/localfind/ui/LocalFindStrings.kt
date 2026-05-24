@@ -1,4 +1,8 @@
-package com.example.localfind.ui
+﻿package com.example.localfind.ui
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 object LFS {
     private val en = mapOf(
@@ -42,6 +46,16 @@ object LFS {
         "hide" to "Hide",
         "reset_token" to "Reset Token",
         "na" to "N/A",
+        "local_auth_failed_msg" to "Local auth failed",
+        "partial_ring_flash_msg" to "Partial: ring started, flash failed",
+        "stopped_msg" to "Stopped",
+        "scanned_device" to "Scanned Device",
+        "manual_device" to "Manual Device",
+        "old_phone_placeholder" to "e.g. My old phone",
+        "biometric_title" to "Local Identity Verification",
+        "biometric_not_enrolled" to "Please set up a screen lock or biometric in system settings first.",
+        "biometric_unavailable" to "Local authentication unavailable or not set up.",
+        "generated_after_start" to "Generated after service start",
         "reset_token_title" to "Reset Token?",
         "reset_token_body" to "All paired controllers will be disconnected. They will need the new token to reconnect.",
         "reset" to "Reset",
@@ -207,6 +221,16 @@ object LFS {
         "hide" to "隐藏",
         "reset_token" to "重置令牌",
         "na" to "无",
+        "local_auth_failed_msg" to "本机认证失败",
+        "partial_ring_flash_msg" to "部分成功：响铃已启动，闪光失败",
+        "stopped_msg" to "已停止",
+        "scanned_device" to "已扫描设备",
+        "manual_device" to "手动设备",
+        "old_phone_placeholder" to "例如：我的旧手机",
+        "biometric_title" to "本地身份认证",
+        "biometric_not_enrolled" to "请先在本机系统中设置锁屏密码或生物识别",
+        "biometric_unavailable" to "本机认证不可用或未设置锁屏",
+        "generated_after_start" to "服务启动后生成",
         "reset_token_title" to "重置令牌？",
         "reset_token_body" to "所有已配对的控制器将断开连接，需要使用新令牌重新连接。",
         "reset" to "重置",
@@ -331,13 +355,14 @@ object LFS {
         "test_webauthn" to "测试 WebAuthn",
     )
 
-    private var lang: String = "en"
+    private var lang by mutableStateOf("en")
 
     fun setLanguage(l: String) { lang = l }
     fun getLanguage(): String = lang
 
     fun str(key: String): String {
-        val dict = if (lang == "zh") zh else en
+        val currentLang = lang
+        val dict = if (currentLang == "zh") zh else en
         return dict[key] ?: en[key] ?: key
     }
 }

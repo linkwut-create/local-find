@@ -33,6 +33,7 @@ import com.example.localfind.server.DiscoveredDevice
 import com.example.localfind.auth.RemoteDeviceTokenStore
 import com.example.localfind.model.PairingRequest
 import com.example.localfind.ui.MainScreen
+import com.example.localfind.ui.LFS
 import com.example.localfind.util.NetworkUtil
 
 class MainActivity : FragmentActivity() {
@@ -135,7 +136,13 @@ class MainActivity : FragmentActivity() {
         remoteTokenStore = RemoteDeviceTokenStore(this)
 
         val prefs = getSharedPreferences("pairing_prefs", Context.MODE_PRIVATE)
-        languageState = prefs.getString("app_language", "en") ?: "en"
+        fun resolveLanguage(setting: String): String = when (setting) {
+            "en" -> "en"
+            "zh" -> "zh"
+            else -> if (java.util.Locale.getDefault().language == "zh") "zh" else "en"
+        }
+        val savedSetting = prefs.getString("app_language", "system") ?: "system"
+        languageState = resolveLanguage(savedSetting)
 
         setContent {
             MaterialTheme {
@@ -235,10 +242,10 @@ class MainActivity : FragmentActivity() {
                             authenticateLocalUser(reason, onSuccess, onFailure)
                         },
                         language = languageState,
-                        onLanguageChange = { lang ->
-                            languageState = lang
-                            val prefs = getSharedPreferences("pairing_prefs", Context.MODE_PRIVATE)
-                            prefs.edit().putString("app_language", lang).apply()
+                        onLanguageChange = { mode ->
+                            languageState = resolveLanguage(mode)
+                            val p = getSharedPreferences("pairing_prefs", Context.MODE_PRIVATE)
+                            p.edit().putString("app_language", mode).apply()
                         }
                     )
                 }
@@ -281,7 +288,7 @@ class MainActivity : FragmentActivity() {
                     })
 
                 val promptInfo = BiometricPrompt.PromptInfo.Builder()
-                    .setTitle("本地身份认证")
+                    .setTitle(LFS.str("biometric_title"))
                     .setSubtitle(reason)
                     .setAllowedAuthenticators(authenticators)
                     .build()
@@ -289,10 +296,10 @@ class MainActivity : FragmentActivity() {
                 biometricPrompt.authenticate(promptInfo)
             }
             BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
-                onFailure("请先在本机系统中设置锁屏密码或生物识别")
+                onFailure(LFS.str("biometric_not_enrolled"))
             }
             else -> {
-                onFailure("本机认证不可用或未设置锁屏")
+                onFailure(LFS.str("biometric_unavailable"))
             }
         }
     }

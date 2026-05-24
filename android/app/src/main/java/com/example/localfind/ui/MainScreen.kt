@@ -127,6 +127,19 @@ fun MainScreen(
                             fontWeight = FontWeight.Bold
                         )
                     },
+                    actions = {
+                        var langExpanded by remember { mutableStateOf(false) }
+                        Box {
+                            TextButton(onClick = { langExpanded = true }) {
+                                Text(if (language == "zh") "中文" else "EN", fontSize = 12.sp)
+                            }
+                            DropdownMenu(expanded = langExpanded, onDismissRequest = { langExpanded = false }) {
+                                DropdownMenuItem(text = { Text("System") }, onClick = { onLanguageChange("system"); langExpanded = false })
+                                DropdownMenuItem(text = { Text("English") }, onClick = { onLanguageChange("en"); langExpanded = false })
+                                DropdownMenuItem(text = { Text("简体中文") }, onClick = { onLanguageChange("zh"); langExpanded = false })
+                            }
+                        }
+                    },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
                     )
@@ -382,10 +395,10 @@ fun FinderModeScreen(
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
 
                 StatusRow(LFS.str("service_status"), when(serverStatus) {
-                    ServerStatus.STOPPED -> "Stopped"
-                    ServerStatus.STARTING -> "Starting..."
-                    ServerStatus.LISTENING -> "Listening"
-                    ServerStatus.FAILED -> "Failed"
+                    ServerStatus.STOPPED -> LFS.str("stopped")
+                    ServerStatus.STARTING -> LFS.str("starting")
+                    ServerStatus.LISTENING -> LFS.str("listening")
+                    ServerStatus.FAILED -> LFS.str("failed")
                 })
                 if (lastServerError != null) {
                     StatusRow(LFS.str("last_error"), lastServerError)
@@ -393,10 +406,10 @@ fun FinderModeScreen(
                 StatusRow(LFS.str("lan_address"), localIp ?: LFS.str("offline"))
                 StatusRow(LFS.str("port_label"), port.toString())
                 StatusRow(LFS.str("nsd"), when(nsdStatus) {
-                    NsdStatus.IDLE -> "Idle"
-                    NsdStatus.ADVERTISING -> "Advertising"
-                    NsdStatus.ADVERTISED -> "Advertised"
-                    NsdStatus.FAILED -> "Failed"
+                    NsdStatus.IDLE -> LFS.str("idle")
+                    NsdStatus.ADVERTISING -> LFS.str("advertising")
+                    NsdStatus.ADVERTISED -> LFS.str("advertised")
+                    NsdStatus.FAILED -> LFS.str("failed")
                 })
                 StatusRow(LFS.str("wake_lock"), if (wakeLockHeld) LFS.str("held_cpu") else LFS.str("not_held"))
                 StatusRow(LFS.str("wifi_lock"), if (wifiLockHeld) LFS.str("held_wifi") else LFS.str("not_held"))
@@ -500,7 +513,7 @@ fun FinderModeScreen(
             ) {
                 Text(LFS.str("controller_pairing"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 StatusRow(LFS.str("device_label"), localDeviceName.ifBlank { android.os.Build.MODEL })
-                StatusRow(LFS.str("device_id"), localDeviceId.ifBlank { "Generated after service start" })
+                StatusRow(LFS.str("device_id"), localDeviceId.ifBlank { LFS.str("generated_after_start") })
                 StatusRow(LFS.str("pairing_mode"), if (pairingModeActive) LFS.str("enabled") else LFS.str("disabled"))
                 
                 if (pairingModeActive) {
@@ -515,7 +528,7 @@ fun FinderModeScreen(
                     StatusRow(LFS.str("remaining"), "${remainingSeconds / 60}m${remainingSeconds % 60}s")
                 }
 
-                Text("Pairing mode is active for a short window. Requests must be confirmed on this phone.", style = MaterialTheme.typography.bodySmall)
+                Text(LFS.str("pairing_mode_hint"), style = MaterialTheme.typography.bodySmall)
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
@@ -546,7 +559,7 @@ fun FinderModeScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(request.controllerName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                            Text("Type: ${request.controllerType}", style = MaterialTheme.typography.bodySmall)
+                            Text(LFS.str("type_label") + " " + request.controllerType, style = MaterialTheme.typography.bodySmall)
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Button(
                                     onClick = { onAcceptPairingRequest(request.requestId) },
@@ -615,9 +628,9 @@ fun FinderModeScreen(
 
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(LFS.str("pairing_qr"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Text("• Scan from controller to pair", style = MaterialTheme.typography.labelSmall)
-                        Text("• QR code is LAN-only", style = MaterialTheme.typography.labelSmall)
-                        Text("• Reset token if compromised", style = MaterialTheme.typography.labelSmall)
+                        Text("• " + LFS.str("qr_hint1"), style = MaterialTheme.typography.labelSmall)
+                        Text("• " + LFS.str("qr_hint2"), style = MaterialTheme.typography.labelSmall)
+                        Text("• " + LFS.str("qr_hint3"), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -633,9 +646,9 @@ fun FinderModeScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(LFS.str("security"), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                Text("• Tokens are LAN-only. Nothing is uploaded to the cloud.", style = MaterialTheme.typography.labelSmall)
-                Text("• Do not share tokens with untrusted parties.", style = MaterialTheme.typography.labelSmall)
-                Text("• Reset the token if you suspect it has leaked.", style = MaterialTheme.typography.labelSmall)
+                Text("• " + LFS.str("sec1"), style = MaterialTheme.typography.labelSmall)
+                Text("• " + LFS.str("sec2"), style = MaterialTheme.typography.labelSmall)
+                Text("• " + LFS.str("sec3"), style = MaterialTheme.typography.labelSmall)
             }
         }
 
@@ -653,18 +666,18 @@ fun FinderModeScreen(
             ) {
                 Text(LFS.str("background"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    "The service runs as a foreground service. Some devices (Xiaomi, Huawei, Oppo) may restrict background network after screen lock.",
+                    LFS.str("bg1"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    "Set this app to \"Don't optimize\" or \"Allow background activity\" in system settings.",
+                    LFS.str("bg2"),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    "Some devices disable Wi-Fi on screen lock. Enable \"Keep Wi-Fi on during sleep\" in system settings.",
+                    LFS.str("bg3"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -674,7 +687,7 @@ fun FinderModeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Battery Optimization Settings", fontSize = 12.sp)
+                    Text(LFS.str("battery_settings"), fontSize = 12.sp)
                 }
             }
         }
@@ -698,7 +711,7 @@ fun FinderModeScreen(
                     OutlinedButton(onClick = onTestFlashStop, modifier = Modifier.weight(1f)) { Text(LFS.str("turn_flash_off"), fontSize = 12.sp) }
                 }
                 Button(onClick = onStopAll, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)) {
-                    Text("Stop All Alerts", fontWeight = FontWeight.Bold)
+                    Text(LFS.str("stop_all_alerts"), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -761,7 +774,7 @@ fun ControllerModeScreen(
                     if (json.optString("type") == "local_find_pairing") {
                         val host = json.getString("host")
                         val port = json.getInt("port")
-                        val name = json.optString("name", "Scanned Device")
+                        val name = json.optString("name", LFS.str("scanned_device"))
                         val token = json.getString("token")
                         
                         val device = DiscoveredDevice(
@@ -906,10 +919,10 @@ fun ControllerModeScreen(
                         ) {
                             Text(
                                 text = LFS.str("status_label") + when(discoveryStatus) {
-                                    DiscoveryStatus.IDLE -> "Idle"
+                                    DiscoveryStatus.IDLE -> LFS.str("idle")
                                     DiscoveryStatus.SCANNING -> LFS.str("scanning")
                                     DiscoveryStatus.FAILED -> LFS.str("scan_failed")
-                                    DiscoveryStatus.STOPPED -> "Stopped"
+                                    DiscoveryStatus.STOPPED -> LFS.str("stopped")
                                 },
                                 fontWeight = FontWeight.Bold,
                                 color = if (discoveryStatus == DiscoveryStatus.SCANNING) Color(0xFF1976D2) else Color.Gray,
@@ -987,7 +1000,7 @@ fun ControllerModeScreen(
                             label = { Text(LFS.str("custom_name_opt")) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            placeholder = { Text("e.g. My old phone") },
+                            placeholder = { Text(LFS.str("old_phone_placeholder")) },
                             textStyle = MaterialTheme.typography.bodySmall
                         )
 
@@ -1009,7 +1022,7 @@ fun ControllerModeScreen(
                                     return@Button
                                 }
 
-                                val name = manualName.ifBlank { "Manual Device" }
+                                val name = manualName.ifBlank { LFS.str("manual_device") }
                                 val device = DiscoveredDevice(
                                     name = name,
                                     host = hostTrimmed,
@@ -1035,7 +1048,7 @@ fun ControllerModeScreen(
                     ) {
                         Text(LFS.str("no_other_devices"), color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
                         Text(
-                            "Make sure both phones are on the same Wi-Fi. This device is hidden from the list. Try Manual Connection below if discovery fails.",
+                            LFS.str("discovery_hint"),
                             color = Color.Gray,
                             style = MaterialTheme.typography.labelSmall,
                             textAlign = TextAlign.Center
@@ -1142,7 +1155,7 @@ fun RemoteControlPanel(
                 }
                 is ControlResult.Error -> {
                     connectionStatus = RemoteConnectionStatus.OFFLINE
-                    val msg = if (result.message == "connection_failed") LFS.str("offline_svc") else "Connection failed"
+                    val msg = if (result.message == "connection_failed") LFS.str("offline_svc") else LFS.str("command_failed")
                     snackbarHostState.showSnackbar(msg)
                 }
             }
@@ -1182,7 +1195,7 @@ fun RemoteControlPanel(
                 isLoading = false
             }
         }, { error ->
-            scope.launch { snackbarHostState.showSnackbar("Local auth failed: $error") }
+            scope.launch { snackbarHostState.showSnackbar(LFS.str("local_auth_failed_msg") + ": $error") }
         })
     }
 
@@ -1226,14 +1239,14 @@ fun RemoteControlPanel(
                 } else {
                     // Ring succeeded, flash failed
                     connectionStatus = RemoteConnectionStatus.PARTIAL_SUCCESS
-                    snackbarHostState.showSnackbar("Partial success: ring started, flash failed")
+                    snackbarHostState.showSnackbar(LFS.str("partial_ring_flash_msg"))
                 }
                 
                 refreshStatus()
                 isLoading = false
             }
         }, { error ->
-            scope.launch { snackbarHostState.showSnackbar("Local auth failed: $error") }
+            scope.launch { snackbarHostState.showSnackbar(LFS.str("local_auth_failed_msg") + ": $error") }
         })
     }
 
@@ -1250,7 +1263,7 @@ fun RemoteControlPanel(
                     is ControlResult.Success -> {
                         handleSuccessfulCommand(effectiveToken)
                         connectionStatus = RemoteConnectionStatus.STOPPED
-                        snackbarHostState.showSnackbar("Stopped")
+                        snackbarHostState.showSnackbar(LFS.str("stopped_msg"))
                         refreshStatus()
                     }
                     is ControlResult.Unauthorized -> {
@@ -1270,7 +1283,7 @@ fun RemoteControlPanel(
                 isLoading = false
             }
         }, { error ->
-            scope.launch { snackbarHostState.showSnackbar("Local auth failed: $error") }
+            scope.launch { snackbarHostState.showSnackbar(LFS.str("local_auth_failed_msg") + ": $error") }
         })
     }
 
@@ -1322,7 +1335,7 @@ fun RemoteControlPanel(
                     Surface(shape = androidx.compose.foundation.shape.CircleShape, color = statusColor, modifier = Modifier.size(10.dp)) {}
                     Text(
                         text = when (connectionStatus) {
-                            RemoteConnectionStatus.IDLE -> "Idle"
+                            RemoteConnectionStatus.IDLE -> LFS.str("idle")
                             RemoteConnectionStatus.CONNECTING -> LFS.str("connecting")
                             RemoteConnectionStatus.ONLINE -> LFS.str("online")
                             RemoteConnectionStatus.OFFLINE -> LFS.str("offline_svc")
@@ -1330,7 +1343,7 @@ fun RemoteControlPanel(
                             RemoteConnectionStatus.UNAUTHORIZED -> LFS.str("token_error")
                             RemoteConnectionStatus.SEARCHING -> LFS.str("searching")
                             RemoteConnectionStatus.PARTIAL_SUCCESS -> LFS.str("partial_ringing")
-                            RemoteConnectionStatus.STOPPED -> "Stopped"
+                            RemoteConnectionStatus.STOPPED -> LFS.str("stopped")
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
@@ -1370,13 +1383,13 @@ fun RemoteControlPanel(
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(device.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text("Address: ${device.controlUrl}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
+                    Text(LFS.str("address") + ": ${device.controlUrl}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        IndicatorBox("Remote Ring", if (ringActive) LFS.str("ringing") else LFS.str("silent"), ringActive, Modifier.weight(1f))
-                        IndicatorBox("Remote Flash", when(flashMode) { "steady" -> LFS.str("steady"); "strobe" -> LFS.str("strobe"); else -> LFS.str("off") }, flashMode != "off", Modifier.weight(1f))
+                        IndicatorBox(LFS.str("remote_ring"), if (ringActive) LFS.str("ringing") else LFS.str("silent"), ringActive, Modifier.weight(1f))
+                        IndicatorBox(LFS.str("remote_flash"), when(flashMode) { "steady" -> LFS.str("steady"); "strobe" -> LFS.str("strobe"); else -> LFS.str("off") }, flashMode != "off", Modifier.weight(1f))
                     }
                 }
             }
@@ -1456,7 +1469,7 @@ fun RemoteControlPanel(
                     modifier = Modifier.fillMaxWidth(), 
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Stop All Alerts", fontWeight = FontWeight.Bold)
+                    Text(LFS.str("stop_all_alerts"), fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))

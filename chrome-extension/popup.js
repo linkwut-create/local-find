@@ -1,7 +1,7 @@
 ﻿const DEFAULT_PORT = "8888";
 const FIND_PHONE_STEPS = [
-  { method: "POST", path: "/command/ring/start", label: "Ring" },
-  { method: "POST", path: "/command/flash/strobe/start", label: "Flash" }
+  { method: "POST", path: "/command/ring/start", labelKey: "ring_label" },
+  { method: "POST", path: "/command/flash/strobe/start", labelKey: "flash_label" }
 ];
 const PROTECTED_COMMANDS = new Set(["find-phone", "flash-start"]);
 const MIN_PIN_LENGTH = 4;
@@ -14,40 +14,38 @@ const CONTROLLER_NAME = "Chrome on Windows";
 const CONTROLLER_TYPE = "chrome_extension";
 const PAIRING_POLL_INTERVAL_MS = 2000;
 
-let lang = "en";
+function resolveLang(mode) { if (mode === "en" || mode === "zh") return mode; var l = (navigator.language || "").split("-")[0]; return l === "zh" ? "zh" : "en"; }
+var savedMode = "system";
+let lang = resolveLang(savedMode);
 function t(key) { return I18N.t(key, lang); }
 function tpl(key, ...args) { let s = t(key); args.forEach((a, i) => { s = s.replace("{" + i + "}", a); }); return s; }
 
 function applyLanguage() {
   document.title = t("app_name");
-  document.querySelector(".device-card-title").textContent = t("current_device");
-  document.querySelector(".paired-devices-header span").textContent = t("paired_phones");
-  document.querySelector(".pairing-header span").textContent = t("add_phone");
-  document.querySelector(".protection-header span").textContent = t("access_protection");
-  document.querySelector(".webauthn-header span").textContent = t("webauthn");
-  document.querySelector(".manual-compat-card summary").textContent = t("manual_legacy_summary");
-  document.querySelector(".manual-compat-note").textContent = t("manual_legacy_note");
-  var pm = document.querySelector(".protection-method span");
-  if (pm) pm.textContent = t("protection_method");
-  var wc = document.querySelector(".webauthn-card");
-  if (wc) {
-    var ps = wc.querySelectorAll("p");
-    if (ps[0]) ps[0].textContent = t("webauthn_info1");
-    if (ps[1]) ps[1].textContent = t("webauthn_info2");
-    if (ps[2]) ps[2].textContent = t("webauthn_info3");
-  }
-  document.getElementById("pin-modal-title").textContent = t("pin_verify_title");
-  document.getElementById("pin-modal-message").textContent = t("pin_verify_message");
+  // All elements with data-l attribute
+  document.querySelectorAll("[data-l]").forEach(function(el) {
+    if (el.tagName === "OPTION") return; // handled separately below
+    el.textContent = t(el.dataset.l);
+  });
+  // SELECT options
+  document.querySelectorAll("select option[data-l]").forEach(function(opt) {
+    opt.textContent = t(opt.dataset.l);
+  });
+  // Placeholders
+  document.querySelectorAll("[data-l-placeholder]").forEach(function(el) {
+    el.placeholder = t(el.dataset.lPlaceholder);
+  });
+  // Dynamic lists
   updateDeviceCard();
   updatePairedDevicesList();
   updateProtectionStatus();
   updateWebAuthnStatus();
 }
 
-function saveLanguage(l) { lang = l; chrome.storage.local.set({ language: l }); applyLanguage(); }
+function saveLanguage(mode) { savedMode = mode; lang = resolveLang(mode); chrome.storage.local.set({ uiLanguage: mode }); applyLanguage(); }
 document.addEventListener("DOMContentLoaded", function() {
   var sel = document.getElementById("language-select");
-  if (sel) { sel.value = lang; sel.addEventListener("change", function() { saveLanguage(this.value); }); }
+  if (sel) { sel.value = savedMode; sel.addEventListener("change", function() { saveLanguage(this.value); }); }
 });
 
 const COMMANDS = {
@@ -116,7 +114,7 @@ function init() {
     {
       host: "",
       port: DEFAULT_PORT,
-      language: "en",
+      uiLanguage: "system",
       rememberToken: false,
       savedToken: "",
       lastSuccessAt: "",
@@ -133,7 +131,7 @@ function init() {
     ({
       host,
       port,
-      language: savedLanguage,
+      uiLanguage: savedUiLanguage,
       rememberToken,
       savedToken,
       lastSuccessAt: savedLastSuccessAt,
@@ -147,9 +145,10 @@ function init() {
       selectedDeviceId: savedSelectedDeviceId,
       controllerId: savedControllerId
     }) => {
-      lang = savedLanguage || "en";
+      savedMode = savedUiLanguage || "system";
+      lang = resolveLang(savedMode);
       var sel = document.getElementById("language-select");
-      if (sel) sel.value = lang;
+      if (sel) sel.value = savedMode;
       applyLanguage();
       hostInput.value = host || "";
       portInput.value = String(port || DEFAULT_PORT);
@@ -282,7 +281,7 @@ async function deleteDevice(deviceId) {
     return;
   }
 
-  const deviceName = device.name || "Android Phone";
+  const deviceName = device.name || t("android_phone");
   const canRevoke = Boolean(device.controllerId && device.host && isValidPort(device.port) && device.token);
   const confirmMessage = canRevoke
     ? "Remove paired phone \"" + deviceName + "\"?\n\nPhone-side authorization will be revoked, then local record deleted."
@@ -522,7 +521,7 @@ async function saveAcceptedDevice(pairingResult, target) {
   const now = new Date().toISOString();
   const nextDevice = {
     id: pairedDevice.id,
-    name: pairedDevice.name || "Android Phone",
+    name: pairedDevice.name || t("android_phone"),
     type: pairedDevice.type || "android_phone",
     host: pairedDevice.host || target.host,
     port: String(pairedDevice.port || target.port || DEFAULT_PORT),
@@ -564,7 +563,7 @@ function normalizeDevices(value) {
     .filter((device) => device && device.id)
     .map((device) => ({
       id: String(device.id),
-      name: device.name || "Android Phone",
+      name: device.name || t("android_phone"),
       type: device.type || "android_phone",
       host: device.host || "",
       port: String(device.port || DEFAULT_PORT),
@@ -713,7 +712,7 @@ async function clearSavedToken() {
     chrome.storage.local.set({ rememberToken: false }, () => {
       chrome.storage.local.remove("savedToken", () => {
         updateDeviceCard();
-        showResult("ClearedSaved Token", false);
+        showResult(t("token_cleared"), false);
       });
     });
   } catch (error) {
@@ -762,7 +761,7 @@ async function disableProtection() {
     chrome.storage.local.set({ protectionEnabled: false }, () => {
       chrome.storage.local.remove(["localPinSalt", "localPinHash"], () => {
         updateProtectionStatus();
-        showResult("Protection lock disabled", false);
+        showResult(t("protection_disabled"), false);
       });
     });
   } catch (error) {
@@ -823,7 +822,7 @@ async function registerWebAuthn() {
     });
     updateWebAuthnStatus();
     updateProtectionMethodOptions();
-    showResult("WebAuthnRegistered", false);
+    showResult(t("webauthn_verified"), false);
   } catch (error) {
     showResult(getWebAuthnErrorMessage(error, t("webauthn_reg_failed")), true);
   }
@@ -1307,10 +1306,10 @@ function updateDeviceCard() {
   const selectedDevice = getSelectedDevice();
 
   if (selectedDevice) {
-    deviceName.textContent = selectedDevice.name || "Android Phone";
+    deviceName.textContent = selectedDevice.name || t("android_phone");
     deviceAddress.textContent = formatAddress(selectedDevice.host, selectedDevice.port);
     deviceTokenStatus.textContent = selectedDevice.token ? t("paired") : t("missing_token");
-    lastSuccess.textContent = "Last Connected: " + (selectedDevice.lastSuccessAt ? formatDateTime(selectedDevice.lastSuccessAt) : "--");
+    lastSuccess.textContent = t("last_connected") + (selectedDevice.lastSuccessAt ? formatDateTime(selectedDevice.lastSuccessAt) : "--");
     return;
   }
 
@@ -1346,7 +1345,7 @@ function updatePairedDevicesList() {
     summary.className = "paired-device-summary";
 
     const title = document.createElement("strong");
-    title.textContent = device.name || "Android Phone";
+    title.textContent = device.name || t("android_phone");
 
     const status = document.createElement("span");
     status.className = "paired-device-status";
@@ -1363,7 +1362,7 @@ function updatePairedDevicesList() {
     meta.className = "paired-device-meta";
     meta.append(
       createDeviceMetaLine(t("paired"), device.pairedAt),
-      createDeviceMetaLine("Last success", device.lastSuccessAt)
+      createDeviceMetaLine(t("last_connected_label"), device.lastSuccessAt)
     );
 
     const actions = document.createElement("div");
@@ -1381,7 +1380,7 @@ function updatePairedDevicesList() {
     deleteAction.className = "delete-paired-device";
     deleteAction.dataset.deleteDeviceId = device.id;
     deleteAction.textContent = t("delete");
-    deleteAction.setAttribute("aria-label", `Delete ${device.name || "Android Phone"}`);
+    deleteAction.setAttribute("aria-label", `Delete ${device.name || t("android_phone")}`);
 
     actions.append(selectAction, deleteAction);
 
@@ -1403,13 +1402,13 @@ function formatAddress(host, port) {
 }
 
 function updateProtectionStatus() {
-  protectionStatus.textContent = protectionEnabled ? "On" : "Off";
+  protectionStatus.textContent = protectionEnabled ? t("on") : t("off");
   protectionStatus.classList.toggle("enabled", protectionEnabled);
   disableProtectionButton.disabled = !protectionEnabled;
 }
 
 function updateWebAuthnStatus() {
-  webauthnStatus.textContent = hasWebAuthnCredential() ? "Registered" : "Not registered";
+  webauthnStatus.textContent = hasWebAuthnCredential() ? t("registered") : t("not_registered");
   webauthnStatus.classList.toggle("enabled", hasWebAuthnCredential());
 }
 

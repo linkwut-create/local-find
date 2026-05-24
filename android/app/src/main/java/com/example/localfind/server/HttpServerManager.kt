@@ -407,7 +407,8 @@ class HttpServerManager(
                                   }
                                 };
                                 const qp = new URLSearchParams(location.search);
-                                const lang = qp.get("lang") === "zh" ? "zh" : "en";
+                                const langParam = qp.get("lang") || "en";
+                                const lang = langParam === "zh" ? "zh" : "en";
                                 function lt(k) { return (L[lang] || L.en)[k] || L.en[k] || k; }
                                 function applyLang() {
                                   document.querySelector(".subtitle").innerHTML = lang === "zh" ? "浏览器远程控制 &mdash; 无需安装" : "Remote Control in Browser &mdash; no install needed";

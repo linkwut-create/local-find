@@ -1,4 +1,4 @@
-const I18N = {
+﻿const I18N = {
   en: {
     app_name: "Local Find",
     endpoint_preview: "http://HOST:8888",
@@ -182,6 +182,7 @@ const I18N = {
     no_other_devices: "No other devices found",
     discovery_hint: "Make sure both phones are on the same Wi-Fi. This device is hidden from the list.",
     saved_devices: "Saved Devices",
+    ring_label: "Ring", flash_label: "Flash", android_phone: "Android Phone",
     recent: "Recent",
   },
 
@@ -368,6 +369,7 @@ const I18N = {
     no_other_devices: "未发现其他设备",
     discovery_hint: "请确认两台手机在同一 Wi-Fi。本机不会出现在列表中。",
     saved_devices: "已保存设备",
+    ring_label: "响铃", flash_label: "闪光", android_phone: "Android 手机",
     recent: "最近",
   },
 
