@@ -1,3 +1,26 @@
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
+fun signingValue(name: String): String? =
+    providers.environmentVariable(name).orNull ?: localProperties.getProperty(name)
+
+val releaseSigningStoreFile = signingValue("LOCAL_FIND_UPLOAD_STORE_FILE")
+val releaseSigningStorePassword = signingValue("LOCAL_FIND_UPLOAD_STORE_PASSWORD")
+val releaseSigningKeyAlias = signingValue("LOCAL_FIND_UPLOAD_KEY_ALIAS")
+val releaseSigningKeyPassword = signingValue("LOCAL_FIND_UPLOAD_KEY_PASSWORD")
+val hasReleaseSigningConfig = listOf(
+    releaseSigningStoreFile,
+    releaseSigningStorePassword,
+    releaseSigningKeyAlias,
+    releaseSigningKeyPassword,
+).all { !it.isNullOrBlank() }
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -21,8 +44,22 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseSigningConfig) {
+            create("release") {
+                storeFile = file(checkNotNull(releaseSigningStoreFile))
+                storePassword = checkNotNull(releaseSigningStorePassword)
+                keyAlias = checkNotNull(releaseSigningKeyAlias)
+                keyPassword = checkNotNull(releaseSigningKeyPassword)
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (hasReleaseSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

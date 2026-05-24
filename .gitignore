@@ -19,6 +19,12 @@ coverage/
 local.properties
 android/local.properties
 
+# Android signing secrets
+*.jks
+*.keystore
+*.p12
+signing.properties
+
 # Local LLM and audit artifacts
 .local_llm_out/
 .mcp_audit/
