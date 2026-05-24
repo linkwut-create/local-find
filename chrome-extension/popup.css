@@ -26,6 +26,25 @@ body {
   gap: 4px;
 }
 
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.language-select {
+  width: auto;
+  min-height: 28px;
+  border: 1px solid #dadce0;
+  border-radius: 6px;
+  padding: 2px 6px;
+  background: #ffffff;
+  color: #5f6368;
+  font-size: 11px;
+  cursor: pointer;
+}
+
 h1 {
   margin: 0;
   font-size: 20px;

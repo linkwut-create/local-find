@@ -57,6 +57,7 @@ class MainActivity : FragmentActivity() {
     private var pairingModeActiveState by mutableStateOf(false)
     private var pairingModeExpiresAtState by mutableStateOf(0L)
     private var pendingPairingRequestsState by mutableStateOf(listOf<PairingRequest>())
+    private var languageState by mutableStateOf("en")
 
     // NSD Discovery 状态
     private lateinit var nsdDiscoveryManager: NsdDiscoveryManager
@@ -133,6 +134,9 @@ class MainActivity : FragmentActivity() {
 
         remoteTokenStore = RemoteDeviceTokenStore(this)
 
+        val prefs = getSharedPreferences("pairing_prefs", Context.MODE_PRIVATE)
+        languageState = prefs.getString("app_language", "en") ?: "en"
+
         setContent {
             MaterialTheme {
                 Surface(
@@ -170,7 +174,8 @@ class MainActivity : FragmentActivity() {
                             onStopDiscovery = { nsdDiscoveryManager.stopDiscovery() },
                             onOpenDevice = { device ->
                                 try {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(device.controlUrl))
+                                    val url = device.controlUrl + "?lang=" + languageState
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                                     startActivity(intent)
                                 } catch (e: Exception) {
                                     e.printStackTrace()
@@ -228,6 +233,12 @@ class MainActivity : FragmentActivity() {
                         onOpenBatterySettings = { openBatteryOptimizationSettings() },
                         onAuthenticate = { reason, onSuccess, onFailure ->
                             authenticateLocalUser(reason, onSuccess, onFailure)
+                        },
+                        language = languageState,
+                        onLanguageChange = { lang ->
+                            languageState = lang
+                            val prefs = getSharedPreferences("pairing_prefs", Context.MODE_PRIVATE)
+                            prefs.edit().putString("app_language", lang).apply()
                         }
                     )
                 }

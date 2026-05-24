@@ -14,16 +14,55 @@ const CONTROLLER_NAME = "Chrome on Windows";
 const CONTROLLER_TYPE = "chrome_extension";
 const PAIRING_POLL_INTERVAL_MS = 2000;
 
+let lang = "en";
+function t(key) { return I18N.t(key, lang); }
+function tpl(key, ...args) { let s = t(key); args.forEach((a, i) => { s = s.replace("{" + i + "}", a); }); return s; }
+
+function applyLanguage() {
+  document.title = t("app_name");
+  document.querySelector(".device-card-title").textContent = t("current_device");
+  document.querySelector(".paired-devices-header span").textContent = t("paired_phones");
+  document.querySelector(".pairing-header span").textContent = t("add_phone");
+  document.querySelector(".protection-header span").textContent = t("access_protection");
+  document.querySelector(".webauthn-header span").textContent = t("webauthn");
+  document.querySelector(".manual-compat-card summary").textContent = t("manual_legacy_summary");
+  document.querySelector(".manual-compat-note").textContent = t("manual_legacy_note");
+  var pm = document.querySelector(".protection-method span");
+  if (pm) pm.textContent = t("protection_method");
+  var wc = document.querySelector(".webauthn-card");
+  if (wc) {
+    var ps = wc.querySelectorAll("p");
+    if (ps[0]) ps[0].textContent = t("webauthn_info1");
+    if (ps[1]) ps[1].textContent = t("webauthn_info2");
+    if (ps[2]) ps[2].textContent = t("webauthn_info3");
+  }
+  document.getElementById("pin-modal-title").textContent = t("pin_verify_title");
+  document.getElementById("pin-modal-message").textContent = t("pin_verify_message");
+  updateDeviceCard();
+  updatePairedDevicesList();
+  updateProtectionStatus();
+  updateWebAuthnStatus();
+}
+
+function saveLanguage(l) { lang = l; chrome.storage.local.set({ language: l }); applyLanguage(); }
+document.addEventListener("DOMContentLoaded", function() {
+  var sel = document.getElementById("language-select");
+  if (sel) { sel.value = lang; sel.addEventListener("change", function() { saveLanguage(this.value); }); }
+});
+
 const COMMANDS = {
-  status: { method: "GET", path: "/status", label: "Check Status" },
-  "find-phone": { method: "SEQUENCE", label: "Find Phone", success: "Find Phone: Ring + Flash" },
-  "ring-stop": { method: "POST", path: "/command/ring/stop", label: "Stop Ring", success: "Ring stopped" },
-  "flash-start": { method: "POST", path: "/command/flash/strobe/start", label: "Flash", success: "Flash started" },
-  "flash-stop": { method: "POST", path: "/command/flash/stop", label: "Stop Flash", success: "Flash stopped" },
-  "stop-all": { method: "POST", path: "/command/stop-all", label: "Stop All Alerts", success: "All alerts stopped" }
+  status: { method: "GET", path: "/status", labelKey: "check_status_label" },
+  "find-phone": { method: "SEQUENCE", labelKey: "find_phone", successKey: "find_phone_success" },
+  "ring-stop": { method: "POST", path: "/command/ring/stop", labelKey: "ring_stop_label", successKey: "ring_stop_success" },
+  "flash-start": { method: "POST", path: "/command/flash/strobe/start", labelKey: "flash_start_label", successKey: "flash_start_success" },
+  "flash-stop": { method: "POST", path: "/command/flash/stop", labelKey: "flash_stop_label", successKey: "flash_stop_success" },
+  "stop-all": { method: "POST", path: "/command/stop-all", labelKey: "stop_all_label", successKey: "stop_all_success" }
 };
 
-const NETWORK_ERROR_MESSAGE = "Cannot reach phone. Check Wi-Fi, service status, IP, and port.";
+function getCommandLabel(cmd) { return t(cmd.labelKey || cmd.label); }
+function getCommandSuccess(cmd) { return t(cmd.successKey || cmd.success); }
+
+function getNetworkError() { return t("network_error"); }
 
 const hostInput = document.getElementById("host");
 const portInput = document.getElementById("port");
@@ -77,6 +116,7 @@ function init() {
     {
       host: "",
       port: DEFAULT_PORT,
+      language: "en",
       rememberToken: false,
       savedToken: "",
       lastSuccessAt: "",
@@ -93,6 +133,7 @@ function init() {
     ({
       host,
       port,
+      language: savedLanguage,
       rememberToken,
       savedToken,
       lastSuccessAt: savedLastSuccessAt,
@@ -106,6 +147,10 @@ function init() {
       selectedDeviceId: savedSelectedDeviceId,
       controllerId: savedControllerId
     }) => {
+      lang = savedLanguage || "en";
+      var sel = document.getElementById("language-select");
+      if (sel) sel.value = lang;
+      applyLanguage();
       hostInput.value = host || "";
       portInput.value = String(port || DEFAULT_PORT);
       pairingHostInput.value = host || "";
@@ -218,7 +263,7 @@ async function handlePairedDevicesKeyDown(event) {
 
 async function selectDevice(deviceId) {
   if (!devices.some((device) => device.id === deviceId)) {
-    showResult("Device not found", true);
+    showResult(t("device_not_found"), true);
     return;
   }
 
@@ -227,13 +272,13 @@ async function selectDevice(deviceId) {
   updateEndpointPreview();
   updateDeviceCard();
   updatePairedDevicesList();
-  showResult("Switched current phone", false);
+  showResult(t("switched_device"), false);
 }
 
 async function deleteDevice(deviceId) {
   const device = devices.find((candidate) => candidate.id === deviceId);
   if (!device) {
-    showResult("Device not found", true);
+    showResult(t("device_not_found"), true);
     return;
   }
 
@@ -249,7 +294,7 @@ async function deleteDevice(deviceId) {
   }
 
   try {
-    await requireSensitiveVerification("Verify to remove paired phone.");
+    await requireSensitiveVerification(t("verify_to_remove_device"));
 
     if (canRevoke) {
       const revoked = await tryRevokeDevice(device);
@@ -344,11 +389,11 @@ async function requestPairing() {
     });
 
     if (!body?.requestId) {
-      throw new Error("Pairing request did not return requestId");
+      throw new Error(t("pairing_no_request_id"));
     }
 
     pairingStatusOutput.classList.remove("error");
-    pairingStatusOutput.textContent = "Waiting for phone confirmation";
+    pairingStatusOutput.textContent = t("pairing_waiting");
     pollPairingStatus(target, body.requestId);
   } catch (error) {
     setPairingBusy(false);
@@ -369,7 +414,7 @@ function pollPairingStatus(target, requestId) {
 
       if (status === "pending") {
         pairingStatusOutput.classList.remove("error");
-        pairingStatusOutput.textContent = "Waiting for phone confirmation";
+        pairingStatusOutput.textContent = t("pairing_waiting");
         pairingPollTimer = window.setTimeout(run, PAIRING_POLL_INTERVAL_MS);
         return;
       }
@@ -380,7 +425,7 @@ function pollPairingStatus(target, requestId) {
       if (status === "accepted") {
         await saveAcceptedDevice(body, target);
         pairingStatusOutput.classList.remove("error");
-        pairingStatusOutput.textContent = "Paired successfully, device saved";
+        pairingStatusOutput.textContent = t("pairing_accepted");
         return;
       }
 
@@ -440,14 +485,14 @@ function validateConnectionTarget(target) {
 function formatDeviceInfo(info) {
   const pairingMode = info?.pairingMode === true;
   const lines = [
-    `device name: ${info?.name || "No response"}`,
-    `device id: ${info?.id || "No response"}`,
+    `device name: ${info?.name || t("na")}`,
+    `device id: ${info?.id || t("na")}`,
     `pairingMode: ${pairingMode ? "true" : "false"}`,
-    `service: ${info?.service || "No response"}`
+    `service: ${info?.service || t("na")}`
   ];
 
   if (!pairingMode) {
-    lines.push("Enable pairing mode on the phone first.");
+    lines.push(t("enable_pairing_first"));
   }
 
   pairingStatusOutput.classList.remove("error");
@@ -456,14 +501,14 @@ function formatDeviceInfo(info) {
 
 function getPairingTerminalMessage(status) {
   if (status === "rejected") {
-    return "Phone rejected";
+    return t("pairing_rejected");
   }
 
   if (status === "expired") {
-    return "Pairing request expired";
+    return t("pairing_expired");
   }
 
-  return `Pairing request ended: ：${status || "unknown"}`;
+  return `Pairing request ended: ：${status || t("unknown")}`;
 }
 
 async function saveAcceptedDevice(pairingResult, target) {
@@ -471,7 +516,7 @@ async function saveAcceptedDevice(pairingResult, target) {
   const controlToken = pairingResult?.controlToken || "";
 
   if (!pairedDevice.id || !controlToken) {
-    throw new Error("Pairing response missing device or controlToken");
+    throw new Error(t("pairing_missing_fields"));
   }
 
   const now = new Date().toISOString();
@@ -599,7 +644,7 @@ async function sendJsonRequest(url, options = {}) {
     if (error?.message) {
       throw error;
     }
-    throw new Error(NETWORK_ERROR_MESSAGE);
+    throw new Error(getNetworkError());
   }
 }
 
@@ -618,7 +663,7 @@ async function handleRememberTokenChange() {
   const shouldRemember = rememberTokenInput.checked;
 
   try {
-    await requireSensitiveVerification("Verify to change token save setting.");
+    await requireSensitiveVerification(t("verify_to_change_token_setting"));
 
     if (shouldRemember) {
       rememberTokenState = true;
@@ -648,7 +693,7 @@ async function saveTokenIfRemembered() {
   }
 
   try {
-    await requireSensitiveVerification("Verify to save token.");
+    await requireSensitiveVerification(t("verify_to_save_token"));
     chrome.storage.local.set({
       rememberToken: true,
       savedToken: tokenInput.value
@@ -661,7 +706,7 @@ async function saveTokenIfRemembered() {
 
 async function clearSavedToken() {
   try {
-    await requireSensitiveVerification("Verify to clear saved token.");
+    await requireSensitiveVerification(t("verify_to_clear_token"));
     tokenInput.value = "";
     rememberTokenInput.checked = false;
     rememberTokenState = false;
@@ -681,7 +726,7 @@ async function setLocalPin() {
 
   try {
     if (protectionEnabled) {
-      await requireSensitiveVerification("Verify current PIN to update protection PIN.");
+      await requireSensitiveVerification(t("verify_to_update_pin"));
     }
 
     validatePin(pin);
@@ -697,7 +742,7 @@ async function setLocalPin() {
     });
     localPinInput.value = "";
     updateProtectionStatus();
-    showResult("Protection enabled", false);
+    showResult(t("protection_enabled"), false);
   } catch (error) {
     showResult(getFriendlyErrorMessage(error), true);
   }
@@ -705,12 +750,12 @@ async function setLocalPin() {
 
 async function disableProtection() {
   if (!protectionEnabled) {
-    showResult("Protection disabled", false);
+    showResult(t("protection_disabled"), false);
     return;
   }
 
   try {
-    await requireSensitiveVerification("Enter current PIN to disable protection.");
+    await requireSensitiveVerification(t("verify_to_disable"));
     protectionEnabled = false;
     localPinSalt = "";
     localPinHash = "";
@@ -730,7 +775,7 @@ async function handleProtectionMethodChange() {
 
   if (requiresWebAuthn(nextMethod) && !hasWebAuthnCredential()) {
     protectionMethodSelect.value = protectionMethod;
-    showResult("Register WebAuthn first", true);
+    showResult(t("register_webauthn_first"), true);
     return;
   }
 
@@ -767,7 +812,7 @@ async function registerWebAuthn() {
     });
 
     if (!credential || !credential.rawId) {
-      throw new Error("WebAuthn registration returned no credential");
+      throw new Error(t("webauthn_reg_no_cred"));
     }
 
     webauthnEnabled = true;
@@ -780,7 +825,7 @@ async function registerWebAuthn() {
     updateProtectionMethodOptions();
     showResult("WebAuthnRegistered", false);
   } catch (error) {
-    showResult(getWebAuthnErrorMessage(error, "WebAuthn registration failed"), true);
+    showResult(getWebAuthnErrorMessage(error, t("webauthn_reg_failed")), true);
   }
 }
 
@@ -793,15 +838,15 @@ async function testWebAuthn() {
 
     await performWebAuthnVerification();
 
-    showResult("WebAuthn verified", false);
+    showResult(t("webauthn_verified"), false);
   } catch (error) {
-    showResult(getWebAuthnErrorMessage(error, "WebAuthn verification failed"), true);
+    showResult(getWebAuthnErrorMessage(error, t("webauthn_error")), true);
   }
 }
 
 function ensureWebAuthnSupport() {
   if (!navigator.credentials || typeof PublicKeyCredential === "undefined") {
-    throw new Error("WebAuthn not supported in this browser");
+    throw new Error(t("webauthn_not_supported"));
   }
 }
 
@@ -881,12 +926,12 @@ async function requireSensitiveVerification(message) {
       await requireWebAuthnForSensitiveAction();
       return;
     } catch {
-      await requireLocalVerification("WebAuthn failed. Enter local PIN to continue.");
+      await requireLocalVerification(t("webauthn_fallback_prompt"));
       return;
     }
   }
 
-  await requireLocalVerification(message || "Enter protection PIN to continue.");
+  await requireLocalVerification(message || t("verify_pin_continue"));
 }
 
 async function requireWebAuthnForSensitiveAction() {
@@ -897,7 +942,7 @@ async function requireWebAuthnForSensitiveAction() {
   try {
     await performWebAuthnVerification();
   } catch (error) {
-    throw new Error(getWebAuthnErrorMessage(error, "WebAuthn verification failed"));
+    throw new Error(getWebAuthnErrorMessage(error, t("webauthn_error")));
   }
 }
 
@@ -909,12 +954,12 @@ async function requireLocalVerification(message) {
   const pin = await promptForPin(message);
   const isValid = await verifyPin(pin);
   if (!isValid) {
-    throw new Error("Local verification failed");
+    throw new Error(t("auth_failed"));
   }
 }
 
 function promptForPin(message) {
-  pinModalMessage.textContent = message || "Enter your protection PIN.";
+  pinModalMessage.textContent = message || t("pin_verify_message");
   verifyPinInput.value = "";
   pinModal.classList.remove("hidden");
   verifyPinInput.focus();
@@ -935,7 +980,7 @@ function promptForPin(message) {
 
     const handleCancel = () => {
       cleanup();
-      reject(new Error("Local verification cancelled"));
+      reject(new Error(t("auth_cancelled")));
     };
 
     const handleKeyDown = (event) => {
@@ -963,7 +1008,7 @@ async function verifyPin(pin) {
 
 function validatePin(pin) {
   if (pin.length < MIN_PIN_LENGTH || pin.length > MAX_PIN_LENGTH) {
-    throw new Error("PIN must be 4-12 digits");
+    throw new Error(t("pin_must_be_4_12"));
   }
 }
 
@@ -1039,20 +1084,20 @@ async function handleButtonClick(commandName) {
 
   const command = COMMANDS[commandName];
   if (!command) {
-    showResult("Unknown command", true);
+    showResult(t("unknown_command"), true);
     return;
   }
 
   try {
     setBusy(true);
-    showResult(`${command.label}...`, false);
+    showResult(`${getCommandLabel(command)}...`, false);
 
     if (command.method === "SEQUENCE") {
       validateCommandInputs({ method: "POST" });
       await requireProtectedCommand(commandName);
       await runFindPhoneSequence();
       saveLastSuccessAt();
-      showResult(command.success, false);
+      showResult(getCommandSuccess(command), false);
     } else {
       if (PROTECTED_COMMANDS.has(commandName)) {
         validateCommandInputs(command);
@@ -1060,10 +1105,10 @@ async function handleButtonClick(commandName) {
       }
       const { body } = await sendCheckedRequest(command);
       if (command.method === "GET") {
-        showResult(body ? formatStatus(body) : "Status OK", false);
+        showResult(body ? formatStatus(body) : t("status_ok"), false);
       } else {
         saveLastSuccessAt();
-        showResult(command.success || `${command.label} succeeded`, false);
+        showResult(getCommandSuccess(command) || `${getCommandLabel(command)} succeeded`, false);
       }
     }
   } catch (error) {
@@ -1121,14 +1166,14 @@ async function sendRequest(command) {
   try {
     return await fetch(url, request);
   } catch {
-    throw new Error(NETWORK_ERROR_MESSAGE);
+    throw new Error(getNetworkError());
   }
 }
 
 function openDiagnosticsPage() {
   try {
-    window.open(`${getBaseUrl()}/`, "_blank", "noopener");
-    showResult("Diagnostics page opened", false);
+    window.open(`${getBaseUrl()}/?lang=${lang}`, "_blank", "noopener");
+    showResult(t("diagnostics_opened"), false);
   } catch (error) {
     showResult(error.message || "Cannot open diagnostics page", true);
   }
@@ -1142,11 +1187,11 @@ function getBaseUrlForTarget(target) {
   const { host, port } = target;
 
   if (!host) {
-    throw new Error("Enter host");
+    throw new Error(t("enter_host"));
   }
 
   if (!isValidPort(port)) {
-    throw new Error("Enter valid port");
+    throw new Error(t("enter_valid_port"));
   }
 
   return `http://${host}:${port}`;
@@ -1264,15 +1309,15 @@ function updateDeviceCard() {
   if (selectedDevice) {
     deviceName.textContent = selectedDevice.name || "Android Phone";
     deviceAddress.textContent = formatAddress(selectedDevice.host, selectedDevice.port);
-    deviceTokenStatus.textContent = selectedDevice.token ? "Paired" : "Missing token";
+    deviceTokenStatus.textContent = selectedDevice.token ? t("paired") : t("missing_token");
     lastSuccess.textContent = "Last Connected: " + (selectedDevice.lastSuccessAt ? formatDateTime(selectedDevice.lastSuccessAt) : "--");
     return;
   }
 
   const { host, port } = parseConnectionInput();
-  deviceName.textContent = "Manual";
-  deviceAddress.textContent = host ? formatAddress(host, port) : "N/A";
-  deviceTokenStatus.textContent = rememberTokenInput.checked && tokenInput.value ? "Legacy token saved" : "Manual host/port/token";
+  deviceName.textContent = t("manual_mode");
+  deviceAddress.textContent = host ? formatAddress(host, port) : t("na");
+  deviceTokenStatus.textContent = rememberTokenInput.checked && tokenInput.value ? t("legacy_token_saved") : t("manual_host_port_token");
   lastSuccess.textContent = `Last Connected:${lastSuccessAt ? formatDateTime(lastSuccessAt) : "--"}`;
 }
 
@@ -1282,7 +1327,7 @@ function updatePairedDevicesList() {
   if (devices.length === 0) {
     const empty = document.createElement("p");
     empty.className = "paired-devices-empty";
-    empty.textContent = "No paired phones. Enable pairing mode on the phone to add one.";
+    empty.textContent = t("no_paired_phones");
     pairedDevicesList.append(empty);
     return;
   }
@@ -1306,7 +1351,7 @@ function updatePairedDevicesList() {
     const status = document.createElement("span");
     status.className = "paired-device-status";
     status.classList.toggle("selected", isSelected);
-    status.textContent = isSelected ? "Current" : "Inactive";
+    status.textContent = isSelected ? t("current") : t("inactive");
 
     summary.append(title, status);
 
@@ -1317,7 +1362,7 @@ function updatePairedDevicesList() {
     const meta = document.createElement("div");
     meta.className = "paired-device-meta";
     meta.append(
-      createDeviceMetaLine("Paired", device.pairedAt),
+      createDeviceMetaLine(t("paired"), device.pairedAt),
       createDeviceMetaLine("Last success", device.lastSuccessAt)
     );
 
@@ -1329,13 +1374,13 @@ function updatePairedDevicesList() {
     selectAction.className = "set-current-device";
     selectAction.dataset.selectDeviceId = device.id;
     selectAction.disabled = isSelected;
-    selectAction.textContent = isSelected ? "Current" : "Set Current";
+    selectAction.textContent = isSelected ? t("current") : t("set_current");
 
     const deleteAction = document.createElement("button");
     deleteAction.type = "button";
     deleteAction.className = "delete-paired-device";
     deleteAction.dataset.deleteDeviceId = device.id;
-    deleteAction.textContent = "Delete";
+    deleteAction.textContent = t("delete");
     deleteAction.setAttribute("aria-label", `Delete ${device.name || "Android Phone"}`);
 
     actions.append(selectAction, deleteAction);
@@ -1352,7 +1397,7 @@ function createDeviceMetaLine(label, value) {
 }
 
 function formatAddress(host, port) {
-  const displayHost = host || "N/A";
+  const displayHost = host || t("na");
   const displayPort = isValidPort(port) ? port : DEFAULT_PORT;
   return `${displayHost}:${displayPort}`;
 }
@@ -1450,7 +1495,7 @@ function formatStatus(status) {
   const flash = status.flash_mode || "off";
 
   return [
-    "Status OK",
+    t("status_ok"),
     `service: ${service}`,
     `ring_active: ${ring}`,
     `flash_mode: ${flash}`
@@ -1459,61 +1504,61 @@ function formatStatus(status) {
 
 function formatRingStatus(value) {
   if (value === true) {
-    return "true (Ringing)";
+    return "true (" + t("remote_ring") + ")";
   }
 
   if (value === false) {
-    return "false (Silent)";
+    return "false (" + t("off") + ")";
   }
 
-  return "No response";
+  return t("na");
 }
 
 function getHttpErrorMessage(response, body, bodyText) {
   if (response.status === 401) {
-    return "Token incorrect or phone token was reset.";
+    return t("token_incorrect");
   }
 
   if (response.status === 404) {
-    return "Endpoint not found (404). Check phone service is running.";
+    return t("endpoint_404");
   }
 
   if (response.status === 403 && (body?.message || "").includes("Pairing mode")) {
-    return "Enable pairing mode on the phone first.";
+    return t("enable_pairing_first");
   }
 
   if (response.status >= 500) {
     return `Phone service error (${response.status})。Check phone Local Find service status, or open diagnostics.`;
   }
 
-  const serverMessage = body?.message || body?.error || bodyText || response.statusText || "Request incomplete";
+  const serverMessage = body?.message || body?.error || bodyText || response.statusText || t("request_incomplete");
   return `Request failed (${response.status})。${serverMessage}`;
 }
 
 function getFriendlyErrorMessage(error) {
   const message = error?.message || "";
 
-  if (message === NETWORK_ERROR_MESSAGE) {
+  if (message === getNetworkError()) {
     return message;
   }
 
   if (message.includes("Failed to fetch") || message.includes("NetworkError")) {
-    return NETWORK_ERROR_MESSAGE;
+    return getNetworkError();
   }
 
-  return message || "Request failed. Check IP, port, and phone service status.";
+  return message || t("request_failed");
 }
 
 function getWebAuthnErrorMessage(error, fallback) {
   const message = error?.message || "";
 
-  if (message === "WebAuthn not supported in this browser" || message === "Register WebAuthn first") {
+  if (message === t("webauthn_not_supported") || message === "Register WebAuthn first") {
     return message;
   }
 
   if (error?.name === "NotAllowedError") {
-    return "WebAuthn cancelled";
+    return t("webauthn_cancelled");
   }
 
-  return `${fallback}：${message || error?.name || "Unknown error"}`;
+  return `${fallback}：${message || error?.name || t("unknown")}`;
 }

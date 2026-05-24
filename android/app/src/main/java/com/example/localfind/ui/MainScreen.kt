@@ -109,10 +109,13 @@ fun MainScreen(
     onRejectPairingRequest: (String) -> Unit,
     onRequestPermission: () -> Unit,
     onOpenBatterySettings: () -> Unit,
-    onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit
+    onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit,
+    language: String,
+    onLanguageChange: (String) -> Unit
 ) {
+    LFS.setLanguage(language)
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Find Me", "Controller")
+    val tabs = listOf(LFS.str("find_me"), LFS.str("controller"))
 
     Scaffold(
         topBar = {
@@ -243,8 +246,8 @@ fun FinderModeScreen(
     if (showRegenerateDialog) {
         AlertDialog(
             onDismissRequest = { showRegenerateDialog = false },
-            title = { Text("Reset Token?") },
-            text = { Text("All paired controllers will be disconnected. They will need the new token to reconnect.") },
+            title = { Text(LFS.str("reset_token_title")) },
+            text = { Text(LFS.str("reset_token_body")) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -252,12 +255,12 @@ fun FinderModeScreen(
                         showRegenerateDialog = false
                     }
                 ) {
-                    Text("Reset", color = MaterialTheme.colorScheme.error)
+                    Text(LFS.str("reset"), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRegenerateDialog = false }) {
-                    Text("Cancel")
+                    Text(LFS.str("cancel"))
                 }
             }
         )
@@ -279,13 +282,13 @@ fun FinderModeScreen(
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("How to Use", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(LFS.str("how_to_use"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 
                 val steps = listOf(
-                    "1. Tap Start Service.",
-                    "2. Keep both devices on the same Wi-Fi or LAN.",
-                    "3. On the controller, scan the QR code or enter the address shown here.",
-                    "4. On the controller, tap Find Phone to ring or flash this phone."
+                    LFS.str("how_step1"),
+                    LFS.str("how_step2"),
+                    LFS.str("how_step3"),
+                    LFS.str("how_step4")
                 )
                 
                 steps.forEach { step ->
@@ -314,7 +317,7 @@ fun FinderModeScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Surface(shape = androidx.compose.foundation.shape.CircleShape, color = statusColor, modifier = Modifier.size(12.dp)) {}
                     Text(
-                        text = if (isServiceRunning) "Running" else "Stopped",
+                        text = if (isServiceRunning) LFS.str("running") else LFS.str("stopped"),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -326,7 +329,7 @@ fun FinderModeScreen(
                         modifier = Modifier.weight(1f),
                         enabled = !isServiceRunning
                     ) {
-                        Text("Start Service", fontWeight = FontWeight.Bold)
+                        Text(LFS.str("start_service"), fontWeight = FontWeight.Bold)
                     }
                     Button(
                         onClick = onStopService,
@@ -334,7 +337,7 @@ fun FinderModeScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                         enabled = isServiceRunning
                     ) {
-                        Text("Stop Service", fontWeight = FontWeight.Bold)
+                        Text(LFS.str("stop_service"), fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -344,7 +347,7 @@ fun FinderModeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Restart HTTP Server", fontSize = 12.sp)
+                        Text(LFS.str("restart_http"), fontSize = 12.sp)
                     }
                 }
             }
@@ -370,7 +373,7 @@ fun FinderModeScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Surface(shape = androidx.compose.foundation.shape.CircleShape, color = statusColor, modifier = Modifier.size(12.dp)) {}
                     Text(
-                        text = if (isServiceRunning) "Running" else "Stopped",
+                        text = if (isServiceRunning) LFS.str("running") else LFS.str("stopped"),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -378,26 +381,26 @@ fun FinderModeScreen(
 
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
 
-                StatusRow("Service Status:", when(serverStatus) {
+                StatusRow(LFS.str("service_status"), when(serverStatus) {
                     ServerStatus.STOPPED -> "Stopped"
                     ServerStatus.STARTING -> "Starting..."
                     ServerStatus.LISTENING -> "Listening"
                     ServerStatus.FAILED -> "Failed"
                 })
                 if (lastServerError != null) {
-                    StatusRow("Last Error:", lastServerError)
+                    StatusRow(LFS.str("last_error"), lastServerError)
                 }
-                StatusRow("LAN Address:", localIp ?: "Offline")
-                StatusRow("Port:", port.toString())
-                StatusRow("NSD:", when(nsdStatus) {
+                StatusRow(LFS.str("lan_address"), localIp ?: LFS.str("offline"))
+                StatusRow(LFS.str("port_label"), port.toString())
+                StatusRow(LFS.str("nsd"), when(nsdStatus) {
                     NsdStatus.IDLE -> "Idle"
                     NsdStatus.ADVERTISING -> "Advertising"
                     NsdStatus.ADVERTISED -> "Advertised"
                     NsdStatus.FAILED -> "Failed"
                 })
-                StatusRow("Wake Lock:", if (wakeLockHeld) "Held (CPU)" else "Not held")
-                StatusRow("Wi-Fi Lock:", if (wifiLockHeld) "Held (Wi-Fi)" else "Not held")
-                StatusRow("Service Type:", nsdServiceType)
+                StatusRow(LFS.str("wake_lock"), if (wakeLockHeld) LFS.str("held_cpu") else LFS.str("not_held"))
+                StatusRow(LFS.str("wifi_lock"), if (wifiLockHeld) LFS.str("held_wifi") else LFS.str("not_held"))
+                StatusRow(LFS.str("service_type"), nsdServiceType)
 
                 if (isServiceRunning && localIp != null) {
                     val controlUrl = "http://$localIp:$port"
@@ -409,8 +412,8 @@ fun FinderModeScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Remote Control in Browser:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                        Text("Open in a browser on the same Wi-Fi to control this phone.", style = MaterialTheme.typography.bodySmall)
+                        Text(LFS.str("browser_remote"), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Text(LFS.str("browser_hint"), style = MaterialTheme.typography.bodySmall)
                         
                         Row(
                             modifier = Modifier
@@ -425,7 +428,7 @@ fun FinderModeScreen(
                                 onClick = { clipboardManager.setText(AnnotatedString(controlUrl)) },
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                             ) {
-                                Text("Copy", fontSize = 12.sp)
+                                Text(LFS.str("copy"), fontSize = 12.sp)
                             }
                         }
                     }
@@ -445,7 +448,7 @@ fun FinderModeScreen(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Pairing & Authorization", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                Text(LFS.str("pairing_auth"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
                 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -453,9 +456,9 @@ fun FinderModeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Pairing Token:", style = MaterialTheme.typography.labelSmall)
+                        Text(LFS.str("pairing_token"), style = MaterialTheme.typography.labelSmall)
                         Text(
-                            text = if (isTokenVisible) pairingToken.ifEmpty { "N/A" } else "********",
+                            text = if (isTokenVisible) pairingToken.ifEmpty { LFS.str("na") } else "********",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.ExtraBold,
                             fontFamily = FontFamily.Monospace,
@@ -464,10 +467,10 @@ fun FinderModeScreen(
                     }
                     Row {
                         TextButton(onClick = { isTokenVisible = !isTokenVisible }) {
-                            Text(if (isTokenVisible) "Hide" else "Show", fontSize = 12.sp)
+                            Text(if (isTokenVisible) LFS.str("hide") else LFS.str("show"), fontSize = 12.sp)
                         }
                         TextButton(onClick = { clipboardManager.setText(AnnotatedString(pairingToken)) }) {
-                            Text("Copy", fontSize = 12.sp)
+                            Text(LFS.str("copy"), fontSize = 12.sp)
                         }
                     }
                 }
@@ -478,7 +481,7 @@ fun FinderModeScreen(
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f), contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Reset Token", fontSize = 12.sp)
+                    Text(LFS.str("reset_token"), fontSize = 12.sp)
                 }
             }
         }
@@ -495,10 +498,10 @@ fun FinderModeScreen(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text("Controller Pairing Mode", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                StatusRow("Device:", localDeviceName.ifBlank { android.os.Build.MODEL })
-                StatusRow("Device ID:", localDeviceId.ifBlank { "Generated after service start" })
-                StatusRow("Pairing Mode:", if (pairingModeActive) "Enabled" else "Disabled")
+                Text(LFS.str("controller_pairing"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                StatusRow(LFS.str("device_label"), localDeviceName.ifBlank { android.os.Build.MODEL })
+                StatusRow(LFS.str("device_id"), localDeviceId.ifBlank { "Generated after service start" })
+                StatusRow(LFS.str("pairing_mode"), if (pairingModeActive) LFS.str("enabled") else LFS.str("disabled"))
                 
                 if (pairingModeActive) {
                     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -509,7 +512,7 @@ fun FinderModeScreen(
                         }
                     }
                     val remainingSeconds = max(0L, (pairingModeExpiresAt - currentTime) / 1000L)
-                    StatusRow("Remaining:", "${remainingSeconds / 60}m${remainingSeconds % 60}s")
+                    StatusRow(LFS.str("remaining"), "${remainingSeconds / 60}m${remainingSeconds % 60}s")
                 }
 
                 Text("Pairing mode is active for a short window. Requests must be confirmed on this phone.", style = MaterialTheme.typography.bodySmall)
@@ -520,20 +523,20 @@ fun FinderModeScreen(
                         modifier = Modifier.weight(1f),
                         enabled = isServiceRunning
                     ) {
-                        Text(if (pairingModeActive) "Renew 5 min" else "Enable Pairing", fontSize = 12.sp)
+                        Text(if (pairingModeActive) LFS.str("renew_5min") else LFS.str("enable_pairing"), fontSize = 12.sp)
                     }
                     OutlinedButton(
                         onClick = onDisablePairingMode,
                         modifier = Modifier.weight(1f),
                         enabled = isServiceRunning && pairingModeActive
                     ) {
-                        Text("Disable Pairing", fontSize = 12.sp)
+                        Text(LFS.str("disable_pairing"), fontSize = 12.sp)
                     }
                 }
 
                 if (pendingPairingRequests.isNotEmpty()) {
                     Divider(modifier = Modifier.padding(vertical = 4.dp))
-                    Text("Pending Requests", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                    Text(LFS.str("pending_requests"), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                     pendingPairingRequests.forEach { request ->
                         Column(
                             modifier = Modifier
@@ -550,19 +553,19 @@ fun FinderModeScreen(
                                     modifier = Modifier.weight(1f),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                                 ) {
-                                    Text("Accept", fontSize = 12.sp)
+                                    Text(LFS.str("accept"), fontSize = 12.sp)
                                 }
                                 OutlinedButton(
                                     onClick = { onRejectPairingRequest(request.requestId) },
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    Text("Reject", fontSize = 12.sp)
+                                    Text(LFS.str("reject"), fontSize = 12.sp)
                                 }
                             }
                         }
                     }
                 } else {
-                    Text("No pending requests.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(LFS.str("no_pending"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -603,7 +606,7 @@ fun FinderModeScreen(
                         qrBitmap?.let {
                             androidx.compose.foundation.Image(
                                 bitmap = it.asImageBitmap(),
-                                contentDescription = "Pairing QR Code",
+                                contentDescription = LFS.str("pairing_qr"),
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Fit
                             )
@@ -611,7 +614,7 @@ fun FinderModeScreen(
                     }
 
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Pairing QR Code", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text(LFS.str("pairing_qr"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                         Text("• Scan from controller to pair", style = MaterialTheme.typography.labelSmall)
                         Text("• QR code is LAN-only", style = MaterialTheme.typography.labelSmall)
                         Text("• Reset token if compromised", style = MaterialTheme.typography.labelSmall)
@@ -629,7 +632,7 @@ fun FinderModeScreen(
             )
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Security & Privacy", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                Text(LFS.str("security"), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                 Text("• Tokens are LAN-only. Nothing is uploaded to the cloud.", style = MaterialTheme.typography.labelSmall)
                 Text("• Do not share tokens with untrusted parties.", style = MaterialTheme.typography.labelSmall)
                 Text("• Reset the token if you suspect it has leaked.", style = MaterialTheme.typography.labelSmall)
@@ -648,7 +651,7 @@ fun FinderModeScreen(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Background Running", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(LFS.str("background"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
                     "The service runs as a foreground service. Some devices (Xiaomi, Huawei, Oppo) may restrict background network after screen lock.",
                     style = MaterialTheme.typography.bodySmall,
@@ -679,20 +682,20 @@ fun FinderModeScreen(
         // 5. Hardware Test Card
         Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Device Test", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text(LFS.str("device_test"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    IndicatorBox("Ring", if (ringActive) "Ringing" else "Silent", ringActive, Modifier.weight(1f))
-                    IndicatorBox("Flash", when(flashMode) { "steady" -> "Steady"; "strobe" -> "Strobe"; else -> "Off" }, flashMode != "off", Modifier.weight(1f))
+                    IndicatorBox(LFS.str("ring_label"), if (ringActive) LFS.str("ringing") else LFS.str("silent"), ringActive, Modifier.weight(1f))
+                    IndicatorBox(LFS.str("flash_label"), when(flashMode) { "steady" -> LFS.str("steady"); "strobe" -> LFS.str("strobe"); else -> LFS.str("off") }, flashMode != "off", Modifier.weight(1f))
                 }
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onTestRingToggle, modifier = Modifier.weight(1f)) { Text(if (ringActive) "Stop Ring" else "Test Ring", fontSize = 12.sp) }
-                    OutlinedButton(onClick = onTestFlashSteady, modifier = Modifier.weight(1f)) { Text("Test Flash", fontSize = 12.sp) }
+                    OutlinedButton(onClick = onTestRingToggle, modifier = Modifier.weight(1f)) { Text(if (ringActive) LFS.str("stop_ring") else LFS.str("test_ring"), fontSize = 12.sp) }
+                    OutlinedButton(onClick = onTestFlashSteady, modifier = Modifier.weight(1f)) { Text(LFS.str("test_flash"), fontSize = 12.sp) }
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onTestFlashStrobe, modifier = Modifier.weight(1f)) { Text("Test Strobe", fontSize = 12.sp) }
-                    OutlinedButton(onClick = onTestFlashStop, modifier = Modifier.weight(1f)) { Text("Turn Flash Off", fontSize = 12.sp) }
+                    OutlinedButton(onClick = onTestFlashStrobe, modifier = Modifier.weight(1f)) { Text(LFS.str("test_strobe"), fontSize = 12.sp) }
+                    OutlinedButton(onClick = onTestFlashStop, modifier = Modifier.weight(1f)) { Text(LFS.str("turn_flash_off"), fontSize = 12.sp) }
                 }
                 Button(onClick = onStopAll, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)) {
                     Text("Stop All Alerts", fontWeight = FontWeight.Bold)
@@ -772,11 +775,11 @@ fun ControllerModeScreen(
                         initialScannedToken = token
                         isScanning = false
                     } else {
-                        scope.launch { snackbarHostState.showSnackbar("Not a valid Local Find pairing code") }
+                        scope.launch { snackbarHostState.showSnackbar(LFS.str("not_valid_code")) }
                         isScanning = false
                     }
                 } catch (_: Exception) {
-                    scope.launch { snackbarHostState.showSnackbar("QR parse failed") }
+                    scope.launch { snackbarHostState.showSnackbar(LFS.str("qr_parse_failed")) }
                     isScanning = false
                 }
             },
@@ -802,7 +805,7 @@ fun ControllerModeScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f))
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("Saved Devices", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                            Text(LFS.str("saved_devices"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
 
                             savedDevices.forEach { saved ->
                                 Row(
@@ -829,7 +832,7 @@ fun ControllerModeScreen(
                                         contentPadding = PaddingValues(horizontal = 12.dp),
                                         modifier = Modifier.height(32.dp)
                                     ) {
-                                        Text("Connect", fontSize = 11.sp)
+                                        Text(LFS.str("connect"), fontSize = 11.sp)
                                     }
                                     TextButton(
                                         onClick = {
@@ -841,7 +844,7 @@ fun ControllerModeScreen(
                                         contentPadding = PaddingValues(horizontal = 4.dp),
                                         modifier = Modifier.height(32.dp)
                                     ) {
-                                        Text("Delete", fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
+                                        Text(LFS.str("delete"), fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
                                     }
                                 }
                             }
@@ -855,7 +858,7 @@ fun ControllerModeScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f))
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Recent", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                            Text(LFS.str("recent"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
                             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(device.name, fontWeight = FontWeight.Bold)
@@ -870,7 +873,7 @@ fun ControllerModeScreen(
                                     contentPadding = PaddingValues(horizontal = 12.dp),
                                     modifier = Modifier.height(32.dp)
                                 ) {
-                                    Text("Connect", fontSize = 11.sp)
+                                    Text(LFS.str("connect"), fontSize = 11.sp)
                                 }
                                 TextButton(
                                     onClick = {
@@ -880,7 +883,7 @@ fun ControllerModeScreen(
                                     contentPadding = PaddingValues(horizontal = 4.dp),
                                     modifier = Modifier.height(32.dp)
                                 ) {
-                                    Text("Delete", fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
+                                    Text(LFS.str("delete"), fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
                                 }
                             }
                         }
@@ -894,7 +897,7 @@ fun ControllerModeScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.1f))
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Device Discovery (NSD)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
+                        Text(LFS.str("device_discovery"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
                         
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -902,10 +905,10 @@ fun ControllerModeScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Status: " + when(discoveryStatus) {
+                                text = LFS.str("status_label") + when(discoveryStatus) {
                                     DiscoveryStatus.IDLE -> "Idle"
-                                    DiscoveryStatus.SCANNING -> "Scanning..."
-                                    DiscoveryStatus.FAILED -> "Scan Failed"
+                                    DiscoveryStatus.SCANNING -> LFS.str("scanning")
+                                    DiscoveryStatus.FAILED -> LFS.str("scan_failed")
                                     DiscoveryStatus.STOPPED -> "Stopped"
                                 },
                                 fontWeight = FontWeight.Bold,
@@ -918,14 +921,14 @@ fun ControllerModeScreen(
                                 enabled = discoveryStatus != DiscoveryStatus.SCANNING,
                                 modifier = Modifier.height(40.dp),
                                 contentPadding = PaddingValues(horizontal = 12.dp)
-                            ) { Text("Scan", maxLines = 1, softWrap = false, fontSize = 12.sp) }
+                            ) { Text(LFS.str("scan"), maxLines = 1, softWrap = false, fontSize = 12.sp) }
                             Spacer(modifier = Modifier.width(8.dp))
                             OutlinedButton(
                                 onClick = onStopDiscovery,
                                 enabled = discoveryStatus == DiscoveryStatus.SCANNING,
                                 modifier = Modifier.height(40.dp),
                                 contentPadding = PaddingValues(horizontal = 12.dp)
-                            ) { Text("Stop", maxLines = 1, softWrap = false, fontSize = 12.sp) }
+                            ) { Text(LFS.str("stop"), maxLines = 1, softWrap = false, fontSize = 12.sp) }
                         }
 
                         Divider(
@@ -942,7 +945,7 @@ fun ControllerModeScreen(
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
                         ) {
-                            Text("Scan QR Code to Connect", fontWeight = FontWeight.Bold)
+                            Text(LFS.str("scan_qr_connect"), fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -953,15 +956,15 @@ fun ControllerModeScreen(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Manual Connection", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text(LFS.str("manual_connection"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                         
-                        Text("Enter the target phone IP address. Default port is 8888.", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        Text(LFS.str("manual_hint"), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedTextField(
                                 value = manualHost,
                                 onValueChange = { manualHost = it; manualError = null },
-                                label = { Text("IP Address") },
+                                label = { Text(LFS.str("ip_address")) },
                                 modifier = Modifier.weight(2f),
                                 singleLine = true,
                                 isError = manualError != null && manualHost.isBlank(),
@@ -970,7 +973,7 @@ fun ControllerModeScreen(
                             OutlinedTextField(
                                 value = manualPort,
                                 onValueChange = { manualPort = it; manualError = null },
-                                label = { Text("Port") },
+                                label = { Text(LFS.str("port")) },
                                 modifier = Modifier.weight(1f),
                                 singleLine = true,
                                 isError = manualError != null && manualPort.toIntOrNull() == null,
@@ -981,7 +984,7 @@ fun ControllerModeScreen(
                         OutlinedTextField(
                             value = manualName,
                             onValueChange = { manualName = it },
-                            label = { Text("Custom Name (optional)") },
+                            label = { Text(LFS.str("custom_name_opt")) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             placeholder = { Text("e.g. My old phone") },
@@ -998,11 +1001,11 @@ fun ControllerModeScreen(
                                 val portInt = manualPort.toIntOrNull()
                                 
                                 if (hostTrimmed.isBlank()) {
-                                    manualError = "Enter IP Address"
+                                    manualError = LFS.str("enter_ip")
                                     return@Button
                                 }
                                 if (portInt == null || portInt !in 1..65535) {
-                                    manualError = "Invalid port (1-65535)"
+                                    manualError = LFS.str("invalid_port")
                                     return@Button
                                 }
 
@@ -1018,7 +1021,7 @@ fun ControllerModeScreen(
                             },
                             modifier = Modifier.align(Alignment.End)
                         ) {
-                            Text("Connect")
+                            Text(LFS.str("connect"))
                         }
                     }
                 }
@@ -1030,7 +1033,7 @@ fun ControllerModeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("No other devices found", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                        Text(LFS.str("no_other_devices"), color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
                         Text(
                             "Make sure both phones are on the same Wi-Fi. This device is hidden from the list. Try Manual Connection below if discovery fails.",
                             color = Color.Gray,
@@ -1061,7 +1064,7 @@ fun ControllerModeScreen(
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                                         modifier = Modifier.height(32.dp)
                                     ) {
-                                        Text("Open in App", fontSize = 11.sp)
+                                        Text(LFS.str("open_in_app"), fontSize = 11.sp)
                                     }
                                     OutlinedButton(
                                         onClick = { 
@@ -1072,7 +1075,7 @@ fun ControllerModeScreen(
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                                         modifier = Modifier.height(32.dp)
                                     ) {
-                                        Text("Open in Browser", fontSize = 11.sp)
+                                        Text(LFS.str("open_in_browser"), fontSize = 11.sp)
                                     }
                                 }
                             }
@@ -1132,14 +1135,14 @@ fun RemoteControlPanel(
                 }
                 is ControlResult.Timeout -> {
                     connectionStatus = RemoteConnectionStatus.TIMEOUT
-                    snackbarHostState.showSnackbar("Timeout")
+                    snackbarHostState.showSnackbar(LFS.str("timeout"))
                 }
                 is ControlResult.Unauthorized -> {
                     connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
                 }
                 is ControlResult.Error -> {
                     connectionStatus = RemoteConnectionStatus.OFFLINE
-                    val msg = if (result.message == "connection_failed") "Offline / Service down" else "Connection failed"
+                    val msg = if (result.message == "connection_failed") LFS.str("offline_svc") else "Connection failed"
                     snackbarHostState.showSnackbar(msg)
                 }
             }
@@ -1150,29 +1153,29 @@ fun RemoteControlPanel(
     fun sendCommand(endpoint: String) {
         val effectiveToken = getEffectiveToken()
         if (effectiveToken == null) {
-            scope.launch { snackbarHostState.showSnackbar("Enter token first") }
+            scope.launch { snackbarHostState.showSnackbar(LFS.str("enter_token_first")) }
             return
         }
-        onAuthenticate("Verify to send command", {
+        onAuthenticate(LFS.str("verify_send"), {
             scope.launch {
                 isLoading = true
                 when (val result = client.sendCommand(device.host, device.port, effectiveToken, endpoint)) {
                     is ControlResult.Success -> {
                         handleSuccessfulCommand(effectiveToken)
-                        snackbarHostState.showSnackbar("Command sent")
+                        snackbarHostState.showSnackbar(LFS.str("command_sent"))
                         refreshStatus()
                     }
                     is ControlResult.Unauthorized -> {
                         connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
-                        snackbarHostState.showSnackbar("Token error")
+                        snackbarHostState.showSnackbar(LFS.str("token_error"))
                     }
                     is ControlResult.Timeout -> {
                         connectionStatus = RemoteConnectionStatus.TIMEOUT
-                        snackbarHostState.showSnackbar("Timeout")
+                        snackbarHostState.showSnackbar(LFS.str("timeout"))
                     }
                     is ControlResult.Error -> {
                         connectionStatus = RemoteConnectionStatus.OFFLINE
-                        val msg = if (result.message == "connection_failed") "Device offline or service down" else "Command failed"
+                        val msg = if (result.message == "connection_failed") LFS.str("device_offline") else LFS.str("command_failed")
                         snackbarHostState.showSnackbar(msg)
                     }
                 }
@@ -1186,10 +1189,10 @@ fun RemoteControlPanel(
     fun startFinding() {
         val effectiveToken = getEffectiveToken()
         if (effectiveToken == null) {
-            scope.launch { snackbarHostState.showSnackbar("Enter token first") }
+            scope.launch { snackbarHostState.showSnackbar(LFS.str("enter_token_first")) }
             return
         }
-        onAuthenticate("Verify to find phone", {
+        onAuthenticate(LFS.str("verify_find"), {
             scope.launch {
                 isLoading = true
                 // 1. Start ring
@@ -1197,17 +1200,17 @@ fun RemoteControlPanel(
                 
                 if (ringResult is ControlResult.Unauthorized) {
                     connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
-                    snackbarHostState.showSnackbar("Token error")
+                    snackbarHostState.showSnackbar(LFS.str("token_error"))
                     isLoading = false
                     return@launch
                 } else if (ringResult is ControlResult.Timeout) {
                     connectionStatus = RemoteConnectionStatus.TIMEOUT
-                    snackbarHostState.showSnackbar("Timeout")
+                    snackbarHostState.showSnackbar(LFS.str("timeout"))
                     isLoading = false
                     return@launch
                 } else if (ringResult is ControlResult.Error) {
                     connectionStatus = RemoteConnectionStatus.OFFLINE
-                    val msg = if (ringResult.message == "connection_failed") "Device offline or service down" else "Command failed"
+                    val msg = if (ringResult.message == "connection_failed") LFS.str("device_offline") else LFS.str("command_failed")
                     snackbarHostState.showSnackbar(msg)
                     isLoading = false
                     return@launch
@@ -1219,7 +1222,7 @@ fun RemoteControlPanel(
                 if (flashResult is ControlResult.Success) {
                     handleSuccessfulCommand(effectiveToken)
                     connectionStatus = RemoteConnectionStatus.SEARCHING
-                    snackbarHostState.showSnackbar("Searching")
+                    snackbarHostState.showSnackbar(LFS.str("searching"))
                 } else {
                     // Ring succeeded, flash failed
                     connectionStatus = RemoteConnectionStatus.PARTIAL_SUCCESS
@@ -1237,10 +1240,10 @@ fun RemoteControlPanel(
     fun stopFinding() {
         val effectiveToken = getEffectiveToken()
         if (effectiveToken == null) {
-            scope.launch { snackbarHostState.showSnackbar("Enter token first") }
+            scope.launch { snackbarHostState.showSnackbar(LFS.str("enter_token_first")) }
             return
         }
-        onAuthenticate("Verify to stop", {
+        onAuthenticate(LFS.str("verify_stop"), {
             scope.launch {
                 isLoading = true
                 when (val result = client.sendCommand(device.host, device.port, effectiveToken, "/command/stop-all")) {
@@ -1252,15 +1255,15 @@ fun RemoteControlPanel(
                     }
                     is ControlResult.Unauthorized -> {
                         connectionStatus = RemoteConnectionStatus.UNAUTHORIZED
-                        snackbarHostState.showSnackbar("Token error")
+                        snackbarHostState.showSnackbar(LFS.str("token_error"))
                     }
                     is ControlResult.Timeout -> {
                         connectionStatus = RemoteConnectionStatus.TIMEOUT
-                        snackbarHostState.showSnackbar("Timeout")
+                        snackbarHostState.showSnackbar(LFS.str("timeout"))
                     }
                     is ControlResult.Error -> {
                         connectionStatus = RemoteConnectionStatus.OFFLINE
-                        val msg = if (result.message == "connection_failed") "Device offline or service down" else "Command failed"
+                        val msg = if (result.message == "connection_failed") LFS.str("device_offline") else LFS.str("command_failed")
                         snackbarHostState.showSnackbar(msg)
                     }
                 }
@@ -1287,7 +1290,7 @@ fun RemoteControlPanel(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onBack) { Text("Back") }
+                TextButton(onClick = onBack) { Text(LFS.str("back")) }
                 Spacer(modifier = Modifier.weight(1f))
                 if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
             }
@@ -1320,13 +1323,13 @@ fun RemoteControlPanel(
                     Text(
                         text = when (connectionStatus) {
                             RemoteConnectionStatus.IDLE -> "Idle"
-                            RemoteConnectionStatus.CONNECTING -> "Connecting..."
-                            RemoteConnectionStatus.ONLINE -> "Online"
-                            RemoteConnectionStatus.OFFLINE -> "Offline / Service down"
-                            RemoteConnectionStatus.TIMEOUT -> "Timeout"
-                            RemoteConnectionStatus.UNAUTHORIZED -> "Token error"
-                            RemoteConnectionStatus.SEARCHING -> "Searching"
-                            RemoteConnectionStatus.PARTIAL_SUCCESS -> "Partial (ringing)"
+                            RemoteConnectionStatus.CONNECTING -> LFS.str("connecting")
+                            RemoteConnectionStatus.ONLINE -> LFS.str("online")
+                            RemoteConnectionStatus.OFFLINE -> LFS.str("offline_svc")
+                            RemoteConnectionStatus.TIMEOUT -> LFS.str("timeout")
+                            RemoteConnectionStatus.UNAUTHORIZED -> LFS.str("token_error")
+                            RemoteConnectionStatus.SEARCHING -> LFS.str("searching")
+                            RemoteConnectionStatus.PARTIAL_SUCCESS -> LFS.str("partial_ringing")
                             RemoteConnectionStatus.STOPPED -> "Stopped"
                         },
                         style = MaterialTheme.typography.bodyMedium,
@@ -1351,7 +1354,7 @@ fun RemoteControlPanel(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Find Phone", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, textAlign = TextAlign.Center)
+                        Text(LFS.str("find_phone"), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, textAlign = TextAlign.Center)
                     }
                     Button(
                         onClick = { stopFinding() },
@@ -1359,7 +1362,7 @@ fun RemoteControlPanel(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Stop", fontWeight = FontWeight.Bold)
+                        Text(LFS.str("stop"), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -1372,8 +1375,8 @@ fun RemoteControlPanel(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        IndicatorBox("Remote Ring", if (ringActive) "Ringing" else "Silent", ringActive, Modifier.weight(1f))
-                        IndicatorBox("Remote Flash", when(flashMode) { "steady" -> "Steady"; "strobe" -> "Strobe"; else -> "Off" }, flashMode != "off", Modifier.weight(1f))
+                        IndicatorBox("Remote Ring", if (ringActive) LFS.str("ringing") else LFS.str("silent"), ringActive, Modifier.weight(1f))
+                        IndicatorBox("Remote Flash", when(flashMode) { "steady" -> LFS.str("steady"); "strobe" -> LFS.str("strobe"); else -> LFS.str("off") }, flashMode != "off", Modifier.weight(1f))
                     }
                 }
             }
@@ -1383,7 +1386,7 @@ fun RemoteControlPanel(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f))
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Authorization", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(LFS.str("authorization"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     
                     if (hasSavedToken) {
                         Surface(
@@ -1398,7 +1401,7 @@ fun RemoteControlPanel(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text("✓", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
-                                    Text("Token saved", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                    Text(LFS.str("token_saved"), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                                 }
                                 TextButton(
                                     onClick = { 
@@ -1407,7 +1410,7 @@ fun RemoteControlPanel(
                                     },
                                     contentPadding = PaddingValues(0.dp)
                                 ) {
-                                    Text("Clear", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                                    Text(LFS.str("clear"), color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
                                 }
                             }
                         }
@@ -1416,7 +1419,7 @@ fun RemoteControlPanel(
                     OutlinedTextField(
                         value = inputToken,
                         onValueChange = { inputToken = it },
-                        label = { Text(if (hasSavedToken) "New token (optional)" else "Enter token from target phone") },
+                        label = { Text(if (hasSavedToken) LFS.str("new_token_opt") else LFS.str("enter_token_target")) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(8.dp),
@@ -1429,23 +1432,23 @@ fun RemoteControlPanel(
                             modifier = Modifier.align(Alignment.End),
                             contentPadding = PaddingValues(0.dp)
                         ) {
-                            Text("Clear", fontSize = 12.sp)
+                            Text(LFS.str("clear"), fontSize = 12.sp)
                         }
                     }
                 }
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Hardware Controls", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(LFS.str("hardware_ctrl"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { sendCommand("/command/flash/steady/start") }, modifier = Modifier.weight(1f)) { Text("Steady", fontSize = 12.sp) }
-                    Button(onClick = { sendCommand("/command/flash/strobe/start") }, modifier = Modifier.weight(1f)) { Text("Strobe", fontSize = 12.sp) }
+                    Button(onClick = { sendCommand("/command/flash/steady/start") }, modifier = Modifier.weight(1f)) { Text(LFS.str("steady"), fontSize = 12.sp) }
+                    Button(onClick = { sendCommand("/command/flash/strobe/start") }, modifier = Modifier.weight(1f)) { Text(LFS.str("strobe"), fontSize = 12.sp) }
                 }
                 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { sendCommand("/command/flash/stop") }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)) { Text("Turn Flash Off", fontSize = 12.sp) }
-                    Button(onClick = { refreshStatus() }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)) { Text("Refresh", fontSize = 12.sp) }
+                    Button(onClick = { sendCommand("/command/flash/stop") }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)) { Text(LFS.str("turn_flash_off"), fontSize = 12.sp) }
+                    Button(onClick = { refreshStatus() }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)) { Text(LFS.str("refresh"), fontSize = 12.sp) }
                 }
 
                 Button(
@@ -1465,14 +1468,14 @@ fun RemoteControlPanel(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                 ) {
-                    Text("Alarm (loud)", fontWeight = FontWeight.Bold)
+                    Text(LFS.str("alarm_loud"), fontWeight = FontWeight.Bold)
                 }
                 
                 OutlinedButton(
                     onClick = { sendCommand("/command/ring/stop") },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Stop Ring")
+                    Text(LFS.str("stop_ring"))
                 }
             }
         }
@@ -1590,11 +1593,11 @@ fun QrScannerScreen(
             onClick = onClose,
             modifier = Modifier.align(Alignment.TopStart).padding(16.dp).background(Color.Black.copy(alpha = 0.5f), androidx.compose.foundation.shape.CircleShape)
         ) {
-            Text("Off", color = Color.White, fontWeight = FontWeight.Bold)
+            Text(LFS.str("off"), color = Color.White, fontWeight = FontWeight.Bold)
         }
         
         Text(
-            "Align QR code inside the frame",
+            LFS.str("align_qr"),
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 64.dp).background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(horizontal = 16.dp, vertical = 8.dp),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium

@@ -9,7 +9,13 @@
   <body>
     <main class="popup-shell">
       <header class="header">
-        <h1>Local Find</h1>
+        <div class="header-top">
+          <h1>Local Find</h1>
+          <select id="language-select" class="language-select">
+            <option value="en">English</option>
+            <option value="zh">简体中文</option>
+          </select>
+        </div>
         <p id="endpoint-preview" class="endpoint-preview">http://HOST:8888</p>
       </header>
 
@@ -148,6 +154,7 @@
       </div>
     </div>
 
+    <script src="i18n.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

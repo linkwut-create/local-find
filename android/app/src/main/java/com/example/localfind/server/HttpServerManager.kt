@@ -318,25 +318,25 @@ class HttpServerManager(
                                 </div>
 
                                 <div class="status-grid">
-                                    <div class="status-item"><span class="status-label">Service</span><span class="status-value active" id="service-status">Online</span></div>
-                                    <div class="status-item"><span class="status-label">Reachable</span><span class="status-value active" id="reachability">Yes</span></div>
-                                    <div class="status-item"><span class="status-label">Ring</span><span class="status-value" id="ring-status">--</span></div>
-                                    <div class="status-item"><span class="status-label">Flash</span><span class="status-value" id="flash-status">--</span></div>
+                                    <div class="status-item"><span class="status-label" data-l="service">Service</span><span class="status-value active" id="service-status">Online</span></div>
+                                    <div class="status-item"><span class="status-label" data-l="reachable">Reachable</span><span class="status-value active" id="reachability">Yes</span></div>
+                                    <div class="status-item"><span class="status-label" data-l="ring">Ring</span><span class="status-value" id="ring-status">--</span></div>
+                                    <div class="status-item"><span class="status-label" data-l="flash">Flash</span><span class="status-value" id="flash-status">--</span></div>
                                 </div>
 
                                 <div class="token-section">
-                                    <label for="token-input">Enter 8-digit Token</label>
+                                    <label for="token-input" data-l="enterToken">Enter 8-digit Token</label>
                                     <input type="password" id="token-input" maxlength="8" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;">
                                 </div>
 
                                 <div class="button-group">
-                                    <button class="btn-main" onclick="startFinding()">Find Phone</button>
+                                    <button class="btn-main" onclick="startFinding()" data-l="findPhone">Find Phone</button>
                                     <div class="row">
-                                        <button class="btn-outline" onclick="toggleRing()" id="btn-ring">Ring</button>
-                                        <button class="btn-outline" onclick="toggleFlash()" id="btn-flash">Flash</button>
+                                        <button class="btn-outline" onclick="toggleRing()" id="btn-ring" data-l="ringBtn">Ring</button>
+                                        <button class="btn-outline" onclick="toggleFlash()" id="btn-flash" data-l="flashBtn">Flash</button>
                                     </div>
-                                    <button class="btn-stop" onclick="callApi('/command/stop-all')">Stop All Alerts</button>
-                                    <button class="btn-outline" onclick="updateStatus()">Refresh</button>
+                                    <button class="btn-stop" onclick="callApi('/command/stop-all')" data-l="stopAll">Stop All Alerts</button>
+                                    <button class="btn-outline" onclick="updateStatus()" data-l="refresh">Refresh</button>
                                 </div>
 
                                 <div id="result-box" class="result-box"></div>
@@ -344,24 +344,78 @@ class HttpServerManager(
 
                             <div class="card" style="padding: 16px;">
                                 <div class="instructions">
-                                    <strong>How to Use</strong>
+                                    <strong data-l="howToUse">How to Use</strong>
                                     <ul>
-                                        <li>No software installation needed on your computer.</li>
-                                        <li>Make sure the computer and phone are on the same Wi-Fi / LAN.</li>
-                                        <li>Enter the 8-digit token shown on the phone screen.</li>
-                                        <li>For quick access, use the Chrome extension instead.</li>
+                                        <li data-l="how1">No software installation needed on your computer.</li>
+                                        <li data-l="how2">Make sure the computer and phone are on the same Wi-Fi / LAN.</li>
+                                        <li data-l="how3">Enter the 8-digit token shown on the phone screen.</li>
+                                        <li data-l="how4">For quick access, use the Chrome extension instead.</li>
                                     </ul>
-                                    <strong>Security</strong>
+                                    <strong data-l="security">Security</strong>
                                     <ul>
-                                        <li>Local Find is intended for trusted local networks only.</li>
-                                        <li>Do not expose this server to the public internet.</li>
-                                        <li>Pair only trusted devices.</li>
-                                        <li>Reset the token if you suspect it has leaked.</li>
+                                        <li data-l="sec1">Local Find is intended for trusted local networks only.</li>
+                                        <li data-l="sec2">Do not expose this server to the public internet.</li>
+                                        <li data-l="sec3">Pair only trusted devices.</li>
+                                        <li data-l="sec4">Reset the token if you suspect it has leaked.</li>
                                     </ul>
                                 </div>
                             </div>
 
                             <script>
+                                // --- i18n ---
+                                const L = {
+                                  en: {
+                                    service:"Service", reachable:"Reachable", ring:"Ring", flash:"Flash",
+                                    enterToken:"Enter 8-digit Token", findPhone:"Find Phone", ringBtn:"Ring",
+                                    flashBtn:"Flash", stopAll:"Stop All Alerts", refresh:"Refresh",
+                                    howToUse:"How to Use", how1:"No software installation needed on your computer.",
+                                    how2:"Make sure the computer and phone are on the same Wi-Fi / LAN.",
+                                    how3:"Enter the 8-digit token shown on the phone screen.",
+                                    how4:"For quick access, use the Chrome extension instead.",
+                                    security:"Security",
+                                    sec1:"Local Find is intended for trusted local networks only.",
+                                    sec2:"Do not expose this server to the public internet.",
+                                    sec3:"Pair only trusted devices.",
+                                    sec4:"Reset the token if you suspect it has leaked.",
+                                    online:"Online", offline:"Offline", yes:"Yes", no:"No",
+                                    ringing:"Ringing", silent:"Silent", steady:"Steady", strobe:"Strobe", off:"Off",
+                                    tokenErr:"Token incorrect or expired", cmdSent:"Command sent",
+                                    cmdFailed:"Failed", netErr:"Network error or timeout",
+                                    sending:"Sending...", findStarted:"Find Phone started",
+                                    cantReach:"Cannot reach phone. Check network.", enterTok:"Enter token"
+                                  },
+                                  zh: {
+                                    service:"服务", reachable:"可访问", ring:"响铃", flash:"闪光",
+                                    enterToken:"输入 8 位令牌", findPhone:"查找手机", ringBtn:"响铃",
+                                    flashBtn:"闪光", stopAll:"停止所有警报", refresh:"刷新",
+                                    howToUse:"使用说明",
+                                    how1:"电脑端无需安装任何软件。",
+                                    how2:"请确保电脑和手机在同一 Wi-Fi / 局域网。",
+                                    how3:"输入手机屏幕显示的 8 位令牌。",
+                                    how4:"推荐使用 Chrome 插件获得更快捷的体验。",
+                                    security:"安全提示",
+                                    sec1:"Local Find 仅限可信局域网使用。",
+                                    sec2:"请勿将此服务暴露到公网。",
+                                    sec3:"仅配对可信设备。",
+                                    sec4:"如怀疑令牌泄露，请重置令牌。",
+                                    online:"在线", offline:"离线", yes:"是", no:"否",
+                                    ringing:"响铃中", silent:"静音", steady:"常亮", strobe:"闪烁", off:"关闭",
+                                    tokenErr:"令牌错误或已失效", cmdSent:"命令已发送",
+                                    cmdFailed:"失败", netErr:"网络错误或超时",
+                                    sending:"发送中...", findStarted:"已开始查找手机",
+                                    cantReach:"无法连接手机，请检查网络。", enterTok:"请输入令牌"
+                                  }
+                                };
+                                const qp = new URLSearchParams(location.search);
+                                const lang = qp.get("lang") === "zh" ? "zh" : "en";
+                                function lt(k) { return (L[lang] || L.en)[k] || L.en[k] || k; }
+                                function applyLang() {
+                                  document.querySelector(".subtitle").innerHTML = lang === "zh" ? "浏览器远程控制 &mdash; 无需安装" : "Remote Control in Browser &mdash; no install needed";
+                                  var els = document.querySelectorAll("[data-l]");
+                                  els.forEach(function(el) { el.textContent = lt(el.dataset.l); });
+                                }
+                                document.addEventListener("DOMContentLoaded", applyLang);
+
                                 const tokenInput = document.getElementById('token-input');
                                 const serviceAddrEl = document.getElementById('service-addr');
                                 const resultBox = document.getElementById('result-box');
@@ -383,27 +437,27 @@ class HttpServerManager(
                                         if (!res.ok) throw new Error('status_error');
                                         const data = await res.json();
 
-                                        document.getElementById('service-status').textContent = 'Online';
-                                        document.getElementById('reachability').textContent = 'Yes';
+                                        document.getElementById('service-status').textContent = lt('online');
+                                        document.getElementById('reachability').textContent = lt('yes');
 
                                         const ringStatus = document.getElementById('ring-status');
-                                        ringStatus.textContent = data.ring_active ? 'Ringing' : 'Silent';
+                                        ringStatus.textContent = data.ring_active ? lt('ringing') : lt('silent');
                                         ringStatus.className = 'status-value ' + (data.ring_active ? 'active' : 'inactive');
 
                                         const flashStatus = document.getElementById('flash-status');
-                                        flashStatus.textContent = data.flash_mode === 'off' ? 'Off' : (data.flash_mode === 'strobe' ? 'Strobe' : 'Steady');
+                                        flashStatus.textContent = data.flash_mode === 'off' ? lt('off') : (data.flash_mode === 'strobe' ? lt('strobe') : lt('steady'));
                                         flashStatus.className = 'status-value ' + (data.flash_mode !== 'off' ? 'active' : 'inactive');
                                     } catch (e) {
-                                        document.getElementById('service-status').textContent = 'Offline';
-                                        document.getElementById('reachability').textContent = 'No';
-                                        showResult('Cannot reach phone. Check network.', true);
+                                        document.getElementById('service-status').textContent = lt('offline');
+                                        document.getElementById('reachability').textContent = lt('no');
+                                        showResult(lt('cantReach'), true);
                                     }
                                 }
 
                                 async function callApi(endpoint) {
                                     const token = tokenInput.value;
                                     if (!token) {
-                                        showResult('Enter token', true);
+                                        showResult(lt('enterTok'), true);
                                         return;
                                     }
                                     try {
@@ -412,29 +466,29 @@ class HttpServerManager(
                                             headers: { 'X-LocalFind-Token': token }
                                         });
                                         if (res.status === 401) {
-                                            showResult('Token incorrect or expired', true);
+                                            showResult(lt('tokenErr'), true);
                                         } else if (res.status === 200) {
-                                            showResult('Command sent');
+                                            showResult(lt('cmdSent'));
                                             setTimeout(updateStatus, 500);
                                         } else {
-                                            showResult('Failed (' + res.status + ')', true);
+                                            showResult(lt('cmdFailed') + ' (' + res.status + ')', true);
                                         }
                                     } catch (e) {
-                                        showResult('Network error or timeout', true);
+                                        showResult(lt('netErr'), true);
                                     }
                                 }
 
                                 function startFinding() {
                                     const token = tokenInput.value;
                                     if (!token) {
-                                        showResult('Enter token', true);
+                                        showResult(lt('enterTok'), true);
                                         return;
                                     }
-                                    showResult('Sending...');
+                                    showResult(lt('sending'));
                                     fetch('/command/ring/start', { method: 'POST', headers: { 'X-LocalFind-Token': token } })
                                         .then(() => fetch('/command/flash/strobe/start', { method: 'POST', headers: { 'X-LocalFind-Token': token } }))
-                                        .then(() => { showResult('Find Phone started'); setTimeout(updateStatus, 500); })
-                                        .catch(() => showResult('Command failed', true));
+                                        .then(() => { showResult(lt('findStarted')); setTimeout(updateStatus, 500); })
+                                        .catch(() => showResult(lt('cmdFailed'), true));
                                 }
 
                                 function toggleRing() {
