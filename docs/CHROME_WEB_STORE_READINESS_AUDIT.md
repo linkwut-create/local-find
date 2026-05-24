@@ -263,3 +263,20 @@ Current CWS.5 status:
 - Chrome Web Store upload should not start until support email and public privacy policy URL are final.
 
 CWS.5 did not modify `PRIVACY.md`, publish a webpage, generate an extension zip, upload to Chrome Web Store, modify the GitHub Release, or change Chrome/Android code.
+
+## CWS.6 Package Dry-Run Note
+
+CWS.6 added:
+
+- `docs/CHROME_WEB_STORE_PACKAGE_DRY_RUN.md`
+
+Current CWS.6 status:
+
+- package source remains `chrome-extension/`;
+- future package include list is limited to `manifest.json`, popup files, `i18n.js`, and extension icons;
+- `README.md` is recorded as optional for a future store package and may remain repository-only;
+- Android, docs, store-assets, tools, Git metadata, local files, signing files, release artifacts, and temporary zip/crx/pem/key files are explicitly excluded from any future package;
+- local validation should check manifest JSON, MV3, icon references/dimensions, unchanged CWS.2 host-permission decision, local-only popup scripts, and absence of accidental background/content scripts;
+- manual browser validation should use Chrome Developer Mode with `chrome-extension/` loaded unpacked.
+
+CWS.6 did not add a validation script, create a zip, upload to Chrome Web Store, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, modify Android code, move tags, or modify the `mvp-u5-ok` GitHub Release.
