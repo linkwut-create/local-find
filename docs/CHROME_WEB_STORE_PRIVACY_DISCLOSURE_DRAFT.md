@@ -8,7 +8,7 @@ Scope: Chrome Web Store-specific privacy disclosure draft for the Local Find Chr
 
 | Field | Draft value |
 | --- | --- |
-| Public privacy policy URL | Candidate: `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`, coverage polish completed in CWS.16, pending final owner reachability check |
+| Public privacy policy URL | `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`, coverage polish completed in CWS.16, reachability PASS in CWS.17, accepted for first Chrome Web Store upload attempt |
 | Support email | `linkwut@gmail.com` |
 
 ## Short Privacy Summary
@@ -78,7 +78,7 @@ You can clear extension storage in Chrome. Where supported by the Local Find And
 
 ## Open Items Before Submission
 
-- Verify the public privacy policy URL is reachable without login.
+- Keep the CWS.17 privacy policy URL reachability PASS aligned with final listing materials.
 - Keep public privacy policy wording aligned with the Android app and Chrome extension behavior.
 - Keep the privacy disclosure aligned with the final `host_permissions` decision.
 
@@ -139,4 +139,27 @@ CWS.16 polished root `PRIVACY.md` for Chrome Web Store privacy coverage.
 - LAN requests to user-entered or paired local Android device addresses;
 - user removal, revocation, deletion, and uninstall behavior at a policy level.
 
-Final public URL use still requires an owner reachability check without login.
+CWS.16 left final public URL use pending a no-login reachability check; CWS.17 later completed that check with PASS.
+
+## CWS.17 Public Policy URL Reachability Note
+
+CWS.17 checked the public privacy policy URL:
+
+```text
+https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md
+```
+
+Reachability result:
+
+- reachable: yes;
+- HTTP status: 200 OK;
+- login required: no;
+- content visible: yes, `PRIVACY.md` content displayed;
+- checked date: 2026-05-26;
+- method used: unauthenticated PowerShell `Invoke-WebRequest` GET request.
+
+Privacy policy URL reachability: PASS.
+
+The candidate URL is accepted for the first Chrome Web Store upload attempt.
+
+Final upload remains blocked by final extension zip not generated, final package validation not completed, explicit upload approval not granted, and review submission approval not granted.

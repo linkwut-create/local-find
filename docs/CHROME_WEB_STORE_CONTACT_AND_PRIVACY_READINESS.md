@@ -19,9 +19,9 @@ These fields are listing and disclosure prerequisites. They should be resolved b
 | --- | --- | --- |
 | Chrome Web Store developer account | registered | Developer Dashboard access available; upload not started. |
 | Support email | `linkwut@gmail.com` | Owner confirmed this email for Chrome Web Store support/contact use. |
-| Public privacy policy URL | Candidate: `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md` | Root `PRIVACY.md` exists; CWS.16 coverage polish completed; final owner reachability check still required. |
+| Public privacy policy URL | `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md` | Reachability PASS in CWS.17; no login required; `PRIVACY.md` content visible; accepted for the first Chrome Web Store upload attempt. |
 
-Chrome Web Store upload should not start until support email and public privacy policy URL are settled and final upload is explicitly approved.
+Chrome Web Store upload should not start until final extension zip generation, final package validation, and final upload are explicitly approved.
 
 ## Support Email Options
 
@@ -166,7 +166,7 @@ https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md
 
 If coverage is not adequate at final review time, update `PRIVACY.md` in a later phase before using it as the public URL.
 
-The final public privacy policy URL remains a manual owner decision.
+CWS.17 verified that the GitHub `PRIVACY.md` URL is reachable without login and displays the policy content. The URL is accepted for the first Chrome Web Store upload attempt.
 
 ## `PRIVACY.md` Coverage Check
 
@@ -195,8 +195,8 @@ First-pass judgment:
 ## Recommended Minimal Path
 
 1. Owner chooses the public support email.
-2. Owner chooses whether to use the GitHub `PRIVACY.md` URL for first submission readiness.
-3. If using GitHub `PRIVACY.md`, confirm the repository is public and the URL is reachable from a signed-out browser.
+2. Use the CWS.17-reached GitHub `PRIVACY.md` URL for first submission readiness.
+3. Keep final upload blocked until package generation, package validation, and explicit upload approval are complete.
 4. If privacy wording needs more explicit Chrome extension detail, update `PRIVACY.md` in a separate approved phase.
 5. Fill the final support email and privacy policy URL into Chrome Web Store listing materials before package/upload.
 
@@ -205,13 +205,13 @@ Recommended first-pass candidate:
 | Field | Candidate |
 | --- | --- |
 | Support email | `linkwut@gmail.com`, owner confirmed for Chrome Web Store support/contact use |
-| Public privacy policy URL | `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`, coverage polish completed in CWS.16, pending final owner reachability check |
+| Public privacy policy URL | `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`, coverage polish completed in CWS.16, reachability PASS in CWS.17, accepted for first Chrome Web Store upload attempt |
 
 ## Pre-Submission Checklist
 
 - Support email selected by owner: `linkwut@gmail.com`.
-- Public privacy policy URL selected by owner.
-- Public privacy policy URL reachable without repository write access.
+- Public privacy policy URL selected by owner: `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`.
+- Public privacy policy URL reachability PASS in CWS.17: HTTP 200 OK, no login required, `PRIVACY.md` content visible.
 - Privacy policy covers Android app and Chrome extension behavior.
 - Listing draft and privacy disclosure draft use the same final URL.
 - Chrome Web Store upload does not start while either field remains TODO.
@@ -220,7 +220,6 @@ Recommended first-pass candidate:
 
 ## Fields Still Requiring Manual Owner Decision
 
-- Final public privacy policy URL.
 - Whether to use GitHub Issues as an additional support channel.
 - Whether to publish a GitHub Pages or project website privacy page later.
 
@@ -269,6 +268,30 @@ Coverage polish addressed:
 - LAN requests to user-entered or paired local Android device addresses;
 - extension-local and app-local user control / deletion language.
 
-Final owner reachability check for the public privacy policy URL is still required before upload approval.
+CWS.16 left the public privacy policy URL reachability check pending; CWS.17 later completed that check with PASS.
 
 CWS.16 does not upload, package, submit for review, change Chrome extension code, change Android code, move tags, or modify the frozen `mvp-u5-ok` release.
+
+## CWS.17 Privacy URL Reachability Note
+
+CWS.17 records that the candidate public privacy policy URL was checked:
+
+```text
+https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md
+```
+
+Reachability result:
+
+- HTTP status: 200 OK;
+- login required: no;
+- content visible: yes, `PRIVACY.md` content displayed;
+- checked date: 2026-05-26;
+- method used: unauthenticated PowerShell `Invoke-WebRequest` GET request.
+
+Public privacy policy URL reachability: PASS.
+
+The candidate URL is accepted for the first Chrome Web Store upload attempt.
+
+Final upload has not started and remains blocked by final extension zip not generated, final package validation not completed, explicit upload approval not granted, and review submission approval not granted.
+
+CWS.17 does not upload, package, submit for review, change Chrome extension code, change Android code, move tags, or modify the frozen `mvp-u5-ok` release.
