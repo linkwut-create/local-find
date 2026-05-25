@@ -11,6 +11,7 @@ CWS.15 does not upload, package, or submit the extension for review.
 - Developer account: registered
 - Support email: `linkwut@gmail.com`
 - Screenshots: 4 polished 1280x800 en-US screenshots committed
+- Final extension zip candidate: `dist/chrome-web-store/local-find-chrome-extension.zip`
 
 ## Accepted Fields For First Upload Attempt
 
@@ -28,8 +29,6 @@ Reachability check result: PASS in CWS.17. The URL returned HTTP 200 OK, require
 
 ## Fields Still Needing Final Owner Check
 
-- final extension zip
-- final package validation
 - final upload approval
 - review submission approval
 
@@ -40,3 +39,5 @@ Reachability check result: PASS in CWS.17. The URL returned HTTP 200 OK, require
 - CWS.16 does not generate final extension zip.
 - CWS.17 verified privacy policy URL reachability but still does not upload.
 - CWS.17 still requires final upload approval before any Chrome Web Store upload.
+- CWS.18 generated and validated `dist/chrome-web-store/local-find-chrome-extension.zip` as a manual upload candidate.
+- CWS.18 still requires explicit owner approval before any Chrome Web Store upload.

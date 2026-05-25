@@ -603,3 +603,33 @@ Current CWS.17 status:
 Upload remains blocked by final extension zip not generated, final package validation not completed, explicit upload approval not granted, and review submission approval not granted.
 
 CWS.17 did not upload to Chrome Web Store, submit for review, generate an extension zip, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, modify screenshot PNG files, upload to Google Play, generate APK/AAB artifacts, install or uninstall apps, clear app data, commit secrets, move the `mvp-u5-ok` tag, modify the published GitHub Release, commit `local.properties`, commit `app-release.aab`, restore the Android I.0 WIP stash, or reset the repository.
+
+## CWS.18 Extension Zip Dry-Run And Package Validation Note
+
+CWS.18 added:
+
+- `dist/chrome-web-store/local-find-chrome-extension.zip`
+- `docs/CHROME_WEB_STORE_PACKAGE_VALIDATION.md`
+
+CWS.18 updated:
+
+- `docs/CHROME_WEB_STORE_FINAL_LISTING_FIELDS.md`
+- `docs/CHROME_WEB_STORE_READINESS_AUDIT.md`
+
+Current CWS.18 status:
+
+- Final extension zip dry-run candidate generated: `dist/chrome-web-store/local-find-chrome-extension.zip`.
+- Packaging source: `chrome-extension/`.
+- Zip size: 28,952 bytes.
+- Zip root directly contains `manifest.json`.
+- Zip root does not contain the `chrome-extension/` directory itself.
+- Required extension files are present: `manifest.json`, `popup.html`, `popup.css`, `popup.js`, `i18n.js`, and `icons/` PNG files.
+- `manifest.json` inside the zip parses as JSON.
+- Manifest summary: `manifest_version` 3, name `Local Find`, version `0.1.0`, permissions `storage`, host permissions `http://*/*`.
+- `host_permissions` remains the previously documented strategy and was not changed in CWS.18.
+- Forbidden content was absent from the zip: `screenshots-draft/`, `store-assets/`, `docs/`, `android/`, secrets, `.git/`, `local.properties`, `app-release.aab`, `.jks`, `.pem`, `.key`, `node_modules`, and build output directories.
+- Package validation result: PASS FOR MANUAL UPLOAD CANDIDATE.
+
+Upload remains blocked by explicit upload approval not granted and review submission approval not granted.
+
+CWS.18 did not upload to Chrome Web Store, submit for review, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, modify screenshot PNG files, upload to Google Play, generate APK/AAB artifacts, install or uninstall apps, clear app data, commit secrets, move the `mvp-u5-ok` tag, modify the published GitHub Release, commit `local.properties`, commit `app-release.aab`, commit `D:\local-find-secrets\local-find-upload.jks`, restore the Android I.0 WIP stash, or reset the repository.
