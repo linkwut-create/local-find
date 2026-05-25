@@ -500,3 +500,31 @@ Current CWS.13 status:
 Upload remains blocked by final screenshots not committed, support email TODO / owner decision, public privacy policy URL TODO / owner decision / reachability check, final extension zip not generated, final package validation not completed, and final upload approval not granted.
 
 CWS.13 did not move screenshots, commit PNG/JPEG/SVG screenshots, move files into `store-assets`, generate a zip, upload to Chrome Web Store, submit for review, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, move the `mvp-u5-ok` tag, modify the published GitHub Release, or reset the repository.
+
+## CWS.14 Polished Screenshot Canvas Note
+
+CWS.14 added:
+
+- `store-assets/chrome-web-store/screenshots/en-US/01-popup-paired-device.png`
+- `store-assets/chrome-web-store/screenshots/en-US/02-controller-actions.png`
+- `store-assets/chrome-web-store/screenshots/en-US/03-pairing-or-manual-host.png`
+- `store-assets/chrome-web-store/screenshots/en-US/04-language-switching.png`
+
+CWS.14 updated:
+
+- `docs/CHROME_WEB_STORE_SCREENSHOT_ASSET_PREFLIGHT.md`
+- `docs/CHROME_WEB_STORE_READINESS_AUDIT.md`
+
+Current CWS.14 status:
+
+- Final screenshot asset candidates generated.
+- Generated screenshot assets are PNG files at 1280x800.
+- Generated assets use a clean neutral canvas, conservative English title text, and proportionally scaled popup screenshots.
+- Source screenshots remain in the untracked `screenshots-draft/` directory.
+- No Chrome Web Store upload has started.
+- No final extension zip has been generated.
+- No review submission has started.
+
+Upload remains blocked by support email TODO / owner decision, public privacy policy URL TODO / owner decision / reachability check, final extension zip not generated, final package validation not completed, and final upload approval not granted.
+
+CWS.14 did not upload to Chrome Web Store, submit for review, generate an extension zip, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, upload to Google Play, generate APK/AAB artifacts, install or uninstall apps, clear app data, commit secrets, move the `mvp-u5-ok` tag, modify the published GitHub Release, commit `local.properties`, commit `app-release.aab`, restore the Android I.0 WIP stash, or reset the repository.

@@ -104,3 +104,39 @@ CWS.13 does not:
 - modify Chrome extension code;
 - modify Android code;
 - move tags or modify the frozen `mvp-u5-ok` release.
+
+## CWS.14 Polished Canvas Generation Note
+
+CWS.14 generated polished Chrome Web Store screenshot candidates from the draft files in:
+
+```text
+D:\local-find\screenshots-draft\
+```
+
+The source draft screenshots remain in `screenshots-draft/`.
+
+Final screenshot candidates now exist under:
+
+```text
+store-assets/chrome-web-store/screenshots/en-US/
+```
+
+Generated files:
+
+| File | Format | Dimensions | Result |
+| --- | --- | ---: | --- |
+| `01-popup-paired-device.png` | PNG | 1280x800 | generated |
+| `02-controller-actions.png` | PNG | 1280x800 | generated |
+| `03-pairing-or-manual-host.png` | PNG | 1280x800 | generated |
+| `04-language-switching.png` | PNG | 1280x800 | generated |
+
+Generation strategy:
+
+- clean neutral 1280x800 canvas;
+- conservative English title text;
+- original popup screenshot scaled proportionally;
+- no stretching or distortion;
+- source edge/background slivers cropped before placement;
+- no Chrome logo, Google Play badge, Android robot, or exaggerated marketing copy.
+
+CWS.14 does not upload to Chrome Web Store, generate an extension zip, submit for review, modify Chrome extension code, modify Android code, move tags, or modify the frozen `mvp-u5-ok` release.
