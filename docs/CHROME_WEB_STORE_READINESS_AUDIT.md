@@ -476,3 +476,27 @@ Current CWS.12 status:
 Upload remains blocked by final screenshots not committed, support email TODO / owner decision, public privacy policy URL TODO / owner decision / reachability check, final extension zip not generated, final package validation not completed, and final upload approval not granted.
 
 CWS.12 did not upload to Chrome Web Store, submit for review, generate a final extension zip, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, add PNG/JPEG/SVG screenshots to the repository, upload to Google Play, generate APK/AAB artifacts, install or uninstall apps, clear app data, commit secrets, move the `mvp-u5-ok` tag, modify the published GitHub Release, commit `app-release.aab`, commit `local.properties`, commit `D:\local-find-secrets\local-find-upload.jks`, restore the Android I.0 WIP stash, or reset the repository.
+
+## CWS.13 Screenshot Asset Preflight Note
+
+CWS.13 added:
+
+- `docs/CHROME_WEB_STORE_SCREENSHOT_ASSET_PREFLIGHT.md`
+
+CWS.13 updated:
+
+- `docs/CHROME_WEB_STORE_READINESS_AUDIT.md`
+
+Current CWS.13 status:
+
+- Screenshot asset preflight completed.
+- `D:\local-find-screenshots-draft\` exists but contains no files at this preflight.
+- `D:\local-find\screenshots-draft\` exists as an untracked repository-local draft directory and contains the four expected PNG drafts.
+- Expected filenames are present in `screenshots-draft/`.
+- Source screenshots are PNG files at 540x921 or 540x922, so they do not match the preferred 1280x800 PNG upload strategy.
+- Visual privacy preflight found no real IP, no real device name, no token, and no controller id in the available drafts.
+- Minor non-popup edge/background slivers are visible, so CWS.14 should create polished 1280x800 store-ready screenshot canvases before any screenshot commit.
+
+Upload remains blocked by final screenshots not committed, support email TODO / owner decision, public privacy policy URL TODO / owner decision / reachability check, final extension zip not generated, final package validation not completed, and final upload approval not granted.
+
+CWS.13 did not move screenshots, commit PNG/JPEG/SVG screenshots, move files into `store-assets`, generate a zip, upload to Chrome Web Store, submit for review, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, move the `mvp-u5-ok` tag, modify the published GitHub Release, or reset the repository.
