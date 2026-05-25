@@ -633,3 +633,30 @@ Current CWS.18 status:
 Upload remains blocked by explicit upload approval not granted and review submission approval not granted.
 
 CWS.18 did not upload to Chrome Web Store, submit for review, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, modify screenshot PNG files, upload to Google Play, generate APK/AAB artifacts, install or uninstall apps, clear app data, commit secrets, move the `mvp-u5-ok` tag, modify the published GitHub Release, commit `local.properties`, commit `app-release.aab`, commit `D:\local-find-secrets\local-find-upload.jks`, restore the Android I.0 WIP stash, or reset the repository.
+
+## CWS.19 Manual Upload Approval Checklist Note
+
+CWS.19 added:
+
+- `docs/CHROME_WEB_STORE_MANUAL_UPLOAD_CHECKLIST.md`
+
+CWS.19 updated:
+
+- `docs/CHROME_WEB_STORE_FINAL_LISTING_FIELDS.md`
+- `docs/CHROME_WEB_STORE_READINESS_AUDIT.md`
+
+Current CWS.19 status:
+
+- Manual upload approval checklist prepared.
+- Package path recorded: `dist/chrome-web-store/local-find-chrome-extension.zip`.
+- Package validation result recorded: PASS FOR MANUAL UPLOAD CANDIDATE.
+- Listing fields recorded: title `Local Find`, support email `linkwut@gmail.com`, privacy policy URL `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`, category recommendation Productivity first with Utilities as documented alternative, and English first language.
+- Screenshot set recorded: four 1280x800 PNG files under `store-assets/chrome-web-store/screenshots/en-US/`.
+- Privacy and permission notes recorded for `storage`, `http://*/*`, no high-risk browser-data permissions, no content scripts, no background service worker, no remote script loading, and no Local Find cloud upload.
+- Dashboard manual steps and stop conditions recorded.
+
+Upload remains blocked by explicit upload approval not granted.
+
+Review submission remains blocked by separate explicit owner command not granted.
+
+CWS.19 did not upload to Chrome Web Store, submit for review, modify the zip package, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, modify screenshot PNG files, upload to Google Play, generate APK/AAB artifacts, install or uninstall apps, clear app data, commit secrets, move the `mvp-u5-ok` tag, modify the published GitHub Release, commit `local.properties`, commit `app-release.aab`, restore the Android I.0 WIP stash, or reset the repository.
