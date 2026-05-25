@@ -554,3 +554,24 @@ Current CWS.15 status:
 Upload remains blocked by privacy URL final reachability check, privacy policy coverage polish, final extension zip not generated, final package validation not completed, and explicit upload approval not granted.
 
 CWS.15 did not upload to Chrome Web Store, submit for review, generate an extension zip, modify `PRIVACY.md`, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, modify screenshot PNG files, upload to Google Play, generate APK/AAB artifacts, install or uninstall apps, clear app data, commit secrets, move the `mvp-u5-ok` tag, modify the published GitHub Release, commit `local.properties`, commit `app-release.aab`, restore the Android I.0 WIP stash, or reset the repository.
+
+## CWS.16 Privacy Coverage Polish Note
+
+CWS.16 updated:
+
+- `PRIVACY.md`
+- `docs/CHROME_WEB_STORE_CONTACT_AND_PRIVACY_READINESS.md`
+- `docs/CHROME_WEB_STORE_PRIVACY_DISCLOSURE_DRAFT.md`
+- `docs/CHROME_WEB_STORE_FINAL_LISTING_FIELDS.md`
+- `docs/CHROME_WEB_STORE_READINESS_AUDIT.md`
+
+Current CWS.16 status:
+
+- Root `PRIVACY.md` was polished for Chrome Web Store privacy coverage.
+- The policy now explicitly covers `chrome.storage.local`, extension-local host/port, paired-device metadata, language preference, local protection settings, pairing/control token data if configured, no browsing history access, no webpage content access, no cookies access, no content script injection, no Local Find cloud server upload from the extension, LAN requests to user-entered or paired local Android device addresses, and user control / deletion behavior.
+- The privacy policy URL candidate remains `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`.
+- Final owner reachability check is still required before using the URL for upload approval.
+
+Upload remains blocked by public privacy policy URL reachability check, final extension zip, final package validation, and explicit upload approval.
+
+CWS.16 did not upload to Chrome Web Store, submit for review, generate an extension zip, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, modify screenshot PNG files, upload to Google Play, generate APK/AAB artifacts, install or uninstall apps, clear app data, commit secrets, move the `mvp-u5-ok` tag, modify the published GitHub Release, commit `local.properties`, commit `app-release.aab`, restore the Android I.0 WIP stash, or reset the repository.

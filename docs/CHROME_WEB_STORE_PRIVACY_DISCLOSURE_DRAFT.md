@@ -8,7 +8,7 @@ Scope: Chrome Web Store-specific privacy disclosure draft for the Local Find Chr
 
 | Field | Draft value |
 | --- | --- |
-| Public privacy policy URL | Candidate: `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`, pending final owner reachability check |
+| Public privacy policy URL | Candidate: `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`, coverage polish completed in CWS.16, pending final owner reachability check |
 | Support email | `linkwut@gmail.com` |
 
 ## Short Privacy Summary
@@ -79,7 +79,7 @@ You can clear extension storage in Chrome. Where supported by the Local Find And
 ## Open Items Before Submission
 
 - Verify the public privacy policy URL is reachable without login.
-- Ensure the public privacy policy covers both the Android app and Chrome extension behavior, or add a Chrome extension-specific section.
+- Keep public privacy policy wording aligned with the Android app and Chrome extension behavior.
 - Keep the privacy disclosure aligned with the final `host_permissions` decision.
 
 ## CWS.5 Public Policy URL Readiness
@@ -116,9 +116,27 @@ https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md
 
 Final URL use still requires owner reachability check without login.
 
-CWS.15 did not modify `PRIVACY.md`. Current root `PRIVACY.md` coverage is mostly adequate but still needs explicit Chrome Web Store polish before final upload approval for:
+CWS.15 did not modify `PRIVACY.md`. At that point, root `PRIVACY.md` coverage was mostly adequate but still needed explicit Chrome Web Store polish before final upload approval for:
 
 - `chrome.storage.local`;
 - no browsing history access;
 - no webpage content access;
 - no cookies access.
+
+## CWS.16 Public Policy Coverage Note
+
+CWS.16 polished root `PRIVACY.md` for Chrome Web Store privacy coverage.
+
+`PRIVACY.md` now explicitly covers:
+
+- Chrome extension local settings stored with `chrome.storage.local`;
+- extension data examples including host, port, paired-device metadata, language preference, local protection settings, and pairing/control token data if configured;
+- no browsing history access;
+- no webpage content access;
+- no cookies access;
+- no content script injection into webpages;
+- no Local Find cloud server upload from the extension;
+- LAN requests to user-entered or paired local Android device addresses;
+- user removal, revocation, deletion, and uninstall behavior at a policy level.
+
+Final public URL use still requires an owner reachability check without login.

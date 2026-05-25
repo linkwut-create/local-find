@@ -27,9 +27,41 @@ The following data may be stored locally on the user's own devices:
 
 This data is stored locally by the Android app and/or Chrome extension. It is not uploaded by Local Find.
 
+## Chrome extension data handling
+
+The Local Find Chrome extension stores local settings using `chrome.storage.local`.
+
+Stored extension data may include:
+
+- Host
+- Port
+- Paired-device metadata
+- Language preference
+- Local protection settings
+- Pairing token data, if configured
+- Control token data, if configured
+
+The Chrome extension:
+
+- Does not access browsing history.
+- Does not read webpage content.
+- Does not access cookies.
+- Does not inject content scripts into webpages.
+- Does not upload Local Find data to a Local Find cloud server.
+
+LAN requests are sent to a user-entered or paired local Android device address.
+
 ## User control
 
 Users can remove saved devices from the controller. When supported and reachable, deleting a saved controller can also revoke the paired controller token on the Android device.
+
+Users can remove paired devices or clear extension data from browser extension storage.
+
+Users can revoke or delete paired device data in the app where supported.
+
+Uninstalling the Chrome extension removes extension-local data according to browser behavior.
+
+Uninstalling the Android app removes app-local data according to Android behavior.
 
 Users should pair only trusted devices and should reset or revoke tokens if a device is lost, shared, or no longer trusted.
 

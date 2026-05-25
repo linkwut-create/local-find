@@ -19,7 +19,7 @@ These fields are listing and disclosure prerequisites. They should be resolved b
 | --- | --- | --- |
 | Chrome Web Store developer account | registered | Developer Dashboard access available; upload not started. |
 | Support email | `linkwut@gmail.com` | Owner confirmed this email for Chrome Web Store support/contact use. |
-| Public privacy policy URL | Candidate: `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md` | Root `PRIVACY.md` exists; final owner reachability check and coverage polish still required. |
+| Public privacy policy URL | Candidate: `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md` | Root `PRIVACY.md` exists; CWS.16 coverage polish completed; final owner reachability check still required. |
 
 Chrome Web Store upload should not start until support email and public privacy policy URL are settled and final upload is explicitly approved.
 
@@ -205,7 +205,7 @@ Recommended first-pass candidate:
 | Field | Candidate |
 | --- | --- |
 | Support email | `linkwut@gmail.com`, owner confirmed for Chrome Web Store support/contact use |
-| Public privacy policy URL | `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`, pending final owner reachability check and coverage polish |
+| Public privacy policy URL | `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`, coverage polish completed in CWS.16, pending final owner reachability check |
 
 ## Pre-Submission Checklist
 
@@ -244,7 +244,7 @@ CWS.15 records:
 
 CWS.15 coverage check found that `PRIVACY.md` covers Android app behavior, Chrome extension local storage at a general level, local-first / LAN communication, paired device metadata, host/port, token / pairing data, no Local Find cloud server upload, and user deletion / revocation path.
 
-Coverage polish TODO before final upload approval:
+CWS.16 addressed the coverage polish TODO before final upload approval:
 
 - explicitly name `chrome.storage.local`;
 - explicitly state no browsing history access;
@@ -252,3 +252,23 @@ Coverage polish TODO before final upload approval:
 - explicitly state no cookies access.
 
 Final upload has not started. CWS.15 does not upload, package, submit for review, change Chrome extension code, change Android code, move tags, or modify the frozen `mvp-u5-ok` release.
+
+## CWS.16 Privacy Coverage Polish Note
+
+CWS.16 records that root `PRIVACY.md` was polished for Chrome Web Store privacy coverage.
+
+Coverage polish addressed:
+
+- explicit `chrome.storage.local` storage wording;
+- stored extension data examples including host, port, paired-device metadata, language preference, local protection settings, and pairing/control token data if configured;
+- no browsing history access;
+- no webpage content access;
+- no cookies access;
+- no content script injection into webpages;
+- no Local Find cloud server upload from the extension;
+- LAN requests to user-entered or paired local Android device addresses;
+- extension-local and app-local user control / deletion language.
+
+Final owner reachability check for the public privacy policy URL is still required before upload approval.
+
+CWS.16 does not upload, package, submit for review, change Chrome extension code, change Android code, move tags, or modify the frozen `mvp-u5-ok` release.
