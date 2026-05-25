@@ -542,3 +542,18 @@ Immediate recommendation:
 - If future failures happen only on specific networks, investigate AP/client isolation, campus/enterprise Wi-Fi policy, VPN, or phone network restrictions before changing app code.
 - If future failures happen while `*:8888` remains listening and no `ESTABLISHED` connection appears, focus on network path / LAN isolation.
 - If future failures happen with no `8888` listener, focus on service lifecycle, foreground service behavior, or watchdog/startup logs.
+
+## A-DIAG.2 Closeout Note
+
+A-DIAG.2 added the closeout record:
+
+- `docs/ANDROID_RUNTIME_CONNECTIVITY_CLOSEOUT.md`
+
+Closeout status:
+
+- Android runtime connectivity is currently treated as restored.
+- The previous timeout was not reproduced after adb authorization and manual service start.
+- Runtime evidence showed `wlan0` IP `10.128.21.95/17`, listener `*:8888` / `[::]:8888`, and `:8888 ESTABLISHED` connections.
+- User confirmed external connection succeeded.
+- No Android code fix branch was started.
+- A-FIX.0 should not start for bind address or `NetworkUtil` unless the timeout recurs and fresh evidence points there.

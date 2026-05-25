@@ -405,3 +405,28 @@ Current CWS.11B status:
 Upload remains blocked by missing final Chrome Web Store screenshots, TODO support email, TODO public privacy policy URL / owner decision, missing final extension zip, and no Chrome Web Store developer account/upload step.
 
 CWS.11B did not modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, add real screenshot assets, generate a zip, upload to Chrome Web Store, move tags, or modify the `mvp-u5-ok` GitHub Release.
+
+## Android Runtime Connectivity Closeout Note
+
+A-DIAG.2 added:
+
+- `docs/ANDROID_RUNTIME_CONNECTIVITY_CLOSEOUT.md`
+
+A-DIAG.2 updated:
+
+- `docs/ANDROID_RUNTIME_CONNECTIVITY_RUNTIME_EVIDENCE.md`
+
+Current Android runtime connectivity status:
+
+- A-DIAG.0 found no static evidence for a localhost-only server bind; current source and `mvp-u5-ok` both use Ktor `host = "0.0.0.0"`, and `/device-info` is public.
+- A-DIAG.1 was blocked by adb `unauthorized`.
+- A-DIAG.1B succeeded after adb authorization for `461QYFFT225UP`.
+- Runtime evidence showed only `io.github.linkwutcreate.localfind` installed; `com.example.localfind` was not installed.
+- Runtime evidence showed `wlan0` IP `10.128.21.95/17`, listener `*:8888` / `[::]:8888`, and `:8888 ESTABLISHED` connections.
+- The user confirmed external connection succeeded.
+- Android runtime connectivity is currently cleared.
+- No Android code fix branch was started, and CWS screenshot work may resume.
+
+Upload remains blocked by missing final Chrome Web Store screenshots, TODO support email, TODO public privacy policy URL, missing final extension zip, and no Chrome Web Store developer account/upload step.
+
+A-DIAG.2 did not modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, modify Android manifest/Gradle/MainActivity/HttpServerManager, generate APK/AAB artifacts, install or uninstall apps, clear app data, generate a Chrome extension zip, upload to Chrome Web Store, move tags, or modify the `mvp-u5-ok` GitHub Release.
