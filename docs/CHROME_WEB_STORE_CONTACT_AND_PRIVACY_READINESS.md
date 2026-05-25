@@ -17,10 +17,11 @@ These fields are listing and disclosure prerequisites. They should be resolved b
 
 | Field | Current value | Status |
 | --- | --- | --- |
+| Chrome Web Store developer account | registered | Developer Dashboard access available; upload not started. |
 | Support email | TODO | Manual owner decision required. |
 | Public privacy policy URL | TODO | Manual owner decision required. |
 
-Chrome Web Store upload should not start until both fields are settled.
+Chrome Web Store upload should not start until support email and public privacy policy URL are settled and final upload is explicitly approved.
 
 ## Support Email Options
 
@@ -223,3 +224,11 @@ Recommended first-pass candidate:
 - Final public privacy policy URL.
 - Whether to use GitHub Issues as an additional support channel.
 - Whether to publish a GitHub Pages or project website privacy page later.
+
+## CWS.12 Developer Account Status Note
+
+CWS.12 records that the Chrome Web Store developer account is registered and Developer Dashboard access is available.
+
+Upload remains blocked by final screenshots not committed, support email TODO, public privacy policy URL TODO / reachability check, final extension zip not generated, final package validation not completed, and final upload approval not granted.
+
+CWS.12 does not upload, package, submit for review, change Chrome extension code, change Android code, move tags, or modify the frozen `mvp-u5-ok` release.
