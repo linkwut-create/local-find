@@ -13,6 +13,8 @@ CWS.15 does not upload, package, or submit the extension for review.
 - Screenshots: 4 polished 1280x800 en-US screenshots committed
 - Final extension zip candidate: `dist/chrome-web-store/local-find-chrome-extension.zip`
 - Manual upload checklist: `docs/CHROME_WEB_STORE_MANUAL_UPLOAD_CHECKLIST.md`
+- Chrome Web Store submission status: pending review / 待审核
+- Chrome Web Store extension ID: `nadcejbdnkaihkgddojlokjcfdak`
 
 ## Accepted Fields For First Upload Attempt
 
@@ -28,10 +30,15 @@ Current coverage check result: candidate exists and coverage polish completed in
 
 Reachability check result: PASS in CWS.17. The URL returned HTTP 200 OK, required no login, and displayed `PRIVACY.md` content.
 
-## Fields Still Needing Final Owner Check
+## Current Review Status
 
-- final upload approval
-- review submission approval
+- Owner manually uploaded and submitted the extension for review in Chrome Web Store Developer Dashboard.
+- Submitted extension: Local Find.
+- Current status: pending review / 待审核.
+- Codex did not perform the upload or Submit review action.
+- No further package/listing changes should be made while review is pending unless Chrome Web Store requests changes.
+- If approved, record the approval and public or unlisted Chrome Web Store URL.
+- If rejected or changes are requested, capture the exact Chrome Web Store message before modifying anything.
 
 ## Do-Not-Upload Note
 
@@ -44,3 +51,5 @@ Reachability check result: PASS in CWS.17. The URL returned HTTP 200 OK, require
 - CWS.18 still requires explicit owner approval before any Chrome Web Store upload.
 - CWS.19 prepared `docs/CHROME_WEB_STORE_MANUAL_UPLOAD_CHECKLIST.md`.
 - CWS.19 does not grant upload approval; upload still requires an explicit owner command.
+- CWS.20 records owner manual upload and Submit review action. Current Chrome Web Store status is pending review / 待审核.
+- CWS.20 does not modify package, listing, manifest, screenshots, privacy policy URL, tag, or GitHub Release.

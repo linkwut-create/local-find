@@ -660,3 +660,27 @@ Upload remains blocked by explicit upload approval not granted.
 Review submission remains blocked by separate explicit owner command not granted.
 
 CWS.19 did not upload to Chrome Web Store, submit for review, modify the zip package, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, modify screenshot PNG files, upload to Google Play, generate APK/AAB artifacts, install or uninstall apps, clear app data, commit secrets, move the `mvp-u5-ok` tag, modify the published GitHub Release, commit `local.properties`, commit `app-release.aab`, restore the Android I.0 WIP stash, or reset the repository.
+
+## CWS.20 Manual Submission Status Note
+
+CWS.20 added:
+
+- `docs/CHROME_WEB_STORE_SUBMISSION_STATUS.md`
+
+CWS.20 updated:
+
+- `docs/CHROME_WEB_STORE_FINAL_LISTING_FIELDS.md`
+- `docs/CHROME_WEB_STORE_READINESS_AUDIT.md`
+
+Current CWS.20 status:
+
+- Chrome Web Store submission status: pending review / 待审核.
+- Submitted extension: Local Find.
+- Extension ID: `nadcejbdnkaihkgddojlokjcfdak`.
+- Upload package previously validated: `dist/chrome-web-store/local-find-chrome-extension.zip`.
+- Upload and Submit review action were performed manually by the owner in Chrome Web Store Developer Dashboard, not by Codex.
+- No further package, manifest, screenshot, privacy policy, or listing field changes should be made while review is pending unless Chrome Web Store requests changes.
+- If approved, record approval and the public or unlisted Chrome Web Store URL.
+- If rejected or changes are requested, capture the exact Chrome Web Store message before modifying anything.
+
+CWS.20 did not upload to Chrome Web Store, resubmit for review, modify the zip package, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, modify screenshot PNG files, modify the privacy policy URL, modify listing fields, move the `mvp-u5-ok` tag, modify the published GitHub Release, or reset the repository.
