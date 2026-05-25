@@ -168,3 +168,25 @@ CWS.11A does not:
 - change Chrome extension code;
 - change `chrome-extension/manifest.json`;
 - change `host_permissions`.
+
+## CWS.11C Draft Review Note
+
+CWS.11C records the draft screenshot review result in:
+
+```text
+docs\CHROME_WEB_STORE_SCREENSHOT_DRAFT_REVIEW.md
+```
+
+Draft screenshots reviewed from:
+
+```text
+D:\local-find-screenshots-draft\
+```
+
+Draft review result: PASS FOR DRAFT.
+
+The reviewed drafts are safe screenshot candidates. The review found no real device name, no real LAN IP, no real token, no controller id, no private browser content, and no notifications. The UI is English.
+
+The `HOST:8888` placeholder is accepted as a safer screenshot value than a real IP, even though it is visually less polished than a real-looking demo IP.
+
+Screenshots remain outside the repository until a later approved commit phase. CWS.11C does not commit screenshots, generate an extension zip, upload to Chrome Web Store, or modify Chrome extension or Android code.

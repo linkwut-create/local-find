@@ -430,3 +430,27 @@ Current Android runtime connectivity status:
 Upload remains blocked by missing final Chrome Web Store screenshots, TODO support email, TODO public privacy policy URL, missing final extension zip, and no Chrome Web Store developer account/upload step.
 
 A-DIAG.2 did not modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, modify Android manifest/Gradle/MainActivity/HttpServerManager, generate APK/AAB artifacts, install or uninstall apps, clear app data, generate a Chrome extension zip, upload to Chrome Web Store, move tags, or modify the `mvp-u5-ok` GitHub Release.
+
+## CWS.11C Screenshot Draft Review Note
+
+CWS.11C added:
+
+- `docs/CHROME_WEB_STORE_SCREENSHOT_DRAFT_REVIEW.md`
+
+CWS.11C updated:
+
+- `docs/CHROME_WEB_STORE_MANUAL_SCREENSHOT_CAPTURE.md`
+- `docs/CHROME_WEB_STORE_READINESS_AUDIT.md`
+
+Current CWS.11C status:
+
+- Android runtime connectivity diagnosis has been closed, and the CWS screenshot line has resumed.
+- Draft screenshot review result: PASS FOR DRAFT.
+- Draft screenshots remain outside the repository at `D:\local-find-screenshots-draft\`.
+- Reviewed draft screenshots are safe candidates for a later approved screenshot asset phase.
+- Screenshots are still not committed.
+- `HOST:8888` is accepted as a safe placeholder and should not be replaced with a real IP.
+
+Upload remains blocked by final screenshots not committed, support email TODO, public privacy policy URL TODO, final extension zip not generated, and Chrome Web Store developer account/upload not done.
+
+CWS.11C did not modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, add PNG/JPEG/SVG screenshots to the repository, move files from `D:\local-find-screenshots-draft\`, generate a zip, upload to Chrome Web Store, upload to Google Play, generate APK/AAB artifacts, install or uninstall apps, clear app data, commit secrets, move the `mvp-u5-ok` tag, modify the published GitHub Release, commit `app-release.aab`, commit `local.properties`, commit `D:\local-find-secrets\local-find-upload.jks`, restore the Android I.0 WIP stash, or reset the repository.
