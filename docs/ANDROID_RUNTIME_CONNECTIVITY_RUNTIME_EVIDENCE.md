@@ -260,3 +260,285 @@ After authorization:
 - If evidence points to phone system inbound restrictions, record a phone settings checklist before changing app code.
 - If old and new package IDs coexist in a suspicious state, enter a package migration cleanup test plan.
 - If evidence remains insufficient, perform the old working tablet APK on same phone A/B test only after explicit user approval.
+
+## A-DIAG.1B Authorized Runtime Evidence
+
+Evidence date: 2026-05-25
+
+Scope: rerun after the user authorized adb for serial `461QYFFT225UP`. This section remains read-only: no code edits, no install/uninstall, no app data clearing, no APK/AAB generation, no upload, and no tag/release movement.
+
+### Repository State
+
+Command:
+
+```text
+git status --short
+```
+
+Result:
+
+```text
+
+```
+
+Command:
+
+```text
+git describe --tags --dirty
+```
+
+Result:
+
+```text
+mvp-u5-ok-25-g7d815c5
+```
+
+Command:
+
+```text
+git log --oneline -5
+```
+
+Result:
+
+```text
+7d815c5 docs: record Android runtime connectivity evidence
+6b1ff49 docs: diagnose Android runtime connectivity regression
+2c8bb80 tools: add Chrome Web Store screenshot profile helper
+848724d docs: add manual Chrome Web Store screenshot capture instructions
+ae423ef docs: choose Chrome Web Store screenshot capture strategy
+```
+
+### adb Authorization
+
+Command:
+
+```powershell
+$ADB = "C:\Users\Zero\AppData\Local\Android\Sdk\platform-tools\adb.exe"
+& $ADB devices
+```
+
+Result:
+
+```text
+List of devices attached
+461QYFFT225UP	device
+```
+
+Interpretation: one authorized adb device was attached, so package, listener, connectivity, and logcat collection continued.
+
+### Package State
+
+Command:
+
+```powershell
+& $ADB shell pm list packages | findstr local
+```
+
+Result:
+
+```text
+package:com.android.localtransport
+package:io.github.linkwutcreate.localfind
+```
+
+Command:
+
+```powershell
+& $ADB shell dumpsys package io.github.linkwutcreate.localfind
+```
+
+Relevant result excerpt:
+
+```text
+android.intent.action.MAIN:
+  io.github.linkwutcreate.localfind/.MainActivity
+  Category: "android.intent.category.LAUNCHER"
+Package [io.github.linkwutcreate.localfind]
+versionCode=1 minSdk=26 targetSdk=35
+versionName=1.0
+flags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA TEST_ONLY ALLOW_BACKUP ]
+firstInstallTime=2026-05-25 07:19:46
+lastUpdateTime=2026-05-25 07:21:12
+requested permissions:
+  android.permission.POST_NOTIFICATIONS
+  android.permission.FOREGROUND_SERVICE
+  android.permission.FOREGROUND_SERVICE_SPECIAL_USE
+  android.permission.INTERNET
+  android.permission.ACCESS_NETWORK_STATE
+  android.permission.CAMERA
+  android.permission.ACCESS_WIFI_STATE
+  android.permission.USE_BIOMETRIC
+  android.permission.WAKE_LOCK
+install permissions:
+  android.permission.FOREGROUND_SERVICE: granted=true
+  android.permission.FOREGROUND_SERVICE_SPECIAL_USE: granted=true
+  android.permission.INTERNET: granted=true
+  android.permission.ACCESS_NETWORK_STATE: granted=true
+  android.permission.ACCESS_WIFI_STATE: granted=true
+  android.permission.USE_BIOMETRIC: granted=true
+  android.permission.WAKE_LOCK: granted=true
+runtime permissions:
+  android.permission.POST_NOTIFICATIONS: granted=true
+  android.permission.CAMERA: granted=true
+```
+
+Command:
+
+```powershell
+& $ADB shell dumpsys package com.example.localfind
+```
+
+Result:
+
+```text
+Unable to find package: com.example.localfind
+```
+
+Interpretation:
+
+- Only the new package `io.github.linkwutcreate.localfind` is installed.
+- The old package `com.example.localfind` is not installed, so the evidence does not support an old/new package coexistence conflict.
+- The installed APK is debug/testOnly and targets SDK 35.
+- Network and foreground-service permissions needed for this diagnosis are present and granted.
+
+### Manual Service Start
+
+The user manually confirmed the affected phone was opened, Local Find was in Find Me / controlled-device mode, the service was started, and the phone remained awake with the app in the foreground.
+
+### IP and Listener Evidence
+
+Command:
+
+```powershell
+& $ADB shell "ip addr"
+```
+
+Relevant result excerpt:
+
+```text
+23: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 3000
+    inet 10.128.21.95/17 brd 10.128.127.255 scope global wlan0
+```
+
+Command:
+
+```powershell
+& $ADB shell "toybox netstat -an | grep 8888"
+```
+
+Result after successful access:
+
+```text
+tcp6       0      0 [::]:8888               [::]:*                  LISTEN
+tcp6       0      0 ::ffff:10.128.21.9:8888 ::ffff:10.128.68.:53928 ESTABLISHED
+tcp6       0      0 ::ffff:10.128.21.:37778 ::ffff:10.128.30.4:8888 ESTABLISHED
+tcp6       0      0 ::ffff:10.128.21.9:8888 ::ffff:10.128.68.:62076 ESTABLISHED
+```
+
+Command:
+
+```powershell
+& $ADB shell "ss -ltn | grep 8888"
+```
+
+Result:
+
+```text
+LISTEN      0      0            *:8888                     *:*
+Cannot open netlink socket: Permission denied
+```
+
+Command:
+
+```powershell
+& $ADB shell "dumpsys connectivity"
+```
+
+Relevant result excerpt:
+
+```text
+Active default network: 187
+NetworkAgentInfo{network{187} ... ni{WIFI CONNECTED extra: } ...
+  lp{{InterfaceName: wlan0 LinkAddresses: [ 10.128.21.95/17 ] ...
+  TransportInfo: <SSID: "NKU_WLAN" ... IP: /10.128.21.95 ...
+mNetworkRequestInfoLogs:
+  REGISTER uid/pid:10372/... RequestorPkg: io.github.linkwutcreate.localfind
+```
+
+Interpretation:
+
+- The Wi-Fi interface is `wlan0`.
+- The Wi-Fi IPv4 address is `10.128.21.95`.
+- The HTTP server is listening on `*:8888` / `[::]:8888`, not on localhost only.
+- `ESTABLISHED` entries involving port `8888` were present after reproduction, so at least some client traffic reached the phone service.
+- `ss` prints a permission warning after the useful listener line; this did not block listener evidence.
+
+### Logcat Capture
+
+Command:
+
+```powershell
+& $ADB logcat -c
+```
+
+Then the user reproduced access. The user reported that the connection succeeded.
+
+Command:
+
+```powershell
+& $ADB logcat -d > D:\local-find-android-connectivity-logcat.txt
+```
+
+Result:
+
+```text
+D:\local-find-android-connectivity-logcat.txt
+Length: 4416824 bytes
+LastWriteTime: 2026-05-25 20:43:23
+```
+
+Relevant logcat snippets:
+
+```text
+05-25 20:40:18.923 ActivityTaskManager: START ... dat=http://10.128.21.95:8888/... cmp=com.android.browser/.BrowserActivity ... result code=2
+05-25 20:40:23.673 BrowserWebView: ... url: http://10.128.21.95:8888/
+05-25 20:40:23.803 cr_WebContentsImpl: updateContentSizeIfNeed ... url: http://10.128.21.95:8888/
+05-25 20:40:25.286 cr_WebContentsImpl: updateContentSizeIfNeed ... url: http://10.128.21.95:8888/
+```
+
+Notes:
+
+- The captured logcat confirms browser activity against `http://10.128.21.95:8888/`.
+- The user confirmed successful connection during this reproduction.
+- No focused `HttpServerManager` request log lines were observed for `/device-info`; Ktor/Netty is not currently logging every HTTP request by default.
+- No relevant Local Find server exception, bind failure, watchdog restart loop, or foreground-service failure was found in the extracted snippets.
+
+### A-DIAG.1B Diagnosis Table
+
+| Check | Result | Interpretation |
+| --- | --- | --- |
+| adb device attached? | `461QYFFT225UP device`. | Authorized single target device available. |
+| package(s) installed? | `io.github.linkwutcreate.localfind` plus unrelated `com.android.localtransport`. | Current package is installed. |
+| old package exists? | `com.example.localfind` not found. | No old/new package coexistence conflict found. |
+| new package exists? | Present; `versionCode=1`, `versionName=1.0`, `targetSdk=35`, debug/testOnly. | Matches current APK identity from A-DIAG.0. |
+| Wi-Fi IP from `ip addr` | `wlan0` = `10.128.21.95/17`. | This is the address to use for LAN access in this run. |
+| 8888 listener result | `tcp6 [::]:8888 LISTEN`; `ss` shows `*:8888`. | Runtime broad-bind is confirmed. |
+| listener address | `[::]:8888` / `*:8888`. | Not localhost-only. |
+| log shows server started? | No explicit startup line in post-clear logcat. | Server was already running before logcat clear or startup was not logged in the captured window. Listener evidence confirms it is running. |
+| log shows request from phone self-access? | Browser logs show phone browser opening `http://10.128.21.95:8888/`. | Phone-side access path worked. |
+| log shows request from external access? | App-level request logs absent, but netstat showed `ESTABLISHED` connections on `:8888`; user confirmed success. | External reachability was successful in this reproduction. |
+| external timeout produced any server log? | No timeout occurred; user reported successful connection. | The original timeout is not reproduced in A-DIAG.1B. |
+| likely next branch | No code fix from this evidence alone. | Treat as transient authorization/service/network-state issue unless timeout recurs with evidence. |
+
+### A-DIAG.1B Branch Conclusion
+
+The authorized runtime evidence rules out a localhost-only bind in this run. The service listened on `*:8888`, Wi-Fi was `10.128.21.95/17`, and connection to the phone service succeeded after manual service start. The previous timeout was not reproduced.
+
+Immediate recommendation:
+
+- Do not start A-FIX.0 for bind address or `NetworkUtil` based on this run.
+- If the timeout recurs, collect a fresh `netstat` snapshot during the failure and compare it against the successful `ESTABLISHED` state recorded here.
+- If future failures happen only on specific networks, investigate AP/client isolation, campus/enterprise Wi-Fi policy, VPN, or phone network restrictions before changing app code.
+- If future failures happen while `*:8888` remains listening and no `ESTABLISHED` connection appears, focus on network path / LAN isolation.
+- If future failures happen with no `8888` listener, focus on service lifecycle, foreground service behavior, or watchdog/startup logs.
