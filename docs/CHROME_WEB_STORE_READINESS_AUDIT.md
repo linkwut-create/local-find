@@ -528,3 +528,29 @@ Current CWS.14 status:
 Upload remains blocked by support email TODO / owner decision, public privacy policy URL TODO / owner decision / reachability check, final extension zip not generated, final package validation not completed, and final upload approval not granted.
 
 CWS.14 did not upload to Chrome Web Store, submit for review, generate an extension zip, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, upload to Google Play, generate APK/AAB artifacts, install or uninstall apps, clear app data, commit secrets, move the `mvp-u5-ok` tag, modify the published GitHub Release, commit `local.properties`, commit `app-release.aab`, restore the Android I.0 WIP stash, or reset the repository.
+
+## CWS.15 Contact And Privacy Field Note
+
+CWS.15 added:
+
+- `docs/CHROME_WEB_STORE_FINAL_LISTING_FIELDS.md`
+
+CWS.15 updated:
+
+- `docs/CHROME_WEB_STORE_CONTACT_AND_PRIVACY_READINESS.md`
+- `docs/CHROME_WEB_STORE_PRIVACY_DISCLOSURE_DRAFT.md`
+- `docs/CHROME_WEB_STORE_READINESS_AUDIT.md`
+
+Current CWS.15 status:
+
+- Support email confirmed: `linkwut@gmail.com`.
+- Owner confirmed this email for Chrome Web Store support/contact use.
+- Root `PRIVACY.md` exists.
+- Privacy policy URL candidate: `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`.
+- Final owner reachability check is still required for the public privacy policy URL.
+- `PRIVACY.md` coverage is mostly adequate but still needs explicit Chrome Web Store polish for `chrome.storage.local`, no browsing history access, no webpage content access, and no cookies access.
+- Four polished 1280x800 en-US screenshots are already committed under `store-assets/chrome-web-store/screenshots/en-US/`.
+
+Upload remains blocked by privacy URL final reachability check, privacy policy coverage polish, final extension zip not generated, final package validation not completed, and explicit upload approval not granted.
+
+CWS.15 did not upload to Chrome Web Store, submit for review, generate an extension zip, modify `PRIVACY.md`, modify Chrome extension code, modify Android code, modify `chrome-extension/manifest.json`, modify `chrome-extension/popup.js`, change `host_permissions`, modify screenshot PNG files, upload to Google Play, generate APK/AAB artifacts, install or uninstall apps, clear app data, commit secrets, move the `mvp-u5-ok` tag, modify the published GitHub Release, commit `local.properties`, commit `app-release.aab`, restore the Android I.0 WIP stash, or reset the repository.

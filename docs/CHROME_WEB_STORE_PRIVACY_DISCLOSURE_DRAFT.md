@@ -8,8 +8,8 @@ Scope: Chrome Web Store-specific privacy disclosure draft for the Local Find Chr
 
 | Field | Draft value |
 | --- | --- |
-| Public privacy policy URL | TODO |
-| Support email | TODO |
+| Public privacy policy URL | Candidate: `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`, pending final owner reachability check |
+| Support email | `linkwut@gmail.com` |
 
 ## Short Privacy Summary
 
@@ -78,8 +78,7 @@ You can clear extension storage in Chrome. Where supported by the Local Find And
 
 ## Open Items Before Submission
 
-- Choose and publish a privacy policy URL.
-- Choose a support email.
+- Verify the public privacy policy URL is reachable without login.
 - Ensure the public privacy policy covers both the Android app and Chrome extension behavior, or add a Chrome extension-specific section.
 - Keep the privacy disclosure aligned with the final `host_permissions` decision.
 
@@ -98,3 +97,28 @@ CWS.5 read-only coverage check found that `PRIVACY.md` covers the local-first mo
 The GitHub `PRIVACY.md` URL may be acceptable for the first readiness pass if the owner chooses it and verifies public reachability before submission.
 
 Final public privacy policy URL requires manual owner decision.
+
+## CWS.15 Contact And Policy Candidate Note
+
+Support email:
+
+```text
+linkwut@gmail.com
+```
+
+The owner confirmed this email for Chrome Web Store support/contact use.
+
+Root `PRIVACY.md` exists, so the current public privacy policy URL candidate is:
+
+```text
+https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md
+```
+
+Final URL use still requires owner reachability check without login.
+
+CWS.15 did not modify `PRIVACY.md`. Current root `PRIVACY.md` coverage is mostly adequate but still needs explicit Chrome Web Store polish before final upload approval for:
+
+- `chrome.storage.local`;
+- no browsing history access;
+- no webpage content access;
+- no cookies access.
