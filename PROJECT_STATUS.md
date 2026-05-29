@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.2B — Play listing icon produced.
+Status: PLAY.2C — feature graphic produced.
 
 | Field | Value |
 |-------|-------|
@@ -65,8 +65,8 @@ Status: PLAY.2B — Play listing icon produced.
 | Signing variables | All 4 present in `local.properties` (gitignored) |
 | Release AAB signing | `hasReleaseSigningConfig` = true |
 | App icon (Play listing) | **Produced** — `store-assets/google-play/icon/local-find-play-icon-512.png` (512x512, ~214KB) |
+| Feature graphic | **Produced** — `store-assets/google-play/feature-graphic/local-find-feature-graphic-1024x500.png` (1024x500, ~536KB, no alpha) |
 | Launcher icon (manifest) | System default — not yet updated (deferred to PLAY.2E) |
-| Feature graphic | Not produced (targets documented) |
 | Phone screenshots | Not captured (targets documented) |
 | Asset directories | Created: `store-assets/google-play/icon/`, `feature-graphic/`, `screenshots/en-US/` |
 | Play Console forms | Not completed |
@@ -74,7 +74,7 @@ Status: PLAY.2B — Play listing icon produced.
 | Upload to Play | No |
 | Submission | No |
 
-Next: PLAY.2C — feature graphic production.
+Next: PLAY.2D — phone screenshots.
 
 Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
@@ -91,7 +91,7 @@ Reference docs:
 | 3 | ~~Upload keystore existence not confirmed~~ | **RESOLVED (PLAY.1)** |
 | — | ~~Upload key uniqueness owner confirmation~~ | **RESOLVED — first Play app with this key** |
 | 4 | ~~Custom app icon (512x512) missing~~ | **RESOLVED — produced (PLAY.2B)** |
-| 5 | Feature graphic (1024x500) missing | Target defined; not produced |
+| 5 | ~~Feature graphic (1024x500) missing~~ | **RESOLVED — produced (PLAY.2C)** |
 | 6 | Phone screenshots missing | Target defined; not captured |
 | 7 | Data Safety form not completed | Open |
 | 8 | Foreground Service declaration not submitted | Open |

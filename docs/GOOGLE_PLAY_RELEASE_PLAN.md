@@ -18,7 +18,7 @@ PLAY.0: Readiness audit ✓
   ├─ PLAY.2: Store assets (IN PROGRESS — PLAY.2A targets defined)
   │   ├─ PLAY.2A: Define asset production targets and directory structure ✓
   │   ├─ PLAY.2B: Create 512x512 custom app icon ✓
-  │   ├─ PLAY.2C: Create 1024x500 feature graphic
+  │   ├─ PLAY.2C: Create 1024x500 feature graphic ✓
   │   ├─ PLAY.2D: Capture phone screenshots (minimum 4)
   │   ├─ PLAY.2E: Update AndroidManifest.xml icon reference
   │   └─ PLAY.2F: Closeout — commit all assets (no secrets)

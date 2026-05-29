@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Phase: PLAY.2B — App icon produced. Feature graphic and screenshots still pending.
+Phase: PLAY.2C — Feature graphic produced. Screenshots still pending.
 
 Status: Draft targets. Do not generate final PNG/JPEG, do not modify AndroidManifest.xml, do not build AAB until each production step is explicitly approved.
 
@@ -76,6 +76,8 @@ These are system default icons. **Do NOT modify AndroidManifest.xml in PLAY.2A.*
 | Size | 1024 x 500 px |
 | Format | JPEG or 24-bit PNG (no alpha) |
 | Max file size | No strict limit documented; keep reasonable |
+| Actual file size | ~536 KB (24-bit PNG, no alpha) |
+| Status | **PRODUCED (PLAY.2C)** — generated 2026-05-29 |
 
 ### Concept
 
@@ -167,7 +169,7 @@ Maximum 140 characters per asset. Used for Play Console accessibility fields.
 | Phase | Action | Prerequisites |
 |-------|--------|---------------|
 | PLAY.2B | Generate/produce app icon (512x512 PNG) | ✓ DONE — `local-find-play-icon-512.png` committed (2026-05-29) |
-| PLAY.2C | Generate/produce feature graphic (1024x500) | Owner approves concept direction |
+| PLAY.2C | Generate/produce feature graphic (1024x500) | ✓ DONE — `local-find-feature-graphic-1024x500.png` committed (2026-05-29) |
 | PLAY.2D | Capture/produce phone screenshots (4x PNG) | App buildable on emulator or device; privacy review pass |
 | PLAY.2E | Update AndroidManifest.xml icon references + add adaptive icon resources | All assets produced and committed |
 | PLAY.2F | PLAY.2 closeout: update docs, commit all assets | All 4 assets in place |
