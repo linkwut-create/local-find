@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Status: PLAY.3B — Play Console forms completed by owner. Do not build AAB, upload to Google Play, or submit for review until each phase is explicitly approved by the owner.
+Status: PLAY.4A — Release AAB build audited. Do not upload to Google Play or submit for review until each phase is explicitly approved by the owner.
 
 ## Release path overview
 
@@ -35,11 +35,12 @@ PLAY.0: Readiness audit ✓
   │   ├─ Set category and tags ✓
   │   └─ Confirm privacy policy URL and support email in Play Console ✓
   │
-  ├─ PLAY.4: Build release AAB
+  ├─ PLAY.4: Build release AAB (IN PROGRESS — PLAY.4A audit done)
+  │   ├─ PLAY.4A: Audit build config and readiness ✓
+  │   ├─ PLAY.4B: Owner runs ./gradlew bundleRelease
   │   ├─ Verify versionCode and versionName
   │   ├─ Verify signing config
-  │   ├─ Build release AAB
-  │   ├─ Validate AAB (size, contents, signing)
+  │   ├─ Validate AAB (size, SHA256, signing)
   │   └─ Do NOT commit the AAB
   │
   ├─ PLAY.5: Internal testing

@@ -184,7 +184,8 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | `docs/GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md` | **PLAY.2A-D** — asset production targets, directory structure, alt texts |
 | `docs/GOOGLE_PLAY_SCREENSHOT_REVIEW.md` | **PLAY.2D-R** — accuracy review of AI-generated screenshots; verdict BLOCKED |
 | `docs/GOOGLE_PLAY_REAL_SCREENSHOT_CAPTURE_TODO.md` | **PLAY.2D2** — manual capture instructions for owner |
-| `docs/GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md` | **NEW (PLAY.3A)** — all Play Console form answers prepared |
+| `docs/GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md` | **PLAY.3A-B** — all Play Console form answers prepared and completed |
+| `docs/GOOGLE_PLAY_AAB_BUILD_AUDIT.md` | **NEW (PLAY.4A)** — release AAB build audit and readiness check |
 
 ## Risk Assessment
 

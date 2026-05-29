@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.3B — Play Console forms completed by owner (draft).
+Status: PLAY.4A — Release AAB build audited.
 
 | Field | Value |
 |-------|-------|
@@ -69,11 +69,11 @@ Status: PLAY.3B — Play Console forms completed by owner (draft).
 | Launcher icon (manifest) | **Updated** — `@mipmap/ic_launcher` adaptive icon |
 | Phone screenshots | **Real captures** — 4x 1080x2340 PNG, real Android device |
 | Play Console forms | **Completed (draft)** — all sections filled and saved in Play Console; not submitted |
-| AAB built | No |
+| AAB built | **Pending** — build config verified; no JDK in env; owner to build (see `GOOGLE_PLAY_AAB_BUILD_AUDIT.md`) |
 | Upload to Play | No |
 | Submission | No |
 
-Next: PLAY.4 — build release AAB.
+Next: PLAY.4B — owner runs `./gradlew bundleRelease` in Android Studio or terminal with JDK.
 
 Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
