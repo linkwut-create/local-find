@@ -2,7 +2,7 @@
 
 Audit date: 2026-05-29
 
-Phase: PLAY.5B — Internal testing release uploaded and confirmed installable.
+Phase: PLAY.5C — Internal testing smoke test passed.
 
 ## Release identity
 
@@ -37,18 +37,29 @@ Phase: PLAY.5B — Internal testing release uploaded and confirmed installable.
 | Production access | Not requested |
 | Closed testing | Not started |
 
-## Next steps (PLAY.5C)
+## Smoke test results (PLAY.5C, 2026-05-29)
 
-Smoke test the internal testing build:
-1. Install from internal testing link
-2. Start Local Find service
-3. Pair with Chrome extension on same LAN
-4. Test ring action
-5. Test flashlight strobe
-6. Test stop all
-7. Test QR pairing flow
-8. Test language switching
-9. Test saved devices and revoke
+| # | Test | Result |
+|---|------|--------|
+| 1 | Install from internal testing link | PASS |
+| 2 | App launches successfully | PASS |
+| 3 | Find Me page works | PASS |
+| 4 | QR pairing / pairing UI works | PASS |
+| 5 | Controller page works | PASS |
+| 6 | Language switching works | PASS |
+| 7 | Foreground service notification appears | PASS |
+| 8 | Local connection / find actions pass basic verification | PASS |
+| — | **Overall** | **PASS** — no blocker found |
+
+Tester: owner (1 user).
+
+## Next steps (PLAY.6)
+
+Closed testing planning and tester recruitment:
+- Recruit 12+ testers for 14+ days (personal account requirement)
+- Create closed testing track in Play Console
+- Upload AAB to closed testing
+- Provide tester instructions
 
 ## Constraints
 

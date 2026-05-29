@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.5B — Internal testing release installable.
+Status: PLAY.5C — Internal smoke test passed.
 
 | Field | Value |
 |-------|-------|
@@ -64,11 +64,11 @@ Status: PLAY.5B — Internal testing release installable.
 | Release AAB signing | `hasReleaseSigningConfig` = true |
 | **Release AAB** | **Uploaded** — internal testing track, `1.0-internal-1`, installable |
 | AAB SHA256 | `DD86A3466DDFF385757FF4B7D8679ECF59CD9289898C4D21C78B201DFC7B4341` |
-| Internal testing | **Installable** — 1 tester, owner confirmed |
+| Internal testing | **Smoke test PASS** — 8/8 checks passed, no blocker |
 | Play Console forms | **Completed (draft)** — not submitted |
 | Production | Not requested |
 
-Next: PLAY.5C — internal testing smoke test.
+Next: PLAY.6 — closed testing planning and tester recruitment.
 
 Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`

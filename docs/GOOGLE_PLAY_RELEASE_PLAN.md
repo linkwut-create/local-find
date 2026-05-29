@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Status: PLAY.5B — Internal testing release installable. Do not submit for review until each phase is explicitly approved by the owner.
+Status: PLAY.5C — Internal smoke test passed. Do not submit for review until each phase is explicitly approved by the owner.
 
 ## Release path overview
 
@@ -41,10 +41,10 @@ PLAY.0: Readiness audit ✓
   │   ├─ AAB: 20.2 MB, SHA256 recorded, gitignored ✓
   │   └─ Do NOT commit the AAB ✓
   │
-  ├─ PLAY.5: Internal testing (IN PROGRESS — PLAY.5B installable)
+  ├─ PLAY.5: Internal testing ✓ (smoke test passed)
   │   ├─ PLAY.5A: Create internal testing track + upload AAB ✓
   │   ├─ PLAY.5B: Confirm installable by owner ✓
-  │   ├─ PLAY.5C: Smoke test results
+  │   ├─ PLAY.5C: Smoke test results ✓ (PASS, no blocker)
   │   └─ Fix issues before advancing
   │
   ├─ PLAY.6: Closed testing (if required)
