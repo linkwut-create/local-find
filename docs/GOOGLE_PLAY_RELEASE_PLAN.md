@@ -10,8 +10,8 @@ Status: PLAY.1 in progress. Do not build AAB, upload to Google Play, or submit f
 PLAY.0: Readiness audit ✓
   │
   ├─ PLAY.1: Account and signing confirmation (IN PROGRESS)
-  │   ├─ Confirm account type (personal / organization) → TODO
-  │   ├─ Confirm production access requirements → TODO
+  │   ├─ Confirm account type (personal / organization) → ✓ Personal
+  │   ├─ Confirm production access requirements → ✓ Closed testing required
   │   ├─ Confirm upload keystore exists and signing variables are set → ✓ DONE
   │   └─ Document findings → IN PROGRESS
   │
@@ -88,9 +88,11 @@ Goal: resolve the three blocker unknowns identified in the readiness audit.
    - Result: **Personal** (confirmed 2026-05-29).
 
 2. **Confirm production access requirements**
-   - [ ] Owner checks Play Console > Dashboard or Play Console > Publishing overview for any "Complete closed testing" requirement banner.
-   - [ ] Record whether closed testing is required for production access.
-   - [ ] Record which tracks are available (internal testing, closed testing, production).
+   - [x] Owner checks Play Console > Dashboard or Play Console > Publishing overview for any "Complete closed testing" requirement banner.
+   - [x] Result: "To publish to all users, you need to complete app setup, complete closed testing, and apply for production access."
+   - [x] Closed testing is mandatory before production.
+   - [x] Internal testing is available.
+   - [ ] Confirm closed testing track availability once app setup progresses.
 
 3. **Confirm upload keystore**
    - [x] `local.properties` exists and is gitignored.
@@ -364,7 +366,7 @@ Goal: publish Local Find on Google Play.
 | # | Blocker | Phase | Status |
 |---|---------|-------|--------|
 | 1 | ~~Google Play account type not confirmed~~ | PLAY.1 | **RESOLVED — Personal** |
-| 2 | Production access path not confirmed | PLAY.1 | **TODO** |
+| 2 | ~~Production access path not confirmed~~ | PLAY.1 | **RESOLVED — closed testing required** |
 | 3 | ~~Upload keystore existence not confirmed~~ | PLAY.1 | **RESOLVED** |
 | 4 | Custom app icon missing | PLAY.2 | Open |
 | 5 | Feature graphic missing | PLAY.2 | Open |

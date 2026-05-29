@@ -55,8 +55,10 @@ Status: PLAY.1 in progress — account and signing confirmation.
 | `targetSdk` | `35` |
 | Developer account | Registered, verified by owner |
 | Account type | **Personal** — confirmed by owner (2026-05-29) |
-| Production access | **TODO: owner to confirm** |
-| Closed testing required? | **TODO: depends on account type** |
+| Production access | Not directly available — requires closed testing + application |
+| Production path | App setup → closed testing (12+ testers, 14+ days) → apply for production |
+| Closed testing required | **Yes — confirmed** (Play Console Dashboard) |
+| Internal testing | Available |
 | Upload keystore | **Confirmed** — exists, all 4 signing variables set |
 | Key alias | `localfind-upload` |
 | Keystore file | Present (2796 bytes, created 2026-05-24) |
@@ -80,7 +82,7 @@ Reference docs:
 | # | Blocker | Status |
 |---|---------|--------|
 | 1 | ~~Account type not confirmed (personal vs organization)~~ | **RESOLVED — Personal** |
-| 2 | Production access path not confirmed (closed testing required?) | **TODO** |
+| 2 | ~~Production access path not confirmed (closed testing required?)~~ | **RESOLVED — closed testing required** |
 | 3 | ~~Upload keystore existence not confirmed~~ | **RESOLVED (PLAY.1)** |
 | 4 | Custom app icon (512x512) missing | Open |
 | 5 | Feature graphic (1024x500) missing | Open |

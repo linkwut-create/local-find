@@ -1,8 +1,16 @@
 # Google Play Developer Account Status
 
-Audit date: 2026-05-29 (updated PLAY.1A)
+Audit date: 2026-05-29 (updated PLAY.1B)
 
 Phase: PLAY.1 — Account and signing confirmation.
+
+## App Identity
+
+| Item | Status |
+|------|--------|
+| App name in Play Console | **Local Find** — created |
+| `applicationId` | `io.github.linkwutcreate.localfind` |
+| App status in Play Console | Setup in progress / not yet submitted |
 
 ## Account Identity
 
@@ -10,7 +18,7 @@ Phase: PLAY.1 — Account and signing confirmation.
 |------|--------|
 | Google Play developer account | Registered |
 | Account verification | Verified by owner |
-| Account type | **Personal** — confirmed by owner via Play Console screenshot (2026-05-29) |
+| Account type | **Personal** — confirmed by owner via Play Console (2026-05-29) |
 | D-U-N-S number | N/A (personal account) |
 
 ### Account type confirmed
@@ -21,25 +29,28 @@ Owner confirmed via Play Console > Developer Account > Account details that the 
 
 As a **personal account**, the following Google Play policies apply:
 
-- **Closed testing required**: Personal accounts created after November 2023 typically require 12+ testers for 14+ days of closed testing before production access.
-- The owner must still confirm whether this specific account has the closed testing requirement by checking Play Console > Publishing overview for any "Complete closed testing" banner.
+- **Closed testing required**: Personal accounts created after November 2023 require 12+ testers for 14+ days of closed testing before production access.
 - Organization-only features (D-U-N-S verification, organization display name) are not applicable.
 
 ## Production Access
 
 | Item | Status |
 |------|--------|
-| Production access granted | **TODO: owner to confirm in Play Console** |
-| Closed testing required | **Likely** — personal account policy; must confirm in Play Console |
-| Internal testing track available | **TODO: owner to confirm** |
-| Closed testing track available | **TODO: owner to confirm** |
-| Production track available | **TODO: owner to confirm** |
+| Production access granted | **No** — requires closed testing + application |
+| Closed testing required | **Yes — confirmed** — Play Console Dashboard explicitly states closed testing required before production |
+| Production path | Complete app setup → Complete closed testing (12+ testers, 14+ days) → Apply for production access |
+| Internal testing track available | **Yes** — available as first testing path |
+| Closed testing track available | **TODO: owner to confirm** (likely available after app setup is complete) |
+| Production track available | **No** — locked until closed testing + application process complete |
 
-### How to check
+### Production access confirmed
 
-Owner opens Play Console > Dashboard or Play Console > Publishing overview. Look for:
-- Any banner or message about "Complete closed testing to unlock production."
-- Under "Production" or "Testing" sections, whether a production track can be created.
+Owner checked Play Console > Dashboard. The dashboard explicitly states (translated): "To publish to all users, you need to complete app setup, complete closed testing, and apply for production access."
+
+This confirms:
+- Direct production access is NOT available for this personal account.
+- Closed testing is MANDATORY before production.
+- The path is: **app setup → closed testing → apply for production access**.
 
 ### Policy reference
 
@@ -104,9 +115,9 @@ e5d2098 docs: record Chrome Web Store pending review status
 ## Open TODOs (owner action required)
 
 1. ~~Confirm account type~~ — **DONE: Personal** (confirmed 2026-05-29).
-2. **Confirm production access requirements** — Play Console > Publishing overview → record any closed testing banner message. Given personal account type, closed testing is likely required.
+2. ~~Confirm production access requirements~~ — **DONE: closed testing required, then apply for production** (confirmed 2026-05-29 via Play Console Dashboard).
 3. **Confirm key uniqueness** — ensure `localfind-upload` key was not used for a previously published app on this Google Play account.
-4. **Confirm track availability** — verify internal testing, closed testing, and production tracks are available.
+4. **Confirm closed testing track availability** — verify in Play Console > Testing > Closed testing.
 
 ## Constraints (this phase)
 

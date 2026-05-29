@@ -51,20 +51,21 @@ Repository is clean except for untracked `screenshots-draft/`. Android I.0 WIP s
 | Google Play developer account | Registered |
 | Account verification | Verified by owner |
 | Account type | **Personal** — confirmed by owner via Play Console (2026-05-29) |
-| Production access | **TODO: owner to confirm** — personal accounts created after November 2023 likely require closed testing before production |
+| Production access | **Not directly available** — requires closed testing + application (confirmed via Play Console Dashboard, 2026-05-29) |
 
 ### Account type confirmed: Personal
 
 Owner confirmed via Play Console > Developer Account > Account details that the account type is **Personal**.
 
-- **Personal account policy**: likely requires 12+ testers for 14+ days of closed testing before production access, per Google Play policy for new personal developer accounts created after November 2023.
-- Closed testing requirement must still be confirmed via Play Console > Publishing overview.
+- **Personal account policy**: requires 12+ testers for 14+ days of closed testing before production access, per Google Play policy for new personal developer accounts created after November 2023.
+- **Production path confirmed** (Play Console Dashboard): complete app setup → complete closed testing → apply for production access.
+- Internal testing is available as the first testing path.
 
 ### Required owner confirmations
 
 1. ~~Confirm Google Play developer account type (personal or organization).~~ **DONE: Personal.**
-2. Confirm whether production access requires closed testing.
-3. Confirm that the account can create internal testing, closed testing, and production tracks.
+2. ~~Confirm whether production access requires closed testing.~~ **DONE: Yes — closed testing required, then apply for production.**
+3. Confirm that the account can create internal testing, closed testing, and production tracks. (Internal testing confirmed available.)
 
 ## Android App Configuration
 
@@ -185,7 +186,7 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | Finding | Severity | Evidence | Recommended next step |
 |---------|----------|----------|----------------------|
 | ~~Google Play account type not confirmed~~ | ~~blocker~~ → **resolved** | Account type confirmed as Personal by owner (2026-05-29) | **Resolved PLAY.1A** |
-| Production access path not confirmed | **blocker** | Personal account likely requires closed testing before production | Owner checks production access requirements in Play Console |
+| Production access path not confirmed | ~~blocker~~ → **resolved** | Play Console Dashboard confirms: closed testing required, then apply for production | **Resolved PLAY.1B** |
 | ~~Upload keystore existence not confirmed~~ | ~~blocker~~ → **resolved** | Keystore file exists at configured path; all 4 signing variables set; `local.properties` gitignored | **Resolved PLAY.1** |
 | Custom app icon missing | **blocker** | Manifest uses `@android:drawable/ic_menu_search` (system default) | Create 512x512 custom app icon for Play, replace manifest icon reference |
 | Feature graphic missing | **blocker** | Play requires 1024x500 feature graphic | Produce feature graphic from concept in `GOOGLE_PLAY_ASSETS_PLAN.md` |
@@ -203,7 +204,7 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 
 ## Prerequisites Before Any Play Upload
 
-1. ~~Owner confirms Google Play account type.~~ **DONE: Personal (PLAY.1A)** Owner confirms production access path.
+1. ~~Owner confirms Google Play account type.~~ **DONE: Personal (PLAY.1A)** ~~Owner confirms production access path.~~ **DONE: closed testing required (PLAY.1B)**
 2. ~~Owner confirms upload keystore exists and signing variables are set.~~ **DONE (PLAY.1)**
 3. Custom app icon (512x512) created and referenced in manifest.
 4. Feature graphic (1024x500) produced.
@@ -220,8 +221,8 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 
 - **Signing config**: Confirmed. All 4 variables set, keystore exists, `hasReleaseSigningConfig` = true.
 - **Account type**: **Personal** — confirmed by owner via Play Console (2026-05-29).
-- **Production access**: TODO (owner to confirm in Play Console).
-- **Key uniqueness**: TODO (owner to confirm).
+- **Production access**: Not directly available — requires closed testing (12+ testers, 14+ days) → apply for production. Confirmed via Play Console Dashboard (2026-05-29).
+- **Internal testing**: Available as first testing path.
 - Detailed account status tracked in `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md`.
 
 ## Constraints
