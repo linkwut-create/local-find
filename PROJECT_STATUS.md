@@ -1,4 +1,4 @@
-﻿# Local Find Project Status
+# Local Find Project Status
 
 ## MVP-U.5 GitHub Release Closeout
 
@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.0 readiness audit completed. No upload, no submission.
+Status: PLAY.1 in progress — account and signing confirmation.
 
 | Field | Value |
 |-------|-------|
@@ -54,32 +54,40 @@ Status: PLAY.0 readiness audit completed. No upload, no submission.
 | `versionName` | `"1.0"` |
 | `targetSdk` | `35` |
 | Developer account | Registered, verified by owner |
-| Account type | Not confirmed (personal vs organization) |
-| Production access | Not confirmed |
-| Upload keystore | Not confirmed |
+| Account type | **Personal** — confirmed by owner (2026-05-29) |
+| Production access | **TODO: owner to confirm** |
+| Closed testing required? | **TODO: depends on account type** |
+| Upload keystore | **Confirmed** — exists, all 4 signing variables set |
+| Key alias | `localfind-upload` |
+| Keystore file | Present (2796 bytes, created 2026-05-24) |
+| Signing variables | All 4 present in `local.properties` (gitignored) |
+| Release AAB signing | `hasReleaseSigningConfig` = true |
 | App icon | System default — custom icon needed |
 | Play Console forms | Not completed |
 | AAB built | No |
 | Upload to Play | No |
 | Submission | No |
 
-Next phase: PLAY.1 — account and signing confirmation.
+Next: owner to confirm account type and production access in Play Console.
 
 Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
 - `docs/GOOGLE_PLAY_RELEASE_PLAN.md`
+- `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` (new)
 
 ### Google Play Release Blockers
 
-1. Account type not confirmed (personal vs organization).
-2. Production access path not confirmed (closed testing required?).
-3. Upload keystore existence not confirmed.
-4. Custom app icon (512x512) missing.
-5. Feature graphic (1024x500) missing.
-6. Phone screenshots missing.
-7. Data Safety form not completed.
-8. Foreground Service declaration not submitted.
-9. App content declarations not completed.
-10. Category and tags not decided.
+| # | Blocker | Status |
+|---|---------|--------|
+| 1 | ~~Account type not confirmed (personal vs organization)~~ | **RESOLVED — Personal** |
+| 2 | Production access path not confirmed (closed testing required?) | **TODO** |
+| 3 | ~~Upload keystore existence not confirmed~~ | **RESOLVED (PLAY.1)** |
+| 4 | Custom app icon (512x512) missing | Open |
+| 5 | Feature graphic (1024x500) missing | Open |
+| 6 | Phone screenshots missing | Open |
+| 7 | Data Safety form not completed | Open |
+| 8 | Foreground Service declaration not submitted | Open |
+| 9 | App content declarations not completed | Open |
+| 10 | Category and tags not decided | Open |
 
-No Android code, Chrome extension code, APK/AAB, signing files, or tags are changed as part of PLAY.0.
+No Android code, Chrome extension code, APK/AAB, signing files, or tags are changed as part of PLAY.1.

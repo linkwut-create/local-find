@@ -2,18 +2,18 @@
 
 Plan date: 2026-05-29
 
-Status: Draft plan. Do not build AAB, upload to Google Play, or submit for review until each phase is explicitly approved by the owner.
+Status: PLAY.1 in progress. Do not build AAB, upload to Google Play, or submit for review until each phase is explicitly approved by the owner.
 
 ## Release path overview
 
 ```
-PLAY.0: Readiness audit (this phase)
+PLAY.0: Readiness audit ✓
   │
-  ├─ PLAY.1: Account and signing confirmation
-  │   ├─ Confirm account type (personal / organization)
-  │   ├─ Confirm production access requirements
-  │   ├─ Confirm upload keystore exists and signing variables are set
-  │   └─ Document findings
+  ├─ PLAY.1: Account and signing confirmation (IN PROGRESS)
+  │   ├─ Confirm account type (personal / organization) → TODO
+  │   ├─ Confirm production access requirements → TODO
+  │   ├─ Confirm upload keystore exists and signing variables are set → ✓ DONE
+  │   └─ Document findings → IN PROGRESS
   │
   ├─ PLAY.2: Store assets
   │   ├─ Create 512x512 custom app icon
@@ -55,17 +55,17 @@ PLAY.0: Readiness audit (this phase)
       └─ Record production release status
 ```
 
-## PLAY.0 (current): Readiness Audit
+## PLAY.0: Readiness Audit
 
-Status: **IN PROGRESS**
+Status: **COMPLETE**
 
 - [x] Read-only audit of Android app configuration.
 - [x] Identify all blockers and warnings.
 - [x] Document existing Play-related docs.
 - [x] Create `GOOGLE_PLAY_RELEASE_READINESS.md`.
-- [x] Create `GOOGLE_PLAY_RELEASE_PLAN.md` (this document).
-- [ ] Update `PROJECT_STATUS.md`.
-- [ ] Commit docs.
+- [x] Create `GOOGLE_PLAY_RELEASE_PLAN.md`.
+- [x] Update `PROJECT_STATUS.md`.
+- [x] Commit docs.
 
 Deliverables:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
@@ -73,32 +73,53 @@ Deliverables:
 
 No code changes, no builds, no uploads.
 
-## PLAY.1: Account and Signing Confirmation
+## PLAY.1 (current): Account and Signing Confirmation
+
+Status: **IN PROGRESS**
 
 Goal: resolve the three blocker unknowns identified in the readiness audit.
 
 ### Tasks
 
 1. **Confirm account type**
-   - Owner opens Play Console > Developer Account > Account details.
-   - Record whether the account is "Personal" or "Organization".
-   - Document the finding in `GOOGLE_PLAY_RELEASE_READINESS.md` and `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` (new).
+   - [x] Owner opens Play Console > Developer Account > Account details.
+   - [x] Record whether the account is "Personal" or "Organization".
+   - [x] Document the finding in `GOOGLE_PLAY_RELEASE_READINESS.md` and `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md`.
+   - Result: **Personal** (confirmed 2026-05-29).
 
 2. **Confirm production access requirements**
-   - Personal accounts created after November 2023 typically require closed testing with 12+ testers for 14+ days before production access.
-   - Organization accounts may differ.
-   - Owner checks Play Console > Dashboard or Play Console > Publishing overview for any "Complete closed testing" requirement banner.
-   - Document the finding.
+   - [ ] Owner checks Play Console > Dashboard or Play Console > Publishing overview for any "Complete closed testing" requirement banner.
+   - [ ] Record whether closed testing is required for production access.
+   - [ ] Record which tracks are available (internal testing, closed testing, production).
 
 3. **Confirm upload keystore**
-   - Owner verifies that the keystore file referenced by `LOCAL_FIND_UPLOAD_STORE_FILE` exists at the expected path.
-   - Owner confirms the keystore password, key alias, and key password are set (either in environment variables or `local.properties`).
-   - Owner confirms the upload key was not previously used for a published app on this account (Play policy: upload key must be unique per app).
-   - Document: "upload keystore confirmed at `<path>`, alias `<alias>`" — do NOT record passwords.
+   - [x] `local.properties` exists and is gitignored.
+   - [x] All 4 signing variables present.
+   - [x] Keystore file exists at configured path (local-find-upload.jks, 2796 bytes, created 2026-05-24).
+   - [x] Key alias: `localfind-upload`.
+   - [x] No `.jks` or `.keystore` committed to repo.
+   - [ ] **TODO: owner** to confirm this key was not previously used for a published app on this account (Play policy: upload key must be unique per app).
+
+### Findings (2026-05-29)
+
+**Signing config**: Complete.
+- `android/local.properties` exists (gitignored).
+- All 4 `LOCAL_FIND_UPLOAD_*` variables set.
+- Keystore file `local-find-upload.jks` exists on disk (2796 bytes).
+- Key alias: `localfind-upload`.
+- Gradle `hasReleaseSigningConfig` = true.
+- No key material committed to repository.
+
+**Account type**: **Personal** — confirmed by owner via Play Console (2026-05-29).
+
+**Production access**: TODO — owner to confirm in Play Console.
 
 ### Deliverables
-- `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` (new)
-- Updates to `GOOGLE_PLAY_RELEASE_READINESS.md`
+- [x] `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` (created)
+- [x] `GOOGLE_PLAY_RELEASE_READINESS.md` (updated with signing findings)
+- [x] `GOOGLE_PLAY_RELEASE_PLAN.md` (this document, updated)
+- [ ] `PROJECT_STATUS.md` (pending update)
+- [ ] Owner to fill in account type and production access TODOs
 
 ### Constraints
 - Do NOT commit `local.properties`.
@@ -200,7 +221,7 @@ Goal: complete all required Play Console declarations before first upload.
 Goal: produce a signed release AAB for Play upload.
 
 ### Prerequisites
-- PLAY.1 complete (signing confirmed).
+- PLAY.1 complete (signing confirmed ✓, account type and production access TODO).
 - PLAY.2 complete (icon updated in manifest).
 - PLAY.3 complete (forms ready).
 
@@ -340,18 +361,18 @@ Goal: publish Local Find on Google Play.
 
 ## Release Blockers Summary
 
-| # | Blocker | Phase to resolve |
-|---|---------|-----------------|
-| 1 | Google Play account type not confirmed | PLAY.1 |
-| 2 | Production access path not confirmed | PLAY.1 |
-| 3 | Upload keystore existence not confirmed | PLAY.1 |
-| 4 | Custom app icon missing | PLAY.2 |
-| 5 | Feature graphic missing | PLAY.2 |
-| 6 | Phone screenshots missing | PLAY.2 |
-| 7 | Data Safety form not completed | PLAY.3 |
-| 8 | Foreground Service declaration not submitted | PLAY.3 |
-| 9 | App content declarations not completed | PLAY.3 |
-| 10 | Category and tags not decided | PLAY.3 |
+| # | Blocker | Phase | Status |
+|---|---------|-------|--------|
+| 1 | ~~Google Play account type not confirmed~~ | PLAY.1 | **RESOLVED — Personal** |
+| 2 | Production access path not confirmed | PLAY.1 | **TODO** |
+| 3 | ~~Upload keystore existence not confirmed~~ | PLAY.1 | **RESOLVED** |
+| 4 | Custom app icon missing | PLAY.2 | Open |
+| 5 | Feature graphic missing | PLAY.2 | Open |
+| 6 | Phone screenshots missing | PLAY.2 | Open |
+| 7 | Data Safety form not completed | PLAY.3 | Open |
+| 8 | Foreground Service declaration not submitted | PLAY.3 | Open |
+| 9 | App content declarations not completed | PLAY.3 | Open |
+| 10 | Category and tags not decided | PLAY.3 | Open |
 
 ## Post-Release Considerations
 

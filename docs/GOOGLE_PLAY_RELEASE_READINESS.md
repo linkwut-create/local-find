@@ -1,10 +1,10 @@
 # Google Play Release Readiness Audit
 
-Audit date: 2026-05-29
+Audit date: 2026-05-29 (updated PLAY.1)
 
 Scope: read-only Google Play developer account, Android app configuration, and release artifact readiness audit for `D:\local-find`.
 
-This audit did not modify Android code, Chrome extension code, release artifacts, tags, or the published GitHub Release. The only intended repository changes for PLAY.0 are this document, `GOOGLE_PLAY_RELEASE_PLAN.md`, and related project status updates.
+This audit did not modify Android code, Chrome extension code, release artifacts, tags, or the published GitHub Release. The only intended repository changes for PLAY.0 and PLAY.1 are this document, `GOOGLE_PLAY_RELEASE_PLAN.md`, `GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md`, and related project status updates.
 
 ## Repository State
 
@@ -27,26 +27,19 @@ git describe --tags --dirty
 Result:
 
 ```text
-mvp-u5-ok-37-ge5d2098
+mvp-u5-ok-38-g14584df
 ```
 
 ```text
-git log --oneline -10
+git log --oneline -3
 ```
 
 Result:
 
 ```text
+14584df docs: plan Google Play release readiness
 e5d2098 docs: record Chrome Web Store pending review status
 7604f9f docs: prepare Chrome Web Store manual upload checklist
-4abc181 build: add Chrome Web Store extension zip candidate
-5a3fd6f docs: verify Chrome Web Store privacy URL reachability
-8ea2642 docs: polish privacy policy for Chrome Web Store
-3473c4f docs: finalize Chrome Web Store contact fields
-7d0b8b2 assets: add polished Chrome Web Store screenshots
-6506984 docs: preflight Chrome Web Store screenshot assets
-e7ef42b docs: record Chrome Web Store developer account status
-bff4162 docs: record Chrome Web Store screenshot draft review
 ```
 
 Repository is clean except for untracked `screenshots-draft/`. Android I.0 WIP stash is preserved at `stash@{0}`.
@@ -57,18 +50,19 @@ Repository is clean except for untracked `screenshots-draft/`. Android I.0 WIP s
 |------|--------|
 | Google Play developer account | Registered |
 | Account verification | Verified by owner |
-| Account type | **Not confirmed** — personal vs organization account affects testing requirements |
-| Production access | **Not confirmed** — personal accounts created after November 2023 may require closed testing before production |
+| Account type | **Personal** — confirmed by owner via Play Console (2026-05-29) |
+| Production access | **TODO: owner to confirm** — personal accounts created after November 2023 likely require closed testing before production |
 
-### Account type implications
+### Account type confirmed: Personal
 
-- **Personal account**: likely requires 12+ testers for 14+ days of closed testing before production access, per Google Play policy for new personal developer accounts.
-- **Organization account**: may have direct production access or different testing requirements.
-- Owner must confirm account type in Play Console > Developer Account > Account details.
+Owner confirmed via Play Console > Developer Account > Account details that the account type is **Personal**.
+
+- **Personal account policy**: likely requires 12+ testers for 14+ days of closed testing before production access, per Google Play policy for new personal developer accounts created after November 2023.
+- Closed testing requirement must still be confirmed via Play Console > Publishing overview.
 
 ### Required owner confirmations
 
-1. Confirm Google Play developer account type (personal or organization).
+1. ~~Confirm Google Play developer account type (personal or organization).~~ **DONE: Personal.**
 2. Confirm whether production access requires closed testing.
 3. Confirm that the account can create internal testing, closed testing, and production tracks.
 
@@ -92,20 +86,27 @@ Source: `android/app/build.gradle.kts:31-39`.
 
 Release signing is conditionally configured from environment variables or `local.properties`:
 
-| Variable | Purpose |
-|----------|---------|
-| `LOCAL_FIND_UPLOAD_STORE_FILE` | Upload keystore file path |
-| `LOCAL_FIND_UPLOAD_STORE_PASSWORD` | Keystore password |
-| `LOCAL_FIND_UPLOAD_KEY_ALIAS` | Key alias |
-| `LOCAL_FIND_UPLOAD_KEY_PASSWORD` | Key password |
+| Variable | Purpose | Status |
+|----------|---------|--------|
+| `LOCAL_FIND_UPLOAD_STORE_FILE` | Upload keystore file path | **Set** |
+| `LOCAL_FIND_UPLOAD_STORE_PASSWORD` | Keystore password | **Set** (value not recorded) |
+| `LOCAL_FIND_UPLOAD_KEY_ALIAS` | Key alias | **Set** — `localfind-upload` |
+| `LOCAL_FIND_UPLOAD_KEY_PASSWORD` | Key password | **Set** (value not recorded) |
 
-`hasReleaseSigningConfig` is `true` only when all four values are non-blank. Without them, release builds will not have a signing config set in the Gradle build file.
+`hasReleaseSigningConfig` is `true` when all four values are non-blank. All four are set → `hasReleaseSigningConfig` = **true**.
 
 Source: `android/app/build.gradle.kts:10-55`.
 
-No `.jks`, `.keystore`, or `.pem` files are committed to the repository.
+Signing readiness details (PLAY.1 findings):
 
-Signing readiness verdict: **Signing config is wired but keystore existence and path are not confirmed.** Owner must confirm that the upload keystore exists at the configured path and that the signing variables are set before any release AAB build.
+- `android/local.properties` exists and is gitignored.
+- All 4 signing variables are present.
+- Keystore file exists at the configured path: `local-find-upload.jks` (2796 bytes, created 2026-05-24).
+- No `.jks`, `.keystore`, or `.pem` files are committed to the repository.
+- Key alias: `localfind-upload`.
+- **TODO: owner to confirm** this key was not previously used for a published app on this account.
+
+Signing readiness verdict: **Signing config is complete. Keystore present. All signing variables set. Release AAB signing is ready.**
 
 ### Manifest declarations
 
@@ -177,14 +178,15 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | `docs/GOOGLE_PLAY_ASSET_PRODUCTION_NOTES.md` | Production notes and frozen release boundary |
 | `docs/GOOGLE_PLAY_ASSET_VALIDATION.md` | Asset validation checklist |
 | `docs/GOOGLE_PLAY_LISTING_DRAFT.md` | Listing text, Data Safety draft, permissions table, FGS draft, closed testing checklist |
+| `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` | **NEW (PLAY.1)** — account type, production access, signing readiness |
 
 ## Risk Assessment
 
 | Finding | Severity | Evidence | Recommended next step |
 |---------|----------|----------|----------------------|
-| Google Play account type not confirmed | **blocker** | Owner stated verification passed but account type (personal/organization) unknown | Owner confirms account type in Play Console |
-| Production access path not confirmed | **blocker** | Personal accounts may require closed testing before production | Owner checks production access requirements in Play Console |
-| Upload keystore existence not confirmed | **blocker** | Signing config reads from env/local.properties; no `.jks` committed | Owner confirms keystore file exists and signing variables are set |
+| ~~Google Play account type not confirmed~~ | ~~blocker~~ → **resolved** | Account type confirmed as Personal by owner (2026-05-29) | **Resolved PLAY.1A** |
+| Production access path not confirmed | **blocker** | Personal account likely requires closed testing before production | Owner checks production access requirements in Play Console |
+| ~~Upload keystore existence not confirmed~~ | ~~blocker~~ → **resolved** | Keystore file exists at configured path; all 4 signing variables set; `local.properties` gitignored | **Resolved PLAY.1** |
 | Custom app icon missing | **blocker** | Manifest uses `@android:drawable/ic_menu_search` (system default) | Create 512x512 custom app icon for Play, replace manifest icon reference |
 | Feature graphic missing | **blocker** | Play requires 1024x500 feature graphic | Produce feature graphic from concept in `GOOGLE_PLAY_ASSETS_PLAN.md` |
 | Phone screenshots missing | **blocker** | Play requires phone screenshots | Capture per `GOOGLE_PLAY_ASSET_CAPTURE_GUIDE.md` |
@@ -192,6 +194,7 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | Foreground Service declaration not submitted | **warning** | Draft text exists; Play may require video evidence for specialUse FGS | Prepare FGS declaration and optional demo video |
 | App content declarations not completed | **warning** | Content rating, ads, target audience not declared | Complete content declarations in Play Console |
 | Category and tags not decided | **warning** | No Play category documented yet | Decide category (likely Tools or Productivity) |
+| Upload key uniqueness not confirmed | **info** | Key `localfind-upload` must be unique per Play policy | Owner confirms key was not used for another published app |
 | `usesCleartextTraffic=true` | **info** | Required for local HTTP; may trigger Play review questions | Document justification in FGS/permissions declaration |
 | Foreground service type is `specialUse` | **info** | Requires stronger justification than `dataSync` or `location` | Prepare detailed FGS declaration with video evidence |
 | No cloud dependency | **info** | App is local-only, which simplifies Data Safety and privacy | Preserve; document in Data Safety form |
@@ -200,8 +203,8 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 
 ## Prerequisites Before Any Play Upload
 
-1. Owner confirms Google Play account type and production access path.
-2. Owner confirms upload keystore exists and signing variables are set.
+1. ~~Owner confirms Google Play account type.~~ **DONE: Personal (PLAY.1A)** Owner confirms production access path.
+2. ~~Owner confirms upload keystore exists and signing variables are set.~~ **DONE (PLAY.1)**
 3. Custom app icon (512x512) created and referenced in manifest.
 4. Feature graphic (1024x500) produced.
 5. Phone screenshots (minimum 4) captured, reviewed for privacy, and committed.
@@ -212,6 +215,14 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 10. Support email confirmed.
 11. Category and tags decided.
 12. Internal testing track created for first upload and smoke validation.
+
+## PLAY.1 Summary
+
+- **Signing config**: Confirmed. All 4 variables set, keystore exists, `hasReleaseSigningConfig` = true.
+- **Account type**: **Personal** — confirmed by owner via Play Console (2026-05-29).
+- **Production access**: TODO (owner to confirm in Play Console).
+- **Key uniqueness**: TODO (owner to confirm).
+- Detailed account status tracked in `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md`.
 
 ## Constraints
 
