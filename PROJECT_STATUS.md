@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.2D3 — real screenshots validated and committed.
+Status: PLAY.2 complete — all store assets and launcher icon ready.
 
 | Field | Value |
 |-------|-------|
@@ -66,7 +66,7 @@ Status: PLAY.2D3 — real screenshots validated and committed.
 | Release AAB signing | `hasReleaseSigningConfig` = true |
 | App icon (Play listing) | **Produced** — `store-assets/google-play/icon/local-find-play-icon-512.png` (512x512, ~214KB) |
 | Feature graphic | **Produced** — `store-assets/google-play/feature-graphic/local-find-feature-graphic-1024x500.png` (1024x500, ~536KB, no alpha) |
-| Launcher icon (manifest) | System default — not yet updated (deferred to PLAY.2E) |
+| Launcher icon (manifest) | **Updated** — `@mipmap/ic_launcher` adaptive icon (replaced `@android:drawable/ic_menu_search`) |
 | Phone screenshots | **Real captures** — 4x 1080x2340 PNG (~437–693KB each), real Android device |
 | Asset directories | Created: `store-assets/google-play/icon/`, `feature-graphic/`, `screenshots/en-US/` |
 | Play Console forms | Not completed |
@@ -74,7 +74,7 @@ Status: PLAY.2D3 — real screenshots validated and committed.
 | Upload to Play | No |
 | Submission | No |
 
-Next: PLAY.2E — manifest launcher icon update.
+Next: PLAY.3 — Play Console forms (Data Safety, FGS declaration, content declarations).
 
 Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`

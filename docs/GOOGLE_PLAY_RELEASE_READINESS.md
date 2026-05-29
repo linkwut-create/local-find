@@ -158,7 +158,8 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | App name | Present | `Local Find` |
 | Short description | Draft | `docs/GOOGLE_PLAY_LISTING_DRAFT.md` |
 | Full description | Draft | `docs/GOOGLE_PLAY_LISTING_DRAFT.md` |
-| 512x512 app icon | **Produced** | `store-assets/google-play/icon/local-find-play-icon-512.png` (512x512, ~214KB) — committed 2026-05-29 |
+| 512x512 app icon | **Produced** | `store-assets/google-play/icon/local-find-play-icon-512.png` (512x512, ~214KB) |
+| Launcher icon (manifest) | **Updated (PLAY.2E)** | `@mipmap/ic_launcher` adaptive icon — replaced `@android:drawable/ic_menu_search` |
 | 1024x500 feature graphic | **Produced** | `store-assets/google-play/feature-graphic/local-find-feature-graphic-1024x500.png` (1024x500, ~536KB, no alpha) — committed 2026-05-29 |
 | Phone screenshots | **Real captures** | 4x 1080x2340 PNG, real Android device screenshots — committed 2026-05-29 (PLAY.2D3) |
 | Short demo video | **Missing / optional** | May be required for foreground service declaration review |
@@ -182,7 +183,7 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` | **PLAY.1** — account type, production access, signing readiness |
 | `docs/GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md` | **PLAY.2A-D** — asset production targets, directory structure, alt texts |
 | `docs/GOOGLE_PLAY_SCREENSHOT_REVIEW.md` | **PLAY.2D-R** — accuracy review of AI-generated screenshots; verdict BLOCKED |
-| `docs/GOOGLE_PLAY_REAL_SCREENSHOT_CAPTURE_TODO.md` | **NEW (PLAY.2D2)** — manual capture instructions for owner |
+| `docs/GOOGLE_PLAY_REAL_SCREENSHOT_CAPTURE_TODO.md` | **PLAY.2D2** — manual capture instructions for owner |
 
 ## Risk Assessment
 

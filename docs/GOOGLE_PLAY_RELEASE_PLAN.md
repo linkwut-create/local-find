@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Status: PLAY.2A — asset production targets prepared. Do not build AAB, upload to Google Play, or submit for review until each phase is explicitly approved by the owner.
+Status: PLAY.2 complete. Do not build AAB, upload to Google Play, or submit for review until each phase is explicitly approved by the owner.
 
 ## Release path overview
 
@@ -15,7 +15,7 @@ PLAY.0: Readiness audit ✓
   │   ├─ Confirm upload keystore exists and signing variables are set → ✓ DONE
   │   └─ Document findings → ✓ DONE
   │
-  ├─ PLAY.2: Store assets (IN PROGRESS — PLAY.2A targets defined)
+  ├─ PLAY.2: Store assets ✓ (all complete)
   │   ├─ PLAY.2A: Define asset production targets and directory structure ✓
   │   ├─ PLAY.2B: Create 512x512 custom app icon ✓
   │   ├─ PLAY.2C: Create 1024x500 feature graphic ✓
@@ -23,8 +23,8 @@ PLAY.0: Readiness audit ✓
   │   ├─ PLAY.2D-R: Accuracy review → AI screenshots inaccurate ✓
   │   ├─ PLAY.2D2: Real screenshot capture → owner captured ✓
   │   ├─ PLAY.2D3: Validate and commit real screenshots ✓
-  │   ├─ PLAY.2E: Update AndroidManifest.xml icon reference
-  │   └─ PLAY.2F: Closeout — commit all assets (no secrets)
+  │   ├─ PLAY.2E: Update AndroidManifest.xml icon reference ✓
+  │   └─ PLAY.2F: Closeout — all assets committed ✓
   │
   ├─ PLAY.3: Play Console forms
   │   ├─ Complete Data Safety form

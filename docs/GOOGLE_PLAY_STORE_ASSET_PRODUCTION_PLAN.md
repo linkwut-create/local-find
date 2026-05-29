@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Phase: PLAY.2D3 — Real screenshots validated and committed. All 4 Play Store assets complete.
+Phase: PLAY.2E — Launcher icon updated. PLAY.2 complete.
 
 Status: Draft targets. Do not generate final PNG/JPEG, do not modify AndroidManifest.xml, do not build AAB until each production step is explicitly approved.
 
@@ -171,8 +171,8 @@ Maximum 140 characters per asset. Used for Play Console accessibility fields.
 | PLAY.2B | Generate/produce app icon (512x512 PNG) | ✓ DONE — `local-find-play-icon-512.png` committed (2026-05-29) |
 | PLAY.2C | Generate/produce feature graphic (1024x500) | ✓ DONE — `local-find-feature-graphic-1024x500.png` committed (2026-05-29) |
 | PLAY.2D | Capture/produce phone screenshots (4x PNG) | ✓ **DONE (PLAY.2D3)** — real device captures validated and committed |
-| PLAY.2E | Update AndroidManifest.xml icon references + add adaptive icon resources | All assets produced and committed |
-| PLAY.2F | PLAY.2 closeout: update docs, commit all assets | All 4 assets in place |
+| PLAY.2E | Update AndroidManifest.xml icon references + add adaptive icon resources | ✓ DONE — adaptive icon resources created, manifest updated (2026-05-29) |
+| PLAY.2F | PLAY.2 closeout: update docs, commit all assets | ✓ DONE — all assets in place, manifest updated |
 
 ---
 
