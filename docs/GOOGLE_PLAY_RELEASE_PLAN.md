@@ -19,7 +19,9 @@ PLAY.0: Readiness audit ✓
   │   ├─ PLAY.2A: Define asset production targets and directory structure ✓
   │   ├─ PLAY.2B: Create 512x512 custom app icon ✓
   │   ├─ PLAY.2C: Create 1024x500 feature graphic ✓
-  │   ├─ PLAY.2D: Capture phone screenshots (minimum 4) ✓
+  │   ├─ PLAY.2D: Capture phone screenshots (minimum 4) → BLOCKED (2D-R)
+  │   ├─ PLAY.2D-R: Accuracy review → AI screenshots inaccurate
+  │   ├─ PLAY.2D2: Replace with real emulator/device screenshots
   │   ├─ PLAY.2E: Update AndroidManifest.xml icon reference
   │   └─ PLAY.2F: Closeout — commit all assets (no secrets)
   │

@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Phase: PLAY.2D — Screenshots produced. All 4 Play Store assets complete.
+Phase: PLAY.2D-R — Screenshots reviewed. Accuracy BLOCKED; real captures needed (PLAY.2D2).
 
 Status: Draft targets. Do not generate final PNG/JPEG, do not modify AndroidManifest.xml, do not build AAB until each production step is explicitly approved.
 
@@ -118,10 +118,10 @@ JPEG or 24-bit PNG (no alpha).
 
 | # | File | Screen | Content |
 |---|------|--------|---------|
-| 1 | `01-phone-service-start.png` | Find Me / service start | **PRODUCED** — 1080x1920, ~1.06MB. Start Service button, status indicator. Mock data only. |
-| 2 | `02-controller-connected.png` | Controller / connected device | **PRODUCED** — 1080x1920, ~1.48MB. Paired controller "My Laptop" on LAN, mock IP 192.168.1.100. |
-| 3 | `03-qr-pairing.png` | QR pairing scanner | **PRODUCED** — 1080x1920, ~1.34MB. Camera viewfinder with mock/test QR code. No real credential. |
-| 4 | `04-language-settings.png` | Language settings | **PRODUCED** — 1080x1920, ~1.26MB. English selected; 简体中文, 日本語, 한국어, Español listed. |
+| 1 | `01-phone-service-start.png` | Find Me / service start | **BLOCKED** — AI-generated, inaccurate vs real app. Wrong tabs, missing UI, wrong button style. |
+| 2 | `02-controller-connected.png` | Controller / connected device | **BLOCKED** — AI-generated, inaccurate. Wrong title, oversimplified, missing RemoteControlPanel. |
+| 3 | `03-qr-pairing.png` | QR pairing scanner | **BLOCKED** — AI-generated, partially inaccurate. Wrong hint text, wrong button, QR overlay wrong. |
+| 4 | `04-language-settings.png` | Language settings | **BLOCKED** — AI-generated, critically inaccurate. Full page vs dropdown, 5 languages vs 3 real, advertises unsupported languages. |
 
 ### Language
 
@@ -170,7 +170,7 @@ Maximum 140 characters per asset. Used for Play Console accessibility fields.
 |-------|--------|---------------|
 | PLAY.2B | Generate/produce app icon (512x512 PNG) | ✓ DONE — `local-find-play-icon-512.png` committed (2026-05-29) |
 | PLAY.2C | Generate/produce feature graphic (1024x500) | ✓ DONE — `local-find-feature-graphic-1024x500.png` committed (2026-05-29) |
-| PLAY.2D | Capture/produce phone screenshots (4x PNG) | ✓ DONE — all 4 screenshots committed (2026-05-29), privacy reviewed |
+| PLAY.2D | Capture/produce phone screenshots (4x PNG) | **BLOCKED (PLAY.2D-R)** — AI screenshots inaccurate; replace with real emulator/device captures |
 | PLAY.2E | Update AndroidManifest.xml icon references + add adaptive icon resources | All assets produced and committed |
 | PLAY.2F | PLAY.2 closeout: update docs, commit all assets | All 4 assets in place |
 
