@@ -23,3 +23,63 @@ Closeout checks before this docs-only commit:
 - Release asset `local-find-mvp-u5.zip` was uploaded with the verified SHA256 above.
 
 No Android source, Chrome extension source, release package, or tag was changed as part of this closeout.
+
+## Chrome Web Store Release
+
+Status: Submitted for review / pending review.
+
+| Field | Value |
+|-------|-------|
+| Extension ID | `nadcejbdnkaihkgddojlokjcfdak` |
+| Submission date | 2026-05-28 |
+| Package | `dist/chrome-web-store/local-find-chrome-extension.zip` |
+| Status | Pending review / 待审核 |
+| Support email | `linkwut@gmail.com` |
+| Privacy policy URL | `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md` |
+
+Reference docs:
+- `docs/CHROME_WEB_STORE_READINESS_AUDIT.md`
+- `docs/CHROME_WEB_STORE_SUBMISSION_STATUS.md`
+
+No changes to Chrome extension code, manifest, assets, or package while review is pending unless Chrome Web Store requests changes.
+
+## Google Play Release
+
+Status: PLAY.0 readiness audit completed. No upload, no submission.
+
+| Field | Value |
+|-------|-------|
+| `applicationId` | `io.github.linkwutcreate.localfind` |
+| `versionCode` | `1` |
+| `versionName` | `"1.0"` |
+| `targetSdk` | `35` |
+| Developer account | Registered, verified by owner |
+| Account type | Not confirmed (personal vs organization) |
+| Production access | Not confirmed |
+| Upload keystore | Not confirmed |
+| App icon | System default — custom icon needed |
+| Play Console forms | Not completed |
+| AAB built | No |
+| Upload to Play | No |
+| Submission | No |
+
+Next phase: PLAY.1 — account and signing confirmation.
+
+Reference docs:
+- `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
+- `docs/GOOGLE_PLAY_RELEASE_PLAN.md`
+
+### Google Play Release Blockers
+
+1. Account type not confirmed (personal vs organization).
+2. Production access path not confirmed (closed testing required?).
+3. Upload keystore existence not confirmed.
+4. Custom app icon (512x512) missing.
+5. Feature graphic (1024x500) missing.
+6. Phone screenshots missing.
+7. Data Safety form not completed.
+8. Foreground Service declaration not submitted.
+9. App content declarations not completed.
+10. Category and tags not decided.
+
+No Android code, Chrome extension code, APK/AAB, signing files, or tags are changed as part of PLAY.0.

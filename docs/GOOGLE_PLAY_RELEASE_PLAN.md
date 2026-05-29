@@ -1,0 +1,380 @@
+# Google Play Release Plan
+
+Plan date: 2026-05-29
+
+Status: Draft plan. Do not build AAB, upload to Google Play, or submit for review until each phase is explicitly approved by the owner.
+
+## Release path overview
+
+```
+PLAY.0: Readiness audit (this phase)
+  │
+  ├─ PLAY.1: Account and signing confirmation
+  │   ├─ Confirm account type (personal / organization)
+  │   ├─ Confirm production access requirements
+  │   ├─ Confirm upload keystore exists and signing variables are set
+  │   └─ Document findings
+  │
+  ├─ PLAY.2: Store assets
+  │   ├─ Create 512x512 custom app icon
+  │   ├─ Create 1024x500 feature graphic
+  │   ├─ Capture phone screenshots (minimum 4)
+  │   ├─ Update AndroidManifest.xml icon reference
+  │   └─ Commit assets (no secrets)
+  │
+  ├─ PLAY.3: Play Console forms
+  │   ├─ Complete Data Safety form
+  │   ├─ Complete Foreground Service declaration
+  │   ├─ Complete App content declarations
+  │   ├─ Set category and tags
+  │   └─ Confirm privacy policy URL and support email in Play Console
+  │
+  ├─ PLAY.4: Build release AAB
+  │   ├─ Verify versionCode and versionName
+  │   ├─ Verify signing config
+  │   ├─ Build release AAB
+  │   ├─ Validate AAB (size, contents, signing)
+  │   └─ Do NOT commit the AAB
+  │
+  ├─ PLAY.5: Internal testing
+  │   ├─ Create internal testing track in Play Console
+  │   ├─ Upload first AAB to internal testing
+  │   ├─ Smoke test: install, start service, pair, trigger actions
+  │   └─ Fix issues before advancing
+  │
+  ├─ PLAY.6: Closed testing (if required)
+  │   ├─ Create closed testing track
+  │   ├─ Recruit testers (12+ for 14+ days if personal account)
+  │   ├─ Collect tester feedback
+  │   └─ Address tester-reported issues
+  │
+  └─ PLAY.7: Production release
+      ├─ Owner approval required
+      ├─ Promote tested AAB to production
+      ├─ Submit for review
+      └─ Record production release status
+```
+
+## PLAY.0 (current): Readiness Audit
+
+Status: **IN PROGRESS**
+
+- [x] Read-only audit of Android app configuration.
+- [x] Identify all blockers and warnings.
+- [x] Document existing Play-related docs.
+- [x] Create `GOOGLE_PLAY_RELEASE_READINESS.md`.
+- [x] Create `GOOGLE_PLAY_RELEASE_PLAN.md` (this document).
+- [ ] Update `PROJECT_STATUS.md`.
+- [ ] Commit docs.
+
+Deliverables:
+- `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
+- `docs/GOOGLE_PLAY_RELEASE_PLAN.md`
+
+No code changes, no builds, no uploads.
+
+## PLAY.1: Account and Signing Confirmation
+
+Goal: resolve the three blocker unknowns identified in the readiness audit.
+
+### Tasks
+
+1. **Confirm account type**
+   - Owner opens Play Console > Developer Account > Account details.
+   - Record whether the account is "Personal" or "Organization".
+   - Document the finding in `GOOGLE_PLAY_RELEASE_READINESS.md` and `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` (new).
+
+2. **Confirm production access requirements**
+   - Personal accounts created after November 2023 typically require closed testing with 12+ testers for 14+ days before production access.
+   - Organization accounts may differ.
+   - Owner checks Play Console > Dashboard or Play Console > Publishing overview for any "Complete closed testing" requirement banner.
+   - Document the finding.
+
+3. **Confirm upload keystore**
+   - Owner verifies that the keystore file referenced by `LOCAL_FIND_UPLOAD_STORE_FILE` exists at the expected path.
+   - Owner confirms the keystore password, key alias, and key password are set (either in environment variables or `local.properties`).
+   - Owner confirms the upload key was not previously used for a published app on this account (Play policy: upload key must be unique per app).
+   - Document: "upload keystore confirmed at `<path>`, alias `<alias>`" — do NOT record passwords.
+
+### Deliverables
+- `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` (new)
+- Updates to `GOOGLE_PLAY_RELEASE_READINESS.md`
+
+### Constraints
+- Do NOT commit `local.properties`.
+- Do NOT commit keystore files.
+- Do NOT commit passwords or key material.
+- Do NOT modify Android code.
+
+## PLAY.2: Store Assets
+
+Goal: produce all required Play Store graphic assets.
+
+### Tasks
+
+1. **Custom app icon (512x512)**
+   - Design a custom app icon per guidance in `GOOGLE_PLAY_ASSETS_PLAN.md` (phone + search/radar/flash cue, no cloud/GPS/anti-theft imagery, no text).
+   - Export as 512x512 PNG.
+   - Create adaptive icon layers for Android manifest update.
+   - Update `AndroidManifest.xml`: replace `@android:drawable/ic_menu_search` with custom icon references.
+   - Source file saved for future edits.
+
+2. **Feature graphic (1024x500)**
+   - Produce per concept in `GOOGLE_PLAY_ASSETS_PLAN.md`.
+   - English copy only (e.g., "Find your phone on your local network").
+   - No Play Store badge, ranking, price, or install call-to-action.
+
+3. **Phone screenshots (minimum 4)**
+   - Capture per `GOOGLE_PLAY_ASSET_CAPTURE_GUIDE.md`.
+   - Required set:
+     | # | Screen | Purpose |
+     |---|--------|---------|
+     | 1 | Find Me / service start | Shows phone-side service start |
+     | 2 | Controller / connected device | Shows paired controller connection |
+     | 3 | QR pairing scanner | Shows camera-based pairing |
+     | 4 | Language settings | Shows language selection |
+   - Use English screenshots for the default listing.
+   - Privacy review: no real IP, no real device name, no tokens, no personal notifications.
+   - Save final PNGs to `store-assets/google-play/screenshots/en-US/`.
+
+4. **Optional: demo video**
+   - May be required for foreground service declaration review.
+   - Decision deferred to PLAY.3 when FGS declaration is prepared.
+
+### Deliverables
+- Custom app icon (committed to `android/app/src/main/res/` and `store-assets/google-play/`)
+- Feature graphic (committed to `store-assets/google-play/`)
+- Phone screenshots (committed to `store-assets/google-play/screenshots/en-US/`)
+- Updated `AndroidManifest.xml` with custom icon references
+
+### Constraints
+- Do NOT modify Chrome extension code.
+- Do NOT build APK/AAB.
+- Do NOT commit `local.properties`, keystores, or passwords.
+
+## PLAY.3: Play Console Forms
+
+Goal: complete all required Play Console declarations before first upload.
+
+### Tasks
+
+1. **Data Safety form**
+   - Use draft answers from `GOOGLE_PLAY_LISTING_DRAFT.md` as starting point.
+   - Confirm with `PRIVACY.md` that the local-only data handling is accurately described.
+   - Key answers:
+     - Data collection: No (no data transmitted off-device to developer or third party).
+     - Data sharing: No.
+     - Encryption in transit: Cleartext LAN HTTP — do not claim internet transport encryption.
+     - Data deletion: Yes — users can delete saved devices and revoke controllers.
+
+2. **Foreground Service declaration**
+   - Use draft text from `GOOGLE_PLAY_LISTING_DRAFT.md`.
+   - Upload demo video if Play Console requires it for `specialUse` FGS review.
+   - The video should show: opening app → starting service → persistent notification appears → pairing locally → triggering find action → stopping action.
+
+3. **App content declarations**
+   - Content rating questionnaire.
+   - Ads declaration: No ads.
+   - Target audience: General audience (no age restrictions).
+   - Any in-app purchases or paid features: No.
+
+4. **Store listing fields**
+   - Category: Productivity (recommended) or Tools.
+   - Tags: utilities, networking, device-finder (as applicable).
+   - Confirm privacy policy URL: `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md`.
+   - Confirm support email: `linkwut@gmail.com`.
+
+### Deliverables
+- Completed Data Safety form (in Play Console).
+- Completed FGS declaration (in Play Console).
+- Completed app content declarations (in Play Console).
+- Store listing draft finalized.
+
+### Constraints
+- Do NOT upload APK/AAB yet.
+- Do NOT submit for review.
+- All form entries should match `PRIVACY.md` and the app's actual behavior.
+
+## PLAY.4: Build Release AAB
+
+Goal: produce a signed release AAB for Play upload.
+
+### Prerequisites
+- PLAY.1 complete (signing confirmed).
+- PLAY.2 complete (icon updated in manifest).
+- PLAY.3 complete (forms ready).
+
+### Tasks
+
+1. **Verify build identity**
+   - Confirm `versionCode` and `versionName` are correct.
+   - For first upload: `versionCode = 1`, `versionName = "1.0"`.
+
+2. **Verify signing**
+   - Confirm all four signing environment variables or `local.properties` values are set.
+   - Confirm keystore file exists at the configured path.
+
+3. **Build**
+   - Run: `./gradlew bundleRelease` from the `android/` directory.
+   - Output: `android/app/build/outputs/bundle/release/app-release.aab`.
+
+4. **Validate AAB**
+   - Check AAB size.
+   - Verify signing with `jarsigner -verify` or `bundletool`.
+   - Confirm AAB is not committed to the repository.
+
+### Deliverables
+- `app-release.aab` at build output path (not committed).
+
+### Constraints
+- Do NOT commit `app-release.aab`.
+- Do NOT commit `local.properties`.
+- Do NOT upload to Play Console yet.
+- Do NOT move the `mvp-u5-ok` tag.
+- Do NOT modify the GitHub MVP-U.5 Release.
+
+## PLAY.5: Internal Testing
+
+Goal: smoke test the release AAB via internal testing track before broader exposure.
+
+### Prerequisites
+- PLAY.4 complete (AAB built and validated).
+- Play Console internal testing track created.
+
+### Tasks
+
+1. **Create internal testing track** in Play Console.
+2. **Upload AAB** to internal testing track.
+3. **Add internal testers** (owner's Google account at minimum).
+4. **Install and smoke test**:
+   - Install from internal testing link.
+   - Start Local Find service.
+   - Pair with Chrome extension on same LAN.
+   - Trigger ring, flashlight strobe, stop all.
+   - Test QR pairing flow.
+   - Test language switching.
+   - Test saved devices and revoke.
+5. **Fix issues** before advancing to closed testing or production.
+
+### Deliverables
+- Internal testing track with uploaded AAB.
+- Smoke test results recorded.
+
+### Constraints
+- Do NOT promote to production.
+- Do NOT submit for production review.
+- Fixes to Android code require a new AAB build and re-upload to the track.
+
+## PLAY.6: Closed Testing (if required)
+
+Goal: satisfy Google Play closed testing requirement before production access.
+
+### Prerequisites
+- PLAY.5 complete (internal testing smoke test passed).
+- Account type confirmed as "Personal" and closed testing requirement confirmed.
+- OR: owner decides to run closed testing regardless of policy requirement.
+
+### Tasks
+
+1. **Create closed testing track** in Play Console.
+2. **Recruit testers** (12+ if personal account policy requires it).
+3. **Upload AAB** to closed testing track (same or incremented version).
+4. **Provide tester instructions**:
+   - Install from closed testing invite link.
+   - Start Local Find service on phone.
+   - Pair trusted controller on same LAN.
+   - Test ring, flashlight strobe, stop all.
+   - Delete saved devices and revoke paired controllers.
+   - Report: device model, Android version, network type, any issues or failures.
+5. **Run for required duration** (14 days minimum if personal account policy).
+6. **Collect and address feedback**.
+7. **Apply for production access** once requirements are met.
+
+### Deliverables
+- Closed testing track with uploaded AAB.
+- Tester recruitment and instructions.
+- Tester feedback summary.
+- Production access granted (or application submitted).
+
+### Constraints
+- Do NOT promote to production until testing requirement is satisfied and owner approves.
+- All tester data should be handled per privacy expectations (testers' device info stays with developer, not published).
+
+## PLAY.7: Production Release
+
+Goal: publish Local Find on Google Play.
+
+### Prerequisites
+- PLAY.6 complete (closed testing required, if applicable) OR confirmed not required.
+- PLAY.5 complete (internal testing smoke test passed).
+- Owner explicitly approves production release.
+
+### Tasks
+
+1. **Final review**
+   - All Play Console forms complete and accurate.
+   - All assets uploaded and correct.
+   - Privacy policy URL reachable.
+   - Support email confirmed.
+
+2. **Create production track** and upload (or promote) the tested AAB.
+
+3. **Submit for review**
+   - Owner manually clicks "Submit for review" in Play Console.
+   - Do not submit until all prerequisites are met and owner approves.
+
+4. **Post-submission**
+   - Record submission status and date.
+   - Do not modify app, AAB, or listing while review is pending.
+   - If approved: record the public Play Store URL.
+   - If rejected or changes requested: capture the exact Play Console message before modifying anything.
+
+### Deliverables
+- Production track with submitted AAB.
+- Submission status documented.
+
+### Constraints
+- Do NOT submit for production review without owner's explicit approval.
+- Do NOT modify the published GitHub MVP-U.5 Release.
+- Do NOT move the `mvp-u5-ok` tag.
+
+## Release Blockers Summary
+
+| # | Blocker | Phase to resolve |
+|---|---------|-----------------|
+| 1 | Google Play account type not confirmed | PLAY.1 |
+| 2 | Production access path not confirmed | PLAY.1 |
+| 3 | Upload keystore existence not confirmed | PLAY.1 |
+| 4 | Custom app icon missing | PLAY.2 |
+| 5 | Feature graphic missing | PLAY.2 |
+| 6 | Phone screenshots missing | PLAY.2 |
+| 7 | Data Safety form not completed | PLAY.3 |
+| 8 | Foreground Service declaration not submitted | PLAY.3 |
+| 9 | App content declarations not completed | PLAY.3 |
+| 10 | Category and tags not decided | PLAY.3 |
+
+## Post-Release Considerations
+
+After production release:
+- Document the Play Store listing URL.
+- Create a `GOOGLE_PLAY_RELEASE_CLOSEOUT.md`.
+- Update `PROJECT_STATUS.md` with Play release status.
+- Update `CHANGELOG.md` if maintained.
+- Do NOT remove or replace the GitHub MVP-U.5 Release.
+- Do NOT rebase or reset the repository to "clean up" pre-Play history.
+
+## Constraints (All Phases)
+
+These constraints apply to EVERY phase of the Google Play release path:
+
+- Do NOT modify Chrome extension code.
+- Do NOT build APK (only AAB for Play).
+- Do NOT commit `local.properties`.
+- Do NOT commit `app-release.aab`.
+- Do NOT commit `.jks` or `.keystore` files.
+- Do NOT commit signing passwords or key material in any file.
+- Do NOT move the `mvp-u5-ok` tag.
+- Do NOT modify the published GitHub MVP-U.5 Release.
+- Do NOT restore the Android I.0 WIP stash unless explicitly directed.
+- Do NOT reset or force-push the repository.
+- Do NOT submit for production review without owner's explicit approval.
