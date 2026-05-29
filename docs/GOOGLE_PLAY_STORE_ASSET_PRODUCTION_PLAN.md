@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Phase: PLAY.2C — Feature graphic produced. Screenshots still pending.
+Phase: PLAY.2D — Screenshots produced. All 4 Play Store assets complete.
 
 Status: Draft targets. Do not generate final PNG/JPEG, do not modify AndroidManifest.xml, do not build AAB until each production step is explicitly approved.
 
@@ -118,10 +118,10 @@ JPEG or 24-bit PNG (no alpha).
 
 | # | File | Screen | Content |
 |---|------|--------|---------|
-| 1 | `01-phone-service-start.png` | Find Me / service start | Phone screen showing "Start Service" button, service status indicator. Demonstrates the core function: turning on the find-me service. |
-| 2 | `02-controller-connected.png` | Controller / connected device | Screen showing a paired controller (Chrome extension) connected on LAN. Demonstrates that pairing works over local network. |
-| 3 | `03-qr-pairing.png` | QR pairing scanner | Camera viewfinder scanning a QR code for pairing. QR code content must be a mock/test code, not a real credential. Demonstrates camera-based pairing flow. |
-| 4 | `04-language-settings.png` | Language settings | Settings screen showing language selection. Demonstrates that the app supports multiple languages. |
+| 1 | `01-phone-service-start.png` | Find Me / service start | **PRODUCED** — 1080x1920, ~1.06MB. Start Service button, status indicator. Mock data only. |
+| 2 | `02-controller-connected.png` | Controller / connected device | **PRODUCED** — 1080x1920, ~1.48MB. Paired controller "My Laptop" on LAN, mock IP 192.168.1.100. |
+| 3 | `03-qr-pairing.png` | QR pairing scanner | **PRODUCED** — 1080x1920, ~1.34MB. Camera viewfinder with mock/test QR code. No real credential. |
+| 4 | `04-language-settings.png` | Language settings | **PRODUCED** — 1080x1920, ~1.26MB. English selected; 简体中文, 日本語, 한국어, Español listed. |
 
 ### Language
 
@@ -170,7 +170,7 @@ Maximum 140 characters per asset. Used for Play Console accessibility fields.
 |-------|--------|---------------|
 | PLAY.2B | Generate/produce app icon (512x512 PNG) | ✓ DONE — `local-find-play-icon-512.png` committed (2026-05-29) |
 | PLAY.2C | Generate/produce feature graphic (1024x500) | ✓ DONE — `local-find-feature-graphic-1024x500.png` committed (2026-05-29) |
-| PLAY.2D | Capture/produce phone screenshots (4x PNG) | App buildable on emulator or device; privacy review pass |
+| PLAY.2D | Capture/produce phone screenshots (4x PNG) | ✓ DONE — all 4 screenshots committed (2026-05-29), privacy reviewed |
 | PLAY.2E | Update AndroidManifest.xml icon references + add adaptive icon resources | All assets produced and committed |
 | PLAY.2F | PLAY.2 closeout: update docs, commit all assets | All 4 assets in place |
 
