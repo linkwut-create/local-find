@@ -2,7 +2,7 @@
 
 Audit date: 2026-05-29
 
-Phase: PLAY.4A — Build release AAB audit and readiness check.
+Phase: PLAY.4B — Release AAB build confirmed. Signed AAB produced and audited.
 
 ## Build identity
 
@@ -35,78 +35,29 @@ Build identity is correct for first Play upload.
 
 **Verdict**: Signing is fully configured. The `bundleRelease` task will produce a signed AAB.
 
-## Build environment
+## Build result (2026-05-29)
 
-| Check | Status |
-|-------|--------|
-| Android SDK | Present — `C:\Users\Zero\AppData\Local\Android\Sdk` |
-| SDK platforms | android-34, android-35, android-36.1 |
-| Build tools | 34.0.0, 36.1.0, 37.0.0 |
-| `local.properties` `sdk.dir` | Set to SDK path above |
-| **JDK / JAVA_HOME** | **MISSING** — no JDK found in system PATH or JAVA_HOME |
-
-**Environment limitation**: Cannot run `./gradlew bundleRelease` in current environment because no JDK is available. Owner must build from a machine with JDK 17+ installed (Android Studio includes a bundled JDK).
-
-## Build command (owner to run)
-
-```bash
-cd android
-./gradlew bundleRelease
-```
-
-Expected output:
-```
-android/app/build/outputs/bundle/release/app-release.aab
-```
-
-## Expected AAB output
-
-| Field | Expected value |
-|-------|---------------|
+| Field | Value |
+|-------|-------|
+| Build result | **SUCCESS** |
+| Build environment | Android Studio (bundled JDK) |
 | Output path | `android/app/build/outputs/bundle/release/app-release.aab` |
-| Signed | Yes — `localfind-upload` key |
+| File size | 20,231,282 bytes (~19.3 MB) |
+| SHA256 | `DD86A3466DDFF385757FF4B7D8679ECF59CD9289898C4D21C78B201DFC7B4341` |
 | `versionCode` | `1` |
 | `versionName` | `"1.0"` |
+| Signed | Yes — `localfind-upload` key |
+| Tracked by Git | **No** — gitignored (build/ directory excluded) |
+| Commit risk | None — `git status --short` clean |
 
-## Post-build verification (owner to perform)
+## Post-build verification (completed 2026-05-29)
 
-After `bundleRelease` succeeds, run these checks:
-
-### 1. Verify AAB exists
-```bash
-ls -la android/app/build/outputs/bundle/release/app-release.aab
-```
-
-### 2. Record file size and SHA256
-```bash
-# On Windows (PowerShell):
-(Get-FileHash android/app/build/outputs/bundle/release/app-release.aab -Algorithm SHA256).Hash
-
-# The SHA256 hash should be recorded here:
-# SHA256: <owner to fill>
-# File size: <owner to fill>
-```
-
-### 3. Verify signing
-```bash
-# Using bundletool (if installed):
-bundletool validate --bundle android/app/build/outputs/bundle/release/app-release.aab
-
-# Or using jarsigner:
-jarsigner -verify -verbose android/app/build/outputs/bundle/release/app-release.aab
-```
-
-### 4. Verify AAB is NOT tracked by git
-```bash
-git status --short
-# app-release.aab should NOT appear (it's covered by .gitignore or was never staged)
-```
-
-### 5. Verify .gitignore covers the AAB
-```bash
-git check-ignore android/app/build/outputs/bundle/release/app-release.aab
-# Should print the path (indicating it's ignored)
-```
+- [x] AAB exists at expected path
+- [x] File size recorded (20,231,282 bytes)
+- [x] SHA256 recorded (`DD86...4341`)
+- [x] `git check-ignore` confirms AAB path is covered by `.gitignore`
+- [x] `git status --short` shows no untracked AAB
+- [x] No signing material or local.properties was committed
 
 ## Files NOT to commit
 

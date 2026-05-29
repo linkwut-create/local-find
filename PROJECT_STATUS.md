@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.4A — Release AAB build audited.
+Status: PLAY.4B — Signed release AAB built and audited.
 
 | Field | Value |
 |-------|-------|
@@ -61,19 +61,17 @@ Status: PLAY.4A — Release AAB build audited.
 | Internal testing | Available |
 | Upload keystore | **Confirmed** — exists, all 4 signing variables set |
 | Key alias | `localfind-upload` |
-| Keystore file | Present (2796 bytes, created 2026-05-24) |
-| Signing variables | All 4 present in `local.properties` (gitignored) |
 | Release AAB signing | `hasReleaseSigningConfig` = true |
-| App icon (Play listing) | **Produced** — `store-assets/google-play/icon/local-find-play-icon-512.png` (512x512, ~214KB) |
-| Feature graphic | **Produced** — `store-assets/google-play/feature-graphic/local-find-feature-graphic-1024x500.png` (1024x500, ~536KB, no alpha) |
-| Launcher icon (manifest) | **Updated** — `@mipmap/ic_launcher` adaptive icon |
-| Phone screenshots | **Real captures** — 4x 1080x2340 PNG, real Android device |
-| Play Console forms | **Completed (draft)** — all sections filled and saved in Play Console; not submitted |
-| AAB built | **Pending** — build config verified; no JDK in env; owner to build (see `GOOGLE_PLAY_AAB_BUILD_AUDIT.md`) |
+| **Release AAB** | **Built** — `app-release.aab`, 20.2 MB, signed, SHA256 recorded, gitignored |
+| App icon (Play listing) | **Produced** — 512x512 PNG |
+| Feature graphic | **Produced** — 1024x500 PNG |
+| Launcher icon (manifest) | **Updated** — `@mipmap/ic_launcher` |
+| Phone screenshots | **Real captures** — 4x 1080x2340 PNG |
+| Play Console forms | **Completed (draft)** — not submitted |
 | Upload to Play | No |
 | Submission | No |
 
-Next: PLAY.4B — owner runs `./gradlew bundleRelease` in Android Studio or terminal with JDK.
+Next: PLAY.5 — prepare internal testing upload.
 
 Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
