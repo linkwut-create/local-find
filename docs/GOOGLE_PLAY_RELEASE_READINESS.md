@@ -105,7 +105,7 @@ Signing readiness details (PLAY.1 findings):
 - Keystore file exists at the configured path: `local-find-upload.jks` (2796 bytes, created 2026-05-24).
 - No `.jks`, `.keystore`, or `.pem` files are committed to the repository.
 - Key alias: `localfind-upload`.
-- **TODO: owner to confirm** this key was not previously used for a published app on this account.
+- **Owner confirmed (2026-05-29)**: this key was not previously used for a published app on this account.
 
 Signing readiness verdict: **Signing config is complete. Keystore present. All signing variables set. Release AAB signing is ready.**
 
@@ -196,7 +196,7 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | Foreground Service declaration not submitted | **warning** | Draft text exists; Play may require video evidence for specialUse FGS | Prepare FGS declaration and optional demo video |
 | App content declarations not completed | **warning** | Content rating, ads, target audience not declared | Complete content declarations in Play Console |
 | Category and tags not decided | **warning** | No Play category documented yet | Decide category (likely Tools or Productivity) |
-| Upload key uniqueness not confirmed | **info** | Key `localfind-upload` must be unique per Play policy | Owner confirms key was not used for another published app |
+| ~~Upload key uniqueness not confirmed~~ | ~~info~~ → **resolved** | Key `localfind-upload` not used for any other Play app; first app with this key | **Resolved PLAY.1C** |
 | `usesCleartextTraffic=true` | **info** | Required for local HTTP; may trigger Play review questions | Document justification in FGS/permissions declaration |
 | Foreground service type is `specialUse` | **info** | Requires stronger justification than `dataSync` or `location` | Prepare detailed FGS declaration with video evidence |
 | No cloud dependency | **info** | App is local-only, which simplifies Data Safety and privacy | Preserve; document in Data Safety form |

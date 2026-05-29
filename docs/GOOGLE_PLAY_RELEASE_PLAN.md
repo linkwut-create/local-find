@@ -101,7 +101,7 @@ Goal: resolve the three blocker unknowns identified in the readiness audit.
    - [x] Keystore file exists at configured path (local-find-upload.jks, 2796 bytes, created 2026-05-24).
    - [x] Key alias: `localfind-upload`.
    - [x] No `.jks` or `.keystore` committed to repo.
-   - [ ] **TODO: owner** to confirm this key was not previously used for a published app on this account (Play policy: upload key must be unique per app).
+   - [x] **Owner confirmed**: this key (`localfind-upload`) has not been used for any other Google Play app. This is the first Play app using this upload key (2026-05-29).
 
 ### Findings (2026-05-29)
 

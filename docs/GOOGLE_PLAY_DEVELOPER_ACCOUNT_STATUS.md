@@ -1,8 +1,8 @@
 # Google Play Developer Account Status
 
-Audit date: 2026-05-29 (updated PLAY.1B)
+Audit date: 2026-05-29 (updated PLAY.1C)
 
-Phase: PLAY.1 — Account and signing confirmation.
+Phase: PLAY.1 — Account and signing confirmation. **COMPLETE.**
 
 ## App Identity
 
@@ -70,9 +70,9 @@ Updated Google Play Console help: https://support.google.com/googleplay/android-
 | All 4 signing variables present | **Yes** (`hasReleaseSigningConfig` = true) |
 | Keystore file exists on disk | **Yes** — `local-find-upload.jks` (2796 bytes, created 2026-05-24) |
 | `.jks` / `.keystore` in repo | **None** |
-| Key alias uniqueness | **TODO: owner to confirm** this key was not used for another published app on this account |
+| Key alias uniqueness | **Confirmed** — `localfind-upload` has not been used for any other Google Play app. This is the first Play app using this upload key (owner confirmed 2026-05-29). |
 
-Signing readiness verdict: **Signing config is complete and keystore is present.** The Gradle `hasReleaseSigningConfig` check will pass. Release AAB build signing is configured.
+Signing readiness verdict: **Signing config is complete and keystore is present. Key uniqueness confirmed.** The Gradle `hasReleaseSigningConfig` check will pass. Release AAB build signing is fully ready.
 
 ## Environment Check (2026-05-29)
 
@@ -116,7 +116,7 @@ e5d2098 docs: record Chrome Web Store pending review status
 
 1. ~~Confirm account type~~ — **DONE: Personal** (confirmed 2026-05-29).
 2. ~~Confirm production access requirements~~ — **DONE: closed testing required, then apply for production** (confirmed 2026-05-29 via Play Console Dashboard).
-3. **Confirm key uniqueness** — ensure `localfind-upload` key was not used for a previously published app on this Google Play account.
+3. ~~Confirm key uniqueness~~ — **DONE: confirmed not used for any other Play app** (owner confirmed 2026-05-29).
 4. **Confirm closed testing track availability** — verify in Play Console > Testing > Closed testing.
 
 ## Constraints (this phase)

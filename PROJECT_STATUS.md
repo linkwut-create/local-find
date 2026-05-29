@@ -88,7 +88,7 @@ Reference docs:
 | 1 | ~~Account type not confirmed~~ | **RESOLVED — Personal** |
 | 2 | ~~Production access path not confirmed~~ | **RESOLVED — closed testing required** |
 | 3 | ~~Upload keystore existence not confirmed~~ | **RESOLVED (PLAY.1)** |
-| — | Upload key uniqueness owner confirmation | **TODO (owner)** |
+| — | ~~Upload key uniqueness owner confirmation~~ | **RESOLVED — first Play app with this key** |
 | 4 | Custom app icon (512x512) missing | Target defined; not produced |
 | 5 | Feature graphic (1024x500) missing | Target defined; not produced |
 | 6 | Phone screenshots missing | Target defined; not captured |
