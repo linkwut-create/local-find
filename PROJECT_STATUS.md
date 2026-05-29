@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.4B — Signed release AAB built and audited.
+Status: PLAY.5B — Internal testing release installable.
 
 | Field | Value |
 |-------|-------|
@@ -62,16 +62,13 @@ Status: PLAY.4B — Signed release AAB built and audited.
 | Upload keystore | **Confirmed** — exists, all 4 signing variables set |
 | Key alias | `localfind-upload` |
 | Release AAB signing | `hasReleaseSigningConfig` = true |
-| **Release AAB** | **Built** — `app-release.aab`, 20.2 MB, signed, SHA256 recorded, gitignored |
-| App icon (Play listing) | **Produced** — 512x512 PNG |
-| Feature graphic | **Produced** — 1024x500 PNG |
-| Launcher icon (manifest) | **Updated** — `@mipmap/ic_launcher` |
-| Phone screenshots | **Real captures** — 4x 1080x2340 PNG |
+| **Release AAB** | **Uploaded** — internal testing track, `1.0-internal-1`, installable |
+| AAB SHA256 | `DD86A3466DDFF385757FF4B7D8679ECF59CD9289898C4D21C78B201DFC7B4341` |
+| Internal testing | **Installable** — 1 tester, owner confirmed |
 | Play Console forms | **Completed (draft)** — not submitted |
-| Upload to Play | No |
-| Submission | No |
+| Production | Not requested |
 
-Next: PLAY.5 — prepare internal testing upload.
+Next: PLAY.5C — internal testing smoke test.
 
 Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
