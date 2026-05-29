@@ -158,7 +158,7 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | App name | Present | `Local Find` |
 | Short description | Draft | `docs/GOOGLE_PLAY_LISTING_DRAFT.md` |
 | Full description | Draft | `docs/GOOGLE_PLAY_LISTING_DRAFT.md` |
-| 512x512 app icon | **Missing** | Target defined in `GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md`; not produced |
+| 512x512 app icon | **Produced** | `store-assets/google-play/icon/local-find-play-icon-512.png` (512x512, ~214KB) — committed 2026-05-29 |
 | 1024x500 feature graphic | **Missing** | Target defined; not produced |
 | Phone screenshots | **Missing** | Target defined; not captured |
 | Short demo video | **Missing / optional** | May be required for foreground service declaration review |
@@ -189,7 +189,7 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | ~~Google Play account type not confirmed~~ | ~~blocker~~ → **resolved** | Account type confirmed as Personal by owner (2026-05-29) | **Resolved PLAY.1A** |
 | Production access path not confirmed | ~~blocker~~ → **resolved** | Play Console Dashboard confirms: closed testing required, then apply for production | **Resolved PLAY.1B** |
 | ~~Upload keystore existence not confirmed~~ | ~~blocker~~ → **resolved** | Keystore file exists at configured path; all 4 signing variables set; `local.properties` gitignored | **Resolved PLAY.1** |
-| Custom app icon missing | **blocker** | Manifest uses `@android:drawable/ic_menu_search` (system default) | Produce per `GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md` (PLAY.2B) |
+| ~~Custom app icon missing~~ | ~~blocker~~ → **resolved** | Play listing icon produced; manifest icon update deferred to PLAY.2E | **Resolved PLAY.2B** |
 | Feature graphic missing | **blocker** | Play requires 1024x500 feature graphic | Produce per production plan (PLAY.2C) |
 | Phone screenshots missing | **blocker** | Play requires phone screenshots | Capture per production plan (PLAY.2D) |
 | Data Safety form not completed | **blocker** | Draft answers exist but form not filled in Play Console | Complete Data Safety form before first upload |

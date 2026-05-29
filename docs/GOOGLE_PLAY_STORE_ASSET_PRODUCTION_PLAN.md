@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Phase: PLAY.2A — Asset production targets and directory structure. No final images generated.
+Phase: PLAY.2B — App icon produced. Feature graphic and screenshots still pending.
 
 Status: Draft targets. Do not generate final PNG/JPEG, do not modify AndroidManifest.xml, do not build AAB until each production step is explicitly approved.
 
@@ -39,7 +39,9 @@ Placeholder directories created with `.gitkeep`. Final assets go alongside `.git
 | Size | 512 x 512 px |
 | Format | 32-bit PNG with alpha |
 | Max file size | 1024 KB |
+| Actual file size | ~214 KB |
 | Play requirement | Icon will appear on Play Store listing, not in the APK/AAB |
+| Status | **PRODUCED (PLAY.2B)** — generated 2026-05-29 |
 
 ### Concept
 
@@ -164,7 +166,7 @@ Maximum 140 characters per asset. Used for Play Console accessibility fields.
 
 | Phase | Action | Prerequisites |
 |-------|--------|---------------|
-| PLAY.2B | Generate/produce app icon (512x512 PNG) | Owner approves concept direction |
+| PLAY.2B | Generate/produce app icon (512x512 PNG) | ✓ DONE — `local-find-play-icon-512.png` committed (2026-05-29) |
 | PLAY.2C | Generate/produce feature graphic (1024x500) | Owner approves concept direction |
 | PLAY.2D | Capture/produce phone screenshots (4x PNG) | App buildable on emulator or device; privacy review pass |
 | PLAY.2E | Update AndroidManifest.xml icon references + add adaptive icon resources | All assets produced and committed |

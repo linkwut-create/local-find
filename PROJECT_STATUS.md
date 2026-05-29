@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.2A — asset production targets prepared. No final images generated.
+Status: PLAY.2B — Play listing icon produced.
 
 | Field | Value |
 |-------|-------|
@@ -64,7 +64,8 @@ Status: PLAY.2A — asset production targets prepared. No final images generated
 | Keystore file | Present (2796 bytes, created 2026-05-24) |
 | Signing variables | All 4 present in `local.properties` (gitignored) |
 | Release AAB signing | `hasReleaseSigningConfig` = true |
-| App icon | System default — custom icon needed (targets documented) |
+| App icon (Play listing) | **Produced** — `store-assets/google-play/icon/local-find-play-icon-512.png` (512x512, ~214KB) |
+| Launcher icon (manifest) | System default — not yet updated (deferred to PLAY.2E) |
 | Feature graphic | Not produced (targets documented) |
 | Phone screenshots | Not captured (targets documented) |
 | Asset directories | Created: `store-assets/google-play/icon/`, `feature-graphic/`, `screenshots/en-US/` |
@@ -73,7 +74,7 @@ Status: PLAY.2A — asset production targets prepared. No final images generated
 | Upload to Play | No |
 | Submission | No |
 
-Next: owner approves asset concept direction, then PLAY.2B (app icon production).
+Next: PLAY.2C — feature graphic production.
 
 Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
@@ -89,7 +90,7 @@ Reference docs:
 | 2 | ~~Production access path not confirmed~~ | **RESOLVED — closed testing required** |
 | 3 | ~~Upload keystore existence not confirmed~~ | **RESOLVED (PLAY.1)** |
 | — | ~~Upload key uniqueness owner confirmation~~ | **RESOLVED — first Play app with this key** |
-| 4 | Custom app icon (512x512) missing | Target defined; not produced |
+| 4 | ~~Custom app icon (512x512) missing~~ | **RESOLVED — produced (PLAY.2B)** |
 | 5 | Feature graphic (1024x500) missing | Target defined; not produced |
 | 6 | Phone screenshots missing | Target defined; not captured |
 | 7 | Data Safety form not completed | Open |
