@@ -166,10 +166,10 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | Privacy policy URL | **Available** | `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md` — reachability verified for CWS; same URL is candidate for Play |
 | Support email | Present | `linkwut@gmail.com` — same as confirmed for CWS |
 | GitHub repo URL | Present | `https://github.com/linkwut-create/local-find` |
-| Data Safety form | **Not completed** | Draft answers in `GOOGLE_PLAY_LISTING_DRAFT.md` |
-| Foreground Service declaration | **Not completed** | Draft text exists; may need demo video evidence |
-| App content declarations | **Not completed** | Content rating questionnaire, ads declaration, etc. |
-| Category and tags | **Not decided** | Not yet documented for Play |
+| Data Safety form | **Draft ready** | Answers prepared in `GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md` — owner to enter in Play Console |
+| Foreground Service declaration | **Draft ready** | Declaration text and justification in `GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md` |
+| App content declarations | **Draft ready** | Content rating, ads, target audience answers prepared |
+| Category and tags | **Decided** | Productivity recommended; tags: utilities, networking, device-finder |
 
 ## Existing Google Play Documentation
 
@@ -184,6 +184,7 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | `docs/GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md` | **PLAY.2A-D** — asset production targets, directory structure, alt texts |
 | `docs/GOOGLE_PLAY_SCREENSHOT_REVIEW.md` | **PLAY.2D-R** — accuracy review of AI-generated screenshots; verdict BLOCKED |
 | `docs/GOOGLE_PLAY_REAL_SCREENSHOT_CAPTURE_TODO.md` | **PLAY.2D2** — manual capture instructions for owner |
+| `docs/GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md` | **NEW (PLAY.3A)** — all Play Console form answers prepared |
 
 ## Risk Assessment
 
@@ -195,10 +196,10 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | ~~Custom app icon missing~~ | ~~blocker~~ → **resolved** | Play listing icon produced; manifest icon update deferred to PLAY.2E | **Resolved PLAY.2B** |
 | ~~Feature graphic missing~~ | ~~blocker~~ → **resolved** | Play feature graphic produced per production plan (PLAY.2C) | **Resolved PLAY.2C** |
 | Phone screenshots inaccurate | ~~blocker~~ → **resolved** | Real device screenshots captured and validated (PLAY.2D3) | **Resolved PLAY.2D3** |
-| Data Safety form not completed | **blocker** | Draft answers exist but form not filled in Play Console | Complete Data Safety form before first upload |
-| Foreground Service declaration not submitted | **warning** | Draft text exists; Play may require video evidence for specialUse FGS | Prepare FGS declaration and optional demo video |
-| App content declarations not completed | **warning** | Content rating, ads, target audience not declared | Complete content declarations in Play Console |
-| Category and tags not decided | **warning** | No Play category documented yet | Decide category (likely Tools or Productivity) |
+| Data Safety form not completed | **warning** | Draft answers prepared in `GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md` | Owner enters in Play Console before upload |
+| Foreground Service declaration not submitted | **warning** | Declaration text prepared; demo video optional | Owner enters FGS declaration in Play Console |
+| App content declarations not completed | **warning** | Content rating, ads, target audience answers prepared | Owner completes questionnaire in Play Console |
+| Category and tags not decided | ~~warning~~ → **resolved** | Productivity category recommended; tags specified | **Resolved PLAY.3A** |
 | ~~Upload key uniqueness not confirmed~~ | ~~info~~ → **resolved** | Key `localfind-upload` not used for any other Play app; first app with this key | **Resolved PLAY.1C** |
 | `usesCleartextTraffic=true` | **info** | Required for local HTTP; may trigger Play review questions | Document justification in FGS/permissions declaration |
 | Foreground service type is `specialUse` | **info** | Requires stronger justification than `dataSync` or `location` | Prepare detailed FGS declaration with video evidence |

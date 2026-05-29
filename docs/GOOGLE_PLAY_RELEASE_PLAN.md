@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Status: PLAY.2 complete. Do not build AAB, upload to Google Play, or submit for review until each phase is explicitly approved by the owner.
+Status: PLAY.3A — Play Console form answers prepared. Do not build AAB, upload to Google Play, or submit for review until each phase is explicitly approved by the owner.
 
 ## Release path overview
 
@@ -26,7 +26,8 @@ PLAY.0: Readiness audit ✓
   │   ├─ PLAY.2E: Update AndroidManifest.xml icon reference ✓
   │   └─ PLAY.2F: Closeout — all assets committed ✓
   │
-  ├─ PLAY.3: Play Console forms
+  ├─ PLAY.3: Play Console forms (IN PROGRESS — PLAY.3A drafts prepared)
+  │   ├─ PLAY.3A: Prepare all form answers (this phase) ✓
   │   ├─ Complete Data Safety form
   │   ├─ Complete Foreground Service declaration
   │   ├─ Complete App content declarations
@@ -382,10 +383,10 @@ Goal: publish Local Find on Google Play.
 | 4 | Custom app icon missing | PLAY.2 | Open |
 | 5 | Feature graphic missing | PLAY.2 | Open |
 | 6 | Phone screenshots missing | PLAY.2 | Open |
-| 7 | Data Safety form not completed | PLAY.3 | Open |
-| 8 | Foreground Service declaration not submitted | PLAY.3 | Open |
-| 9 | App content declarations not completed | PLAY.3 | Open |
-| 10 | Category and tags not decided | PLAY.3 | Open |
+| 7 | Data Safety form not completed | PLAY.3 | Draft ready — owner to enter |
+| 8 | Foreground Service declaration not submitted | PLAY.3 | Draft ready — owner to enter |
+| 9 | App content declarations not completed | PLAY.3 | Draft ready — owner to enter |
+| 10 | Category and tags not decided | PLAY.3 | **Resolved PLAY.3A** |
 
 ## Post-Release Considerations
 

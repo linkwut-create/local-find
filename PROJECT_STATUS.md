@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.2 complete — all store assets and launcher icon ready.
+Status: PLAY.3A — Play Console form answers prepared.
 
 | Field | Value |
 |-------|-------|
@@ -66,15 +66,14 @@ Status: PLAY.2 complete — all store assets and launcher icon ready.
 | Release AAB signing | `hasReleaseSigningConfig` = true |
 | App icon (Play listing) | **Produced** — `store-assets/google-play/icon/local-find-play-icon-512.png` (512x512, ~214KB) |
 | Feature graphic | **Produced** — `store-assets/google-play/feature-graphic/local-find-feature-graphic-1024x500.png` (1024x500, ~536KB, no alpha) |
-| Launcher icon (manifest) | **Updated** — `@mipmap/ic_launcher` adaptive icon (replaced `@android:drawable/ic_menu_search`) |
-| Phone screenshots | **Real captures** — 4x 1080x2340 PNG (~437–693KB each), real Android device |
-| Asset directories | Created: `store-assets/google-play/icon/`, `feature-graphic/`, `screenshots/en-US/` |
-| Play Console forms | Not completed |
+| Launcher icon (manifest) | **Updated** — `@mipmap/ic_launcher` adaptive icon |
+| Phone screenshots | **Real captures** — 4x 1080x2340 PNG, real Android device |
+| Play Console forms | **Drafts prepared** — `docs/GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md` |
 | AAB built | No |
 | Upload to Play | No |
 | Submission | No |
 
-Next: PLAY.3 — Play Console forms (Data Safety, FGS declaration, content declarations).
+Next: Owner reviews `GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md`, then enters answers in Play Console.
 
 Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
@@ -93,9 +92,9 @@ Reference docs:
 | 4 | ~~Custom app icon (512x512) missing~~ | **RESOLVED — produced (PLAY.2B)** |
 | 5 | ~~Feature graphic (1024x500) missing~~ | **RESOLVED — produced (PLAY.2C)** |
 | 6 | ~~Phone screenshots inaccurate (AI-generated)~~ | **RESOLVED — real captures (PLAY.2D3)** |
-| 7 | Data Safety form not completed | Open |
-| 8 | Foreground Service declaration not submitted | Open |
-| 9 | App content declarations not completed | Open |
-| 10 | Category and tags not decided | Open |
+| 7 | Data Safety form not completed | Draft ready (PLAY.3A) |
+| 8 | Foreground Service declaration not submitted | Draft ready (PLAY.3A) |
+| 9 | App content declarations not completed | Draft ready (PLAY.3A) |
+| 10 | ~~Category and tags not decided~~ | **Resolved (PLAY.3A)** |
 
 No Android code, Chrome extension code, APK/AAB, signing files, or tags are changed as part of PLAY.2A.
