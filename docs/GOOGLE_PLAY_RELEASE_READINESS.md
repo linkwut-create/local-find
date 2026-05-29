@@ -166,10 +166,10 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | Privacy policy URL | **Available** | `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md` — reachability verified for CWS; same URL is candidate for Play |
 | Support email | Present | `linkwut@gmail.com` — same as confirmed for CWS |
 | GitHub repo URL | Present | `https://github.com/linkwut-create/local-find` |
-| Data Safety form | **Draft ready** | Answers prepared in `GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md` — owner to enter in Play Console |
-| Foreground Service declaration | **Draft ready** | Declaration text and justification in `GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md` |
-| App content declarations | **Draft ready** | Content rating, ads, target audience answers prepared |
-| Category and tags | **Decided** | Productivity recommended; tags: utilities, networking, device-finder |
+| Data Safety form | **Completed (draft)** | Owner entered in Play Console per PLAY.3A draft |
+| Foreground Service declaration | **Completed (draft)** | Declaration text entered in Play Console |
+| App content declarations | **Completed (draft)** | Content rating, ads, target audience all completed in Play Console |
+| Category and tags | **Completed** | Set in Play Console store listing |
 
 ## Existing Google Play Documentation
 
@@ -196,10 +196,10 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | ~~Custom app icon missing~~ | ~~blocker~~ → **resolved** | Play listing icon produced; manifest icon update deferred to PLAY.2E | **Resolved PLAY.2B** |
 | ~~Feature graphic missing~~ | ~~blocker~~ → **resolved** | Play feature graphic produced per production plan (PLAY.2C) | **Resolved PLAY.2C** |
 | Phone screenshots inaccurate | ~~blocker~~ → **resolved** | Real device screenshots captured and validated (PLAY.2D3) | **Resolved PLAY.2D3** |
-| Data Safety form not completed | **warning** | Draft answers prepared in `GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md` | Owner enters in Play Console before upload |
-| Foreground Service declaration not submitted | **warning** | Declaration text prepared; demo video optional | Owner enters FGS declaration in Play Console |
-| App content declarations not completed | **warning** | Content rating, ads, target audience answers prepared | Owner completes questionnaire in Play Console |
-| Category and tags not decided | ~~warning~~ → **resolved** | Productivity category recommended; tags specified | **Resolved PLAY.3A** |
+| Data Safety form not completed | ~~warning~~ → **resolved** | Owner entered all answers in Play Console (draft) | **Resolved PLAY.3B** |
+| Foreground Service declaration not submitted | ~~warning~~ → **resolved** | Declaration entered in Play Console (draft) | **Resolved PLAY.3B** |
+| App content declarations not completed | ~~warning~~ → **resolved** | Content rating, ads, target audience all completed | **Resolved PLAY.3B** |
+| Category and tags not decided | ~~warning~~ → **resolved** | Set in Play Console store listing | **Resolved PLAY.3A** |
 | ~~Upload key uniqueness not confirmed~~ | ~~info~~ → **resolved** | Key `localfind-upload` not used for any other Play app; first app with this key | **Resolved PLAY.1C** |
 | `usesCleartextTraffic=true` | **info** | Required for local HTTP; may trigger Play review questions | Document justification in FGS/permissions declaration |
 | Foreground service type is `specialUse` | **info** | Requires stronger justification than `dataSync` or `location` | Prepare detailed FGS declaration with video evidence |

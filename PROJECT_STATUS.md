@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.3A — Play Console form answers prepared.
+Status: PLAY.3B — Play Console forms completed by owner (draft).
 
 | Field | Value |
 |-------|-------|
@@ -68,12 +68,12 @@ Status: PLAY.3A — Play Console form answers prepared.
 | Feature graphic | **Produced** — `store-assets/google-play/feature-graphic/local-find-feature-graphic-1024x500.png` (1024x500, ~536KB, no alpha) |
 | Launcher icon (manifest) | **Updated** — `@mipmap/ic_launcher` adaptive icon |
 | Phone screenshots | **Real captures** — 4x 1080x2340 PNG, real Android device |
-| Play Console forms | **Drafts prepared** — `docs/GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md` |
+| Play Console forms | **Completed (draft)** — all sections filled and saved in Play Console; not submitted |
 | AAB built | No |
 | Upload to Play | No |
 | Submission | No |
 
-Next: Owner reviews `GOOGLE_PLAY_CONSOLE_FORMS_DRAFT.md`, then enters answers in Play Console.
+Next: PLAY.4 — build release AAB.
 
 Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
@@ -92,9 +92,9 @@ Reference docs:
 | 4 | ~~Custom app icon (512x512) missing~~ | **RESOLVED — produced (PLAY.2B)** |
 | 5 | ~~Feature graphic (1024x500) missing~~ | **RESOLVED — produced (PLAY.2C)** |
 | 6 | ~~Phone screenshots inaccurate (AI-generated)~~ | **RESOLVED — real captures (PLAY.2D3)** |
-| 7 | Data Safety form not completed | Draft ready (PLAY.3A) |
-| 8 | Foreground Service declaration not submitted | Draft ready (PLAY.3A) |
-| 9 | App content declarations not completed | Draft ready (PLAY.3A) |
+| 7 | ~~Data Safety form not completed~~ | **Resolved (PLAY.3B)** |
+| 8 | ~~Foreground Service declaration not submitted~~ | **Resolved (PLAY.3B)** |
+| 9 | ~~App content declarations not completed~~ | **Resolved (PLAY.3B)** |
 | 10 | ~~Category and tags not decided~~ | **Resolved (PLAY.3A)** |
 
 No Android code, Chrome extension code, APK/AAB, signing files, or tags are changed as part of PLAY.2A.
