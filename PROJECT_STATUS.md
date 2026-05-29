@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.2D-R — screenshots reviewed; BLOCKED for accuracy.
+Status: PLAY.2D2 — real screenshot capture TODO. Owner manual capture required.
 
 | Field | Value |
 |-------|-------|
@@ -67,14 +67,14 @@ Status: PLAY.2D-R — screenshots reviewed; BLOCKED for accuracy.
 | App icon (Play listing) | **Produced** — `store-assets/google-play/icon/local-find-play-icon-512.png` (512x512, ~214KB) |
 | Feature graphic | **Produced** — `store-assets/google-play/feature-graphic/local-find-feature-graphic-1024x500.png` (1024x500, ~536KB, no alpha) |
 | Launcher icon (manifest) | System default — not yet updated (deferred to PLAY.2E) |
-| Phone screenshots | **BLOCKED** — AI-generated screenshots inaccurate vs real app UI; must recapture from emulator/device (see `GOOGLE_PLAY_SCREENSHOT_REVIEW.md`) |
+| Phone screenshots | **BLOCKED — manual capture** — no Android SDK in env; owner must capture per `GOOGLE_PLAY_REAL_SCREENSHOT_CAPTURE_TODO.md` |
 | Asset directories | Created: `store-assets/google-play/icon/`, `feature-graphic/`, `screenshots/en-US/` |
 | Play Console forms | Not completed |
 | AAB built | No |
 | Upload to Play | No |
 | Submission | No |
 
-Next: PLAY.2D2 — capture real emulator or device screenshots.
+Next: Owner captures real screenshots per `docs/GOOGLE_PLAY_REAL_SCREENSHOT_CAPTURE_TODO.md`.
 
 Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`

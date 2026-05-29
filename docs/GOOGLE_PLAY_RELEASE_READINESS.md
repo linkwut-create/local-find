@@ -160,7 +160,7 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | Full description | Draft | `docs/GOOGLE_PLAY_LISTING_DRAFT.md` |
 | 512x512 app icon | **Produced** | `store-assets/google-play/icon/local-find-play-icon-512.png` (512x512, ~214KB) — committed 2026-05-29 |
 | 1024x500 feature graphic | **Produced** | `store-assets/google-play/feature-graphic/local-find-feature-graphic-1024x500.png` (1024x500, ~536KB, no alpha) — committed 2026-05-29 |
-| Phone screenshots | **BLOCKED** | 4 AI-generated PNGs exist but deemed inaccurate vs real app UI; must replace with real emulator/device captures (PLAY.2D2) |
+| Phone screenshots | **BLOCKED — manual capture** | AI screenshots exist but wrong; no Android SDK in env; owner must capture per `GOOGLE_PLAY_REAL_SCREENSHOT_CAPTURE_TODO.md` |
 | Short demo video | **Missing / optional** | May be required for foreground service declaration review |
 | Privacy policy URL | **Available** | `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md` — reachability verified for CWS; same URL is candidate for Play |
 | Support email | Present | `linkwut@gmail.com` — same as confirmed for CWS |
@@ -181,7 +181,8 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | `docs/GOOGLE_PLAY_LISTING_DRAFT.md` | Listing text, Data Safety draft, permissions table, FGS draft, closed testing checklist |
 | `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` | **PLAY.1** — account type, production access, signing readiness |
 | `docs/GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md` | **PLAY.2A-D** — asset production targets, directory structure, alt texts |
-| `docs/GOOGLE_PLAY_SCREENSHOT_REVIEW.md` | **NEW (PLAY.2D-R)** — accuracy review of AI-generated screenshots; verdict BLOCKED |
+| `docs/GOOGLE_PLAY_SCREENSHOT_REVIEW.md` | **PLAY.2D-R** — accuracy review of AI-generated screenshots; verdict BLOCKED |
+| `docs/GOOGLE_PLAY_REAL_SCREENSHOT_CAPTURE_TODO.md` | **NEW (PLAY.2D2)** — manual capture instructions for owner |
 
 ## Risk Assessment
 

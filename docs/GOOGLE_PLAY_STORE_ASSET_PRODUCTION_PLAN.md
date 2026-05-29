@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Phase: PLAY.2D-R — Screenshots reviewed. Accuracy BLOCKED; real captures needed (PLAY.2D2).
+Phase: PLAY.2D2 — Real screenshot capture TODO. Cannot auto-capture (no Android SDK). Owner must capture manually.
 
 Status: Draft targets. Do not generate final PNG/JPEG, do not modify AndroidManifest.xml, do not build AAB until each production step is explicitly approved.
 
@@ -170,7 +170,7 @@ Maximum 140 characters per asset. Used for Play Console accessibility fields.
 |-------|--------|---------------|
 | PLAY.2B | Generate/produce app icon (512x512 PNG) | ✓ DONE — `local-find-play-icon-512.png` committed (2026-05-29) |
 | PLAY.2C | Generate/produce feature graphic (1024x500) | ✓ DONE — `local-find-feature-graphic-1024x500.png` committed (2026-05-29) |
-| PLAY.2D | Capture/produce phone screenshots (4x PNG) | **BLOCKED (PLAY.2D-R)** — AI screenshots inaccurate; replace with real emulator/device captures |
+| PLAY.2D | Capture/produce phone screenshots (4x PNG) | **BLOCKED — owner manual capture required** (see `GOOGLE_PLAY_REAL_SCREENSHOT_CAPTURE_TODO.md`) |
 | PLAY.2E | Update AndroidManifest.xml icon references + add adaptive icon resources | All assets produced and committed |
 | PLAY.2F | PLAY.2 closeout: update docs, commit all assets | All 4 assets in place |
 
