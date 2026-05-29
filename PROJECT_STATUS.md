@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.1 in progress — account and signing confirmation.
+Status: PLAY.2A — asset production targets prepared. No final images generated.
 
 | Field | Value |
 |-------|-------|
@@ -54,7 +54,7 @@ Status: PLAY.1 in progress — account and signing confirmation.
 | `versionName` | `"1.0"` |
 | `targetSdk` | `35` |
 | Developer account | Registered, verified by owner |
-| Account type | **Personal** — confirmed by owner (2026-05-29) |
+| Account type | **Personal** — confirmed (2026-05-29) |
 | Production access | Not directly available — requires closed testing + application |
 | Production path | App setup → closed testing (12+ testers, 14+ days) → apply for production |
 | Closed testing required | **Yes — confirmed** (Play Console Dashboard) |
@@ -64,32 +64,37 @@ Status: PLAY.1 in progress — account and signing confirmation.
 | Keystore file | Present (2796 bytes, created 2026-05-24) |
 | Signing variables | All 4 present in `local.properties` (gitignored) |
 | Release AAB signing | `hasReleaseSigningConfig` = true |
-| App icon | System default — custom icon needed |
+| App icon | System default — custom icon needed (targets documented) |
+| Feature graphic | Not produced (targets documented) |
+| Phone screenshots | Not captured (targets documented) |
+| Asset directories | Created: `store-assets/google-play/icon/`, `feature-graphic/`, `screenshots/en-US/` |
 | Play Console forms | Not completed |
 | AAB built | No |
 | Upload to Play | No |
 | Submission | No |
 
-Next: owner to confirm account type and production access in Play Console.
+Next: owner approves asset concept direction, then PLAY.2B (app icon production).
 
 Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
 - `docs/GOOGLE_PLAY_RELEASE_PLAN.md`
-- `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` (new)
+- `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md`
+- `docs/GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md` (new)
 
 ### Google Play Release Blockers
 
 | # | Blocker | Status |
 |---|---------|--------|
-| 1 | ~~Account type not confirmed (personal vs organization)~~ | **RESOLVED — Personal** |
-| 2 | ~~Production access path not confirmed (closed testing required?)~~ | **RESOLVED — closed testing required** |
+| 1 | ~~Account type not confirmed~~ | **RESOLVED — Personal** |
+| 2 | ~~Production access path not confirmed~~ | **RESOLVED — closed testing required** |
 | 3 | ~~Upload keystore existence not confirmed~~ | **RESOLVED (PLAY.1)** |
-| 4 | Custom app icon (512x512) missing | Open |
-| 5 | Feature graphic (1024x500) missing | Open |
-| 6 | Phone screenshots missing | Open |
+| — | Upload key uniqueness owner confirmation | **TODO (owner)** |
+| 4 | Custom app icon (512x512) missing | Target defined; not produced |
+| 5 | Feature graphic (1024x500) missing | Target defined; not produced |
+| 6 | Phone screenshots missing | Target defined; not captured |
 | 7 | Data Safety form not completed | Open |
 | 8 | Foreground Service declaration not submitted | Open |
 | 9 | App content declarations not completed | Open |
 | 10 | Category and tags not decided | Open |
 
-No Android code, Chrome extension code, APK/AAB, signing files, or tags are changed as part of PLAY.1.
+No Android code, Chrome extension code, APK/AAB, signing files, or tags are changed as part of PLAY.2A.

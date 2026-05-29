@@ -2,25 +2,26 @@
 
 Plan date: 2026-05-29
 
-Status: PLAY.1 in progress. Do not build AAB, upload to Google Play, or submit for review until each phase is explicitly approved by the owner.
+Status: PLAY.2A — asset production targets prepared. Do not build AAB, upload to Google Play, or submit for review until each phase is explicitly approved by the owner.
 
 ## Release path overview
 
 ```
 PLAY.0: Readiness audit ✓
   │
-  ├─ PLAY.1: Account and signing confirmation (IN PROGRESS)
+  ├─ PLAY.1: Account and signing confirmation ✓
   │   ├─ Confirm account type (personal / organization) → ✓ Personal
   │   ├─ Confirm production access requirements → ✓ Closed testing required
   │   ├─ Confirm upload keystore exists and signing variables are set → ✓ DONE
-  │   └─ Document findings → IN PROGRESS
+  │   └─ Document findings → ✓ DONE
   │
-  ├─ PLAY.2: Store assets
-  │   ├─ Create 512x512 custom app icon
-  │   ├─ Create 1024x500 feature graphic
-  │   ├─ Capture phone screenshots (minimum 4)
-  │   ├─ Update AndroidManifest.xml icon reference
-  │   └─ Commit assets (no secrets)
+  ├─ PLAY.2: Store assets (IN PROGRESS — PLAY.2A targets defined)
+  │   ├─ PLAY.2A: Define asset production targets and directory structure ✓
+  │   ├─ PLAY.2B: Create 512x512 custom app icon
+  │   ├─ PLAY.2C: Create 1024x500 feature graphic
+  │   ├─ PLAY.2D: Capture phone screenshots (minimum 4)
+  │   ├─ PLAY.2E: Update AndroidManifest.xml icon reference
+  │   └─ PLAY.2F: Closeout — commit all assets (no secrets)
   │
   ├─ PLAY.3: Play Console forms
   │   ├─ Complete Data Safety form
@@ -73,9 +74,9 @@ Deliverables:
 
 No code changes, no builds, no uploads.
 
-## PLAY.1 (current): Account and Signing Confirmation
+## PLAY.1: Account and Signing Confirmation
 
-Status: **IN PROGRESS**
+Status: **COMPLETE**
 
 Goal: resolve the three blocker unknowns identified in the readiness audit.
 
@@ -129,46 +130,53 @@ Goal: resolve the three blocker unknowns identified in the readiness audit.
 - Do NOT commit passwords or key material.
 - Do NOT modify Android code.
 
-## PLAY.2: Store Assets
+## PLAY.2 (current): Store Assets
 
 Goal: produce all required Play Store graphic assets.
 
-### Tasks
+### PLAY.2A: Asset Production Targets (this sub-phase)
 
-1. **Custom app icon (512x512)**
-   - Design a custom app icon per guidance in `GOOGLE_PLAY_ASSETS_PLAN.md` (phone + search/radar/flash cue, no cloud/GPS/anti-theft imagery, no text).
-   - Export as 512x512 PNG.
-   - Create adaptive icon layers for Android manifest update.
-   - Update `AndroidManifest.xml`: replace `@android:drawable/ic_menu_search` with custom icon references.
-   - Source file saved for future edits.
+Status: **IN PROGRESS**
 
-2. **Feature graphic (1024x500)**
-   - Produce per concept in `GOOGLE_PLAY_ASSETS_PLAN.md`.
-   - English copy only (e.g., "Find your phone on your local network").
-   - No Play Store badge, ranking, price, or install call-to-action.
+- [x] Define production targets for all 4 required assets.
+- [x] Create placeholder directory structure under `store-assets/google-play/`.
+- [x] Write alt text drafts for accessibility.
+- [x] Document per-asset concept, format, constraints, avoid list.
+- [x] Define privacy checklist for screenshots.
+- [x] Create `docs/GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md`.
+- [ ] Commit PLAY.2A docs.
 
-3. **Phone screenshots (minimum 4)**
-   - Capture per `GOOGLE_PLAY_ASSET_CAPTURE_GUIDE.md`.
-   - Required set:
-     | # | Screen | Purpose |
-     |---|--------|---------|
-     | 1 | Find Me / service start | Shows phone-side service start |
-     | 2 | Controller / connected device | Shows paired controller connection |
-     | 3 | QR pairing scanner | Shows camera-based pairing |
-     | 4 | Language settings | Shows language selection |
-   - Use English screenshots for the default listing.
-   - Privacy review: no real IP, no real device name, no tokens, no personal notifications.
-   - Save final PNGs to `store-assets/google-play/screenshots/en-US/`.
+Deliverable: `docs/GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md`
 
-4. **Optional: demo video**
-   - May be required for foreground service declaration review.
-   - Decision deferred to PLAY.3 when FGS declaration is prepared.
+### PLAY.2B: App Icon
 
-### Deliverables
-- Custom app icon (committed to `android/app/src/main/res/` and `store-assets/google-play/`)
-- Feature graphic (committed to `store-assets/google-play/`)
-- Phone screenshots (committed to `store-assets/google-play/screenshots/en-US/`)
-- Updated `AndroidManifest.xml` with custom icon references
+- Produce 512x512 PNG per targets in `GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md`.
+- Commit to `store-assets/google-play/icon/`.
+- Do NOT modify AndroidManifest.xml yet (deferred to PLAY.2E).
+
+### PLAY.2C: Feature Graphic
+
+- Produce 1024x500 PNG/JPEG per targets.
+- Commit to `store-assets/google-play/feature-graphic/`.
+
+### PLAY.2D: Phone Screenshots
+
+- Capture minimum 4 screenshots per targets.
+- English screenshots first → `store-assets/google-play/screenshots/en-US/`.
+- Privacy review pass required before commit.
+
+### PLAY.2E: Manifest Icon Update
+
+- Replace `@android:drawable/ic_menu_search` with custom icon references.
+- Add adaptive icon layers (`ic_launcher.xml`, `ic_launcher_round.xml`).
+- Commit manifest change with icon resources.
+
+### PLAY.2F: PLAY.2 Closeout
+
+- All 4 assets committed.
+- Manifest icon updated.
+- Docs updated.
+- Commit: `docs: add Google Play store assets`.
 
 ### Constraints
 - Do NOT modify Chrome extension code.

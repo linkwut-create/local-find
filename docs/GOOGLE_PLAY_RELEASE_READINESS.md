@@ -1,6 +1,6 @@
 # Google Play Release Readiness Audit
 
-Audit date: 2026-05-29 (updated PLAY.1)
+Audit date: 2026-05-29 (updated PLAY.2A)
 
 Scope: read-only Google Play developer account, Android app configuration, and release artifact readiness audit for `D:\local-find`.
 
@@ -158,9 +158,9 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | App name | Present | `Local Find` |
 | Short description | Draft | `docs/GOOGLE_PLAY_LISTING_DRAFT.md` |
 | Full description | Draft | `docs/GOOGLE_PLAY_LISTING_DRAFT.md` |
-| 512x512 app icon | **Missing** | Current manifest uses system default `ic_menu_search`; custom icon not committed |
-| 1024x500 feature graphic | **Missing** | Concept direction documented in `GOOGLE_PLAY_ASSETS_PLAN.md`, not produced |
-| Phone screenshots | **Missing** | Plan exists in `GOOGLE_PLAY_ASSET_CAPTURE_GUIDE.md`, not captured |
+| 512x512 app icon | **Missing** | Target defined in `GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md`; not produced |
+| 1024x500 feature graphic | **Missing** | Target defined; not produced |
+| Phone screenshots | **Missing** | Target defined; not captured |
 | Short demo video | **Missing / optional** | May be required for foreground service declaration review |
 | Privacy policy URL | **Available** | `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md` — reachability verified for CWS; same URL is candidate for Play |
 | Support email | Present | `linkwut@gmail.com` — same as confirmed for CWS |
@@ -179,7 +179,8 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | `docs/GOOGLE_PLAY_ASSET_PRODUCTION_NOTES.md` | Production notes and frozen release boundary |
 | `docs/GOOGLE_PLAY_ASSET_VALIDATION.md` | Asset validation checklist |
 | `docs/GOOGLE_PLAY_LISTING_DRAFT.md` | Listing text, Data Safety draft, permissions table, FGS draft, closed testing checklist |
-| `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` | **NEW (PLAY.1)** — account type, production access, signing readiness |
+| `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` | **PLAY.1** — account type, production access, signing readiness |
+| `docs/GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md` | **NEW (PLAY.2A)** — asset production targets, directory structure, alt texts |
 
 ## Risk Assessment
 
@@ -188,9 +189,9 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | ~~Google Play account type not confirmed~~ | ~~blocker~~ → **resolved** | Account type confirmed as Personal by owner (2026-05-29) | **Resolved PLAY.1A** |
 | Production access path not confirmed | ~~blocker~~ → **resolved** | Play Console Dashboard confirms: closed testing required, then apply for production | **Resolved PLAY.1B** |
 | ~~Upload keystore existence not confirmed~~ | ~~blocker~~ → **resolved** | Keystore file exists at configured path; all 4 signing variables set; `local.properties` gitignored | **Resolved PLAY.1** |
-| Custom app icon missing | **blocker** | Manifest uses `@android:drawable/ic_menu_search` (system default) | Create 512x512 custom app icon for Play, replace manifest icon reference |
-| Feature graphic missing | **blocker** | Play requires 1024x500 feature graphic | Produce feature graphic from concept in `GOOGLE_PLAY_ASSETS_PLAN.md` |
-| Phone screenshots missing | **blocker** | Play requires phone screenshots | Capture per `GOOGLE_PLAY_ASSET_CAPTURE_GUIDE.md` |
+| Custom app icon missing | **blocker** | Manifest uses `@android:drawable/ic_menu_search` (system default) | Produce per `GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md` (PLAY.2B) |
+| Feature graphic missing | **blocker** | Play requires 1024x500 feature graphic | Produce per production plan (PLAY.2C) |
+| Phone screenshots missing | **blocker** | Play requires phone screenshots | Capture per production plan (PLAY.2D) |
 | Data Safety form not completed | **blocker** | Draft answers exist but form not filled in Play Console | Complete Data Safety form before first upload |
 | Foreground Service declaration not submitted | **warning** | Draft text exists; Play may require video evidence for specialUse FGS | Prepare FGS declaration and optional demo video |
 | App content declarations not completed | **warning** | Content rating, ads, target audience not declared | Complete content declarations in Play Console |
