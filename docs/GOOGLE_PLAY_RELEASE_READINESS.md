@@ -160,7 +160,7 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | Full description | Draft | `docs/GOOGLE_PLAY_LISTING_DRAFT.md` |
 | 512x512 app icon | **Produced** | `store-assets/google-play/icon/local-find-play-icon-512.png` (512x512, ~214KB) — committed 2026-05-29 |
 | 1024x500 feature graphic | **Produced** | `store-assets/google-play/feature-graphic/local-find-feature-graphic-1024x500.png` (1024x500, ~536KB, no alpha) — committed 2026-05-29 |
-| Phone screenshots | **BLOCKED — manual capture** | AI screenshots exist but wrong; no Android SDK in env; owner must capture per `GOOGLE_PLAY_REAL_SCREENSHOT_CAPTURE_TODO.md` |
+| Phone screenshots | **Real captures** | 4x 1080x2340 PNG, real Android device screenshots — committed 2026-05-29 (PLAY.2D3) |
 | Short demo video | **Missing / optional** | May be required for foreground service declaration review |
 | Privacy policy URL | **Available** | `https://github.com/linkwut-create/local-find/blob/master/PRIVACY.md` — reachability verified for CWS; same URL is candidate for Play |
 | Support email | Present | `linkwut@gmail.com` — same as confirmed for CWS |
@@ -193,7 +193,7 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 | ~~Upload keystore existence not confirmed~~ | ~~blocker~~ → **resolved** | Keystore file exists at configured path; all 4 signing variables set; `local.properties` gitignored | **Resolved PLAY.1** |
 | ~~Custom app icon missing~~ | ~~blocker~~ → **resolved** | Play listing icon produced; manifest icon update deferred to PLAY.2E | **Resolved PLAY.2B** |
 | ~~Feature graphic missing~~ | ~~blocker~~ → **resolved** | Play feature graphic produced per production plan (PLAY.2C) | **Resolved PLAY.2C** |
-| Phone screenshots inaccurate | **blocker** | AI-generated screenshots do not match real app UI (see `GOOGLE_PLAY_SCREENSHOT_REVIEW.md`) | Replace with real emulator/device screenshots (PLAY.2D2) |
+| Phone screenshots inaccurate | ~~blocker~~ → **resolved** | Real device screenshots captured and validated (PLAY.2D3) | **Resolved PLAY.2D3** |
 | Data Safety form not completed | **blocker** | Draft answers exist but form not filled in Play Console | Complete Data Safety form before first upload |
 | Foreground Service declaration not submitted | **warning** | Draft text exists; Play may require video evidence for specialUse FGS | Prepare FGS declaration and optional demo video |
 | App content declarations not completed | **warning** | Content rating, ads, target audience not declared | Complete content declarations in Play Console |

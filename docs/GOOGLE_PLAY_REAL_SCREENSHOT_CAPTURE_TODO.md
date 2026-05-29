@@ -2,7 +2,7 @@
 
 Created: 2026-05-29
 
-Status: **BLOCKED** — cannot auto-capture in current environment. Owner must capture manually.
+Status: **DONE (PLAY.2D3)** — Real screenshots captured, validated, and committed by owner (2026-05-29).
 
 ## Why this exists
 

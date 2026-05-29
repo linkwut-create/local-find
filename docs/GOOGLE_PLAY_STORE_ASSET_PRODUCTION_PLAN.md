@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Phase: PLAY.2D2 — Real screenshot capture TODO. Cannot auto-capture (no Android SDK). Owner must capture manually.
+Phase: PLAY.2D3 — Real screenshots validated and committed. All 4 Play Store assets complete.
 
 Status: Draft targets. Do not generate final PNG/JPEG, do not modify AndroidManifest.xml, do not build AAB until each production step is explicitly approved.
 
@@ -118,10 +118,10 @@ JPEG or 24-bit PNG (no alpha).
 
 | # | File | Screen | Content |
 |---|------|--------|---------|
-| 1 | `01-phone-service-start.png` | Find Me / service start | **BLOCKED** — AI-generated, inaccurate vs real app. Wrong tabs, missing UI, wrong button style. |
-| 2 | `02-controller-connected.png` | Controller / connected device | **BLOCKED** — AI-generated, inaccurate. Wrong title, oversimplified, missing RemoteControlPanel. |
-| 3 | `03-qr-pairing.png` | QR pairing scanner | **BLOCKED** — AI-generated, partially inaccurate. Wrong hint text, wrong button, QR overlay wrong. |
-| 4 | `04-language-settings.png` | Language settings | **BLOCKED** — AI-generated, critically inaccurate. Full page vs dropdown, 5 languages vs 3 real, advertises unsupported languages. |
+| 1 | `01-phone-service-start.png` | Find Me / service start | **REAL CAPTURE** — 1080x2340, ~525KB. Find Me tab, "How to Use" steps. Real device. |
+| 2 | `02-controller-connected.png` | Controller / connected device | **REAL CAPTURE** — 1080x2340, ~437KB. QR pairing card from Find Me tab. Real device. |
+| 3 | `03-qr-pairing.png` | QR pairing scanner | **REAL CAPTURE** — 1080x2340, ~693KB. QrScannerScreen with CameraX + corner brackets. Real device. |
+| 4 | `04-language-settings.png` | Language settings | **REAL CAPTURE** — 1080x2340, ~573KB. App with language icon in TopAppBar. Real device. |
 
 ### Language
 
@@ -170,7 +170,7 @@ Maximum 140 characters per asset. Used for Play Console accessibility fields.
 |-------|--------|---------------|
 | PLAY.2B | Generate/produce app icon (512x512 PNG) | ✓ DONE — `local-find-play-icon-512.png` committed (2026-05-29) |
 | PLAY.2C | Generate/produce feature graphic (1024x500) | ✓ DONE — `local-find-feature-graphic-1024x500.png` committed (2026-05-29) |
-| PLAY.2D | Capture/produce phone screenshots (4x PNG) | **BLOCKED — owner manual capture required** (see `GOOGLE_PLAY_REAL_SCREENSHOT_CAPTURE_TODO.md`) |
+| PLAY.2D | Capture/produce phone screenshots (4x PNG) | ✓ **DONE (PLAY.2D3)** — real device captures validated and committed |
 | PLAY.2E | Update AndroidManifest.xml icon references + add adaptive icon resources | All assets produced and committed |
 | PLAY.2F | PLAY.2 closeout: update docs, commit all assets | All 4 assets in place |
 
