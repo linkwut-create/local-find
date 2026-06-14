@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Status: **PLAY.7A - Production access approved.**
+Status: **PLAY.7B-FIX16K - 16 KB compatible `versionCode 2` AAB built and verified locally; not uploaded.**
 
 Current release boundary:
 
@@ -11,8 +11,10 @@ Current release boundary:
 - No critical crashes or blocking bugs reported.
 - Future improvements: onboarding, help/FAQ, store listing, and feedback/rating entry.
 - The app can now create a production release.
-- Next phase: **PLAY.7B - create the production release using the existing AAB with `versionCode 1`.**
-- Do not upload a duplicate AAB. Prefer promoting the existing closed testing release or adding the existing bundle from the artifact library.
+- The existing `versionCode 1` AAB is blocked because it does not support 16 KB memory page sizes.
+- A new signed AAB was built with `versionCode 2`, `versionName 1.0.1`, AGP 8.7.3, and CameraX 1.5.3.
+- The new AAB passed ELF, bundle configuration, signature, and 16 KB zip alignment checks.
+- Do not upload or create a production release until the next phase is explicitly approved.
 
 See `docs/GOOGLE_PLAY_PRODUCTION_ACCESS_APPLICATION.md`.
 
@@ -362,14 +364,15 @@ Status: **COMPLETE - production access approved (PLAY.7A).**
 
 Goal: publish Local Find on Google Play.
 
-Current status: **PLAY.7A COMPLETE - production access approved.**
+Current status: **PLAY.7B-FIX16K COMPLETE - replacement AAB built locally; not uploaded.**
 
-Next phase: **PLAY.7B - create the production release using the existing AAB with `versionCode 1`.**
+The original PLAY.7B plan to reuse `versionCode 1` is cancelled because Google Play rejected that bundle for missing 16 KB memory page-size support.
 
-- Do not build or upload a duplicate AAB.
-- Prefer promoting the existing closed testing release to production.
-- If promotion is unavailable, add the existing bundle from the Play Console artifact library.
-- Do not create or submit the production release until the owner explicitly approves PLAY.7B.
+- Use the new signed `versionCode 2` / `versionName 1.0.1` AAB for the next production release attempt.
+- Local AAB path: `android/app/build/outputs/bundle/release/app-release.aab`.
+- SHA256: `447178CCCC6AE1DEAF26320A35E48338CD5D0127CF1C427140DDA527D19ECBFC`.
+- Do not upload or submit until the owner explicitly approves the next production release phase.
+- Do not create a production release as part of PLAY.7B-FIX16K.
 
 ### Prerequisites
 - PLAY.6 complete (closed testing required, if applicable) OR confirmed not required.

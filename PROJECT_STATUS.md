@@ -45,13 +45,13 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: **PLAY.7A - Production access approved.**
+Status: **PLAY.7B-FIX16K - 16 KB compatible replacement AAB built locally; not uploaded.**
 
 | Field | Value |
 |-------|-------|
 | `applicationId` | `io.github.linkwutcreate.localfind` |
-| `versionCode` | `1` |
-| `versionName` | `"1.0"` |
+| `versionCode` | `2` |
+| `versionName` | `"1.0.1"` |
 | `targetSdk` | `35` |
 | Developer account | Registered, verified by owner |
 | Account type | **Personal** — confirmed (2026-05-29) |
@@ -66,17 +66,21 @@ Status: **PLAY.7A - Production access approved.**
 | Upload keystore | **Confirmed** — exists, all 4 signing variables set |
 | Key alias | `localfind-upload` |
 | Release AAB signing | `hasReleaseSigningConfig` = true |
-| **Release AAB** | **Uploaded** — internal testing track, `1.0-internal-1`, installable |
-| AAB SHA256 | `DD86A3466DDFF385757FF4B7D8679ECF59CD9289898C4D21C78B201DFC7B4341` |
+| Previous AAB | `versionCode 1` — uploaded to testing, blocked for production by 16 KB page-size requirement |
+| Replacement AAB | **Built and signed locally; not uploaded** |
+| Replacement AAB path | `android/app/build/outputs/bundle/release/app-release.aab` |
+| Replacement AAB size | 20,484,249 bytes |
+| Replacement AAB SHA256 | `447178CCCC6AE1DEAF26320A35E48338CD5D0127CF1C427140DDA527D19ECBFC` |
+| 16 KB verification | **PASS** — 64-bit ELF alignment, `PAGE_ALIGNMENT_16K`, and `zipalign -P 16` |
 | Internal testing | **Smoke test PASS** — 8/8 checks passed, no blocker |
 | Play Console forms | **Completed (draft)** — not submitted |
-| Production release | **Not created** - planned for PLAY.7B using existing AAB / `versionCode 1` |
-| AAB reuse rule | Do not upload a duplicate AAB; prefer promotion or artifact library reuse |
+| Production release | **Not created** — waiting for approval to upload `versionCode 2` |
 
-Next: **PLAY.7B - create production release using the existing AAB with `versionCode 1`.**
+Next: obtain explicit approval before uploading the `versionCode 2` AAB or creating the production release.
 
 Reference docs:
 - `docs/GOOGLE_PLAY_PRODUCTION_ACCESS_APPLICATION.md`
+- `docs/GOOGLE_PLAY_AAB_BUILD_AUDIT.md`
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
 - `docs/GOOGLE_PLAY_RELEASE_PLAN.md`
 - `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md`
