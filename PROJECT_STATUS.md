@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: **PLAY.6D - Production access application submitted; result pending.**
+Status: **PLAY.7A - Production access approved.**
 
 | Field | Value |
 |-------|-------|
@@ -55,8 +55,8 @@ Status: **PLAY.6D - Production access application submitted; result pending.**
 | `targetSdk` | `35` |
 | Developer account | Registered, verified by owner |
 | Account type | **Personal** — confirmed (2026-05-29) |
-| Production access | **Application submitted; Google decision pending** |
-| Production path | App setup -> closed testing -> production access application -> decision |
+| Production access | **Approved** - app can create a production release |
+| Production path | App setup -> closed testing -> production access application -> approved |
 | Closed testing required | **Satisfied** - 12+ testers for at least 14 days |
 | Closed testing release | **Published** |
 | Testers Community report | **Available** |
@@ -70,9 +70,10 @@ Status: **PLAY.6D - Production access application submitted; result pending.**
 | AAB SHA256 | `DD86A3466DDFF385757FF4B7D8679ECF59CD9289898C4D21C78B201DFC7B4341` |
 | Internal testing | **Smoke test PASS** — 8/8 checks passed, no blocker |
 | Play Console forms | **Completed (draft)** — not submitted |
-| Production release | **Not created** - waiting for production access decision |
+| Production release | **Not created** - planned for PLAY.7B using existing AAB / `versionCode 1` |
+| AAB reuse rule | Do not upload a duplicate AAB; prefer promotion or artifact library reuse |
 
-Next: **PLAY.7 - wait for production access decision.**
+Next: **PLAY.7B - create production release using the existing AAB with `versionCode 1`.**
 
 Reference docs:
 - `docs/GOOGLE_PLAY_PRODUCTION_ACCESS_APPLICATION.md`

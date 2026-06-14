@@ -2,9 +2,9 @@
 
 Record date: 2026-06-14
 
-Phase: PLAY.6D
+Phase: PLAY.7A
 
-Status: **Production access application submitted; Google decision pending.**
+Status: **Production access approved.**
 
 ## Closed Testing Requirement
 
@@ -34,15 +34,18 @@ These future improvements are not blockers for the submitted production access a
 
 ## Result
 
-Production access result: **Pending**
+Production access result: **Approved**
 
-No code, release artifact, or Play Console production release changes should be made while waiting for Google's decision unless Google requests changes.
+Play Console confirms that Local Find can now create a production release.
 
 ## Next Phase
 
-**PLAY.7: Wait for production access decision.**
+**PLAY.7B: Create the production release using the existing AAB with `versionCode 1`.**
 
-Do not create a production release until production access is granted and the owner explicitly approves the release.
+- Do not build or upload a duplicate AAB.
+- Prefer promoting the existing closed testing release to production.
+- If promotion is unavailable, add the existing bundle from the Play Console artifact library.
+- Production release creation remains a separate phase and requires explicit owner approval.
 
 ## Scope Confirmation
 

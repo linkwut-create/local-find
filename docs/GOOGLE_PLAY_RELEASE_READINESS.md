@@ -1,17 +1,19 @@
 # Google Play Release Readiness Audit
 
-## PLAY.6D Production Access Application
+## PLAY.7A Production Access Approval
 
 Record date: 2026-06-14
 
-Status: **Production access application submitted; result pending.**
+Status: **Production access approved.**
 
 - Closed testing requirement satisfied: a closed testing release was published, at least 12 testers participated, and at least 12 testers participated for at least 14 days.
 - Testers Community testing report is available and was used as a reference.
 - Feedback reported no critical crashes or blocking bugs.
 - Future improvements: onboarding, help/FAQ, store listing, and a feedback/rating entry point.
 - No production release has been created.
-- Next phase: **PLAY.7 - wait for production access decision.**
+- The app can now create a production release.
+- Next phase: **PLAY.7B - create the production release using the existing AAB with `versionCode 1`.**
+- Do not upload a duplicate AAB. Prefer promoting the existing closed testing release or adding the existing bundle from the artifact library.
 
 Application details: `docs/GOOGLE_PLAY_PRODUCTION_ACCESS_APPLICATION.md`.
 
@@ -66,7 +68,7 @@ Repository is clean except for untracked `screenshots-draft/`. Android I.0 WIP s
 | Google Play developer account | Registered |
 | Account verification | Verified by owner |
 | Account type | **Personal** — confirmed by owner via Play Console (2026-05-29) |
-| Production access | **Not directly available** — requires closed testing + application (confirmed via Play Console Dashboard, 2026-05-29) |
+| Production access | **Approved** — app can create a production release (confirmed 2026-06-14) |
 
 ### Account type confirmed: Personal
 
@@ -80,7 +82,7 @@ Owner confirmed via Play Console > Developer Account > Account details that the 
 
 1. ~~Confirm Google Play developer account type (personal or organization).~~ **DONE: Personal.**
 2. ~~Confirm whether production access requires closed testing.~~ **DONE: Yes — closed testing required, then apply for production.**
-3. Confirm that the account can create internal testing, closed testing, and production tracks. (Internal testing confirmed available.)
+3. ~~Confirm that the account can create internal testing, closed testing, and production tracks.~~ **DONE: production access approved.**
 
 ## Android App Configuration
 
@@ -243,7 +245,7 @@ Key dependencies from `android/gradle/libs.versions.toml`:
 
 - **Signing config**: Confirmed. All 4 variables set, keystore exists, `hasReleaseSigningConfig` = true.
 - **Account type**: **Personal** — confirmed by owner via Play Console (2026-05-29).
-- **Production access**: Not directly available — requires closed testing (12+ testers, 14+ days) → apply for production. Confirmed via Play Console Dashboard (2026-05-29).
+- **Production access**: **Approved** after satisfying closed testing and submitting the production access application (2026-06-14).
 - **Internal testing**: Available as first testing path.
 - Detailed account status tracked in `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md`.
 

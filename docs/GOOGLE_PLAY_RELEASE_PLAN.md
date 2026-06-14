@@ -2,7 +2,7 @@
 
 Plan date: 2026-05-29
 
-Status: **PLAY.6D - Production access application submitted; Google decision pending.**
+Status: **PLAY.7A - Production access approved.**
 
 Current release boundary:
 
@@ -10,8 +10,9 @@ Current release boundary:
 - Testers Community report available.
 - No critical crashes or blocking bugs reported.
 - Future improvements: onboarding, help/FAQ, store listing, and feedback/rating entry.
-- Do not create a production release while production access is pending.
-- Next phase: **PLAY.7 - wait for production access decision.**
+- The app can now create a production release.
+- Next phase: **PLAY.7B - create the production release using the existing AAB with `versionCode 1`.**
+- Do not upload a duplicate AAB. Prefer promoting the existing closed testing release or adding the existing bundle from the artifact library.
 
 See `docs/GOOGLE_PLAY_PRODUCTION_ACCESS_APPLICATION.md`.
 
@@ -130,14 +131,14 @@ Goal: resolve the three blocker unknowns identified in the readiness audit.
 
 **Account type**: **Personal** — confirmed by owner via Play Console (2026-05-29).
 
-**Production access**: TODO — owner to confirm in Play Console.
+**Production access**: **Approved** after closed testing and production access application review (2026-06-14).
 
 ### Deliverables
 - [x] `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md` (created)
 - [x] `GOOGLE_PLAY_RELEASE_READINESS.md` (updated with signing findings)
 - [x] `GOOGLE_PLAY_RELEASE_PLAN.md` (this document, updated)
-- [ ] `PROJECT_STATUS.md` (pending update)
-- [ ] Owner to fill in account type and production access TODOs
+- [x] `PROJECT_STATUS.md` (updated)
+- [x] Account type and production access confirmed
 
 ### Constraints
 - Do NOT commit `local.properties`.
@@ -246,7 +247,7 @@ Goal: complete all required Play Console declarations before first upload.
 Goal: produce a signed release AAB for Play upload.
 
 ### Prerequisites
-- PLAY.1 complete (signing confirmed ✓, account type and production access TODO).
+- PLAY.1 complete (signing, account type, and production access path confirmed).
 - PLAY.2 complete (icon updated in manifest).
 - PLAY.3 complete (forms ready).
 
@@ -315,7 +316,7 @@ Goal: smoke test the release AAB via internal testing track before broader expos
 
 Goal: satisfy Google Play closed testing requirement before production access.
 
-Status: **COMPLETE - production access application submitted (PLAY.6D).**
+Status: **COMPLETE - production access approved (PLAY.7A).**
 
 ### Prerequisites
 - PLAY.5 complete (internal testing smoke test passed).
@@ -345,13 +346,13 @@ Status: **COMPLETE - production access application submitted (PLAY.6D).**
 - [x] Testers Community report available.
 - [x] Tester feedback summary recorded.
 - [x] Production access questionnaire completed and submitted.
-- [ ] Production access decision received.
+- [x] Production access decision received: approved.
 
 ### PLAY.6D Feedback Summary
 
 - No critical crashes or blocking bugs were reported.
 - Future improvements: onboarding, help/FAQ, store listing, and feedback/rating entry.
-- Production access result: **Pending**.
+- Production access result: **Approved**.
 
 ### Constraints
 - Do NOT promote to production until testing requirement is satisfied and owner approves.
@@ -361,9 +362,14 @@ Status: **COMPLETE - production access application submitted (PLAY.6D).**
 
 Goal: publish Local Find on Google Play.
 
-Current status: **WAIT - production access decision pending.**
+Current status: **PLAY.7A COMPLETE - production access approved.**
 
-The immediate PLAY.7 task is to wait for Google's production access decision. Do not create a production release until access is granted and the owner explicitly approves proceeding.
+Next phase: **PLAY.7B - create the production release using the existing AAB with `versionCode 1`.**
+
+- Do not build or upload a duplicate AAB.
+- Prefer promoting the existing closed testing release to production.
+- If promotion is unavailable, add the existing bundle from the Play Console artifact library.
+- Do not create or submit the production release until the owner explicitly approves PLAY.7B.
 
 ### Prerequisites
 - PLAY.6 complete (closed testing required, if applicable) OR confirmed not required.
