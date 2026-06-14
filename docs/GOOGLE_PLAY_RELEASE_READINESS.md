@@ -1,5 +1,20 @@
 # Google Play Release Readiness Audit
 
+## PLAY.6D Production Access Application
+
+Record date: 2026-06-14
+
+Status: **Production access application submitted; result pending.**
+
+- Closed testing requirement satisfied: a closed testing release was published, at least 12 testers participated, and at least 12 testers participated for at least 14 days.
+- Testers Community testing report is available and was used as a reference.
+- Feedback reported no critical crashes or blocking bugs.
+- Future improvements: onboarding, help/FAQ, store listing, and a feedback/rating entry point.
+- No production release has been created.
+- Next phase: **PLAY.7 - wait for production access decision.**
+
+Application details: `docs/GOOGLE_PLAY_PRODUCTION_ACCESS_APPLICATION.md`.
+
 Audit date: 2026-05-29 (updated PLAY.2A)
 
 Scope: read-only Google Play developer account, Android app configuration, and release artifact readiness audit for `D:\local-find`.

@@ -2,7 +2,18 @@
 
 Plan date: 2026-05-29
 
-Status: PLAY.5C — Internal smoke test passed. Do not submit for review until each phase is explicitly approved by the owner.
+Status: **PLAY.6D - Production access application submitted; Google decision pending.**
+
+Current release boundary:
+
+- Closed testing requirement satisfied: 12+ testers participated for at least 14 days.
+- Testers Community report available.
+- No critical crashes or blocking bugs reported.
+- Future improvements: onboarding, help/FAQ, store listing, and feedback/rating entry.
+- Do not create a production release while production access is pending.
+- Next phase: **PLAY.7 - wait for production access decision.**
+
+See `docs/GOOGLE_PLAY_PRODUCTION_ACCESS_APPLICATION.md`.
 
 ## Release path overview
 
@@ -304,6 +315,8 @@ Goal: smoke test the release AAB via internal testing track before broader expos
 
 Goal: satisfy Google Play closed testing requirement before production access.
 
+Status: **COMPLETE - production access application submitted (PLAY.6D).**
+
 ### Prerequisites
 - PLAY.5 complete (internal testing smoke test passed).
 - Account type confirmed as "Personal" and closed testing requirement confirmed.
@@ -326,10 +339,19 @@ Goal: satisfy Google Play closed testing requirement before production access.
 7. **Apply for production access** once requirements are met.
 
 ### Deliverables
-- Closed testing track with uploaded AAB.
-- Tester recruitment and instructions.
-- Tester feedback summary.
-- Production access granted (or application submitted).
+- [x] Closed testing track with published release.
+- [x] At least 12 testers participated.
+- [x] At least 12 testers participated for at least 14 days.
+- [x] Testers Community report available.
+- [x] Tester feedback summary recorded.
+- [x] Production access questionnaire completed and submitted.
+- [ ] Production access decision received.
+
+### PLAY.6D Feedback Summary
+
+- No critical crashes or blocking bugs were reported.
+- Future improvements: onboarding, help/FAQ, store listing, and feedback/rating entry.
+- Production access result: **Pending**.
 
 ### Constraints
 - Do NOT promote to production until testing requirement is satisfied and owner approves.
@@ -338,6 +360,10 @@ Goal: satisfy Google Play closed testing requirement before production access.
 ## PLAY.7: Production Release
 
 Goal: publish Local Find on Google Play.
+
+Current status: **WAIT - production access decision pending.**
+
+The immediate PLAY.7 task is to wait for Google's production access decision. Do not create a production release until access is granted and the owner explicitly approves proceeding.
 
 ### Prerequisites
 - PLAY.6 complete (closed testing required, if applicable) OR confirmed not required.

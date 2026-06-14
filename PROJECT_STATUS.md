@@ -45,7 +45,7 @@ No changes to Chrome extension code, manifest, assets, or package while review i
 
 ## Google Play Release
 
-Status: PLAY.5C — Internal smoke test passed.
+Status: **PLAY.6D - Production access application submitted; result pending.**
 
 | Field | Value |
 |-------|-------|
@@ -55,9 +55,13 @@ Status: PLAY.5C — Internal smoke test passed.
 | `targetSdk` | `35` |
 | Developer account | Registered, verified by owner |
 | Account type | **Personal** — confirmed (2026-05-29) |
-| Production access | Not directly available — requires closed testing + application |
-| Production path | App setup → closed testing (12+ testers, 14+ days) → apply for production |
-| Closed testing required | **Yes — confirmed** (Play Console Dashboard) |
+| Production access | **Application submitted; Google decision pending** |
+| Production path | App setup -> closed testing -> production access application -> decision |
+| Closed testing required | **Satisfied** - 12+ testers for at least 14 days |
+| Closed testing release | **Published** |
+| Testers Community report | **Available** |
+| Tester feedback | No critical crashes or blocking bugs reported |
+| Future improvements | Onboarding, help/FAQ, store listing, feedback/rating entry |
 | Internal testing | Available |
 | Upload keystore | **Confirmed** — exists, all 4 signing variables set |
 | Key alias | `localfind-upload` |
@@ -66,11 +70,12 @@ Status: PLAY.5C — Internal smoke test passed.
 | AAB SHA256 | `DD86A3466DDFF385757FF4B7D8679ECF59CD9289898C4D21C78B201DFC7B4341` |
 | Internal testing | **Smoke test PASS** — 8/8 checks passed, no blocker |
 | Play Console forms | **Completed (draft)** — not submitted |
-| Production | Not requested |
+| Production release | **Not created** - waiting for production access decision |
 
-Next: PLAY.6 — closed testing planning and tester recruitment.
+Next: **PLAY.7 - wait for production access decision.**
 
 Reference docs:
+- `docs/GOOGLE_PLAY_PRODUCTION_ACCESS_APPLICATION.md`
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
 - `docs/GOOGLE_PLAY_RELEASE_PLAN.md`
 - `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md`
