@@ -36,3 +36,16 @@ local-find-release-test/
 # Archive and patch files
 *.zip
 *.patch
+
+# Chrome profiles with login state — must never enter git (audit 2026-07-04)
+local-find-cws-chrome-profile/
+local-find-chrome-profile*/
+
+# Local backups, WIP snapshots and draft screenshots (audit 2026-07-04)
+local-find-backups/
+local-find-wip-backup/
+screenshots-draft/
+local-find-screenshots-draft/
+
+# Signing secrets directory (defense in depth; *.jks already ignored above)
+local-find-secrets/
