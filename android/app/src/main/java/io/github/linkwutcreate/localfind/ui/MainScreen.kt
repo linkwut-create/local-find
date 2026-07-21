@@ -23,6 +23,7 @@ import kotlinx.serialization.json.put
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -1495,6 +1496,7 @@ fun RemoteControlPanel(
     }
 }
 
+@OptIn(ExperimentalGetImage::class)
 @Composable
 fun QrScannerScreen(
     onResult: (String) -> Unit,
@@ -1526,6 +1528,7 @@ fun QrScannerScreen(
                     )
                     
                     imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
+                        @OptIn(ExperimentalGetImage::class)
                         val mediaImage = imageProxy.image
                         if (mediaImage != null) {
                             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
