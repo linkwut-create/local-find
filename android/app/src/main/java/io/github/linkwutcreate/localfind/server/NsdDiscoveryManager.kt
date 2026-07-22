@@ -98,8 +98,10 @@ class NsdDiscoveryManager(
                 Log.e("NsdDiscovery", "Resolve failed: $errorCode")
             }
 
+            @Suppress("DEPRECATION")
             override fun onServiceResolved(resolvedServiceInfo: NsdServiceInfo) {
                 Log.d("NsdDiscovery", "Resolve succeeded: ${resolvedServiceInfo.serviceName}")
+                // host/hostAddress deprecated API 34; migrate to hostAddresses when minSdk >= 33
                 val host = resolvedServiceInfo.host?.hostAddress ?: "Unknown"
                 val port = resolvedServiceInfo.port
                 val device = DiscoveredDevice(
@@ -114,6 +116,8 @@ class NsdDiscoveryManager(
         }
         
         try {
+            // resolveService deprecated API 34; migrate to registerServiceInfoCallback when minSdk >= 34
+            @Suppress("DEPRECATION")
             nsdManager.resolveService(serviceInfo, resolveListener)
         } catch (e: Exception) {
             Log.e("NsdDiscovery", "Error resolving service", e)

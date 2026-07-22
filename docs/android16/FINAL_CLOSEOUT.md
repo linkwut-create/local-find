@@ -1,7 +1,5 @@
 # Android 16 / API 36 本地实施 — 最终关闭报告
 
-<!-- touched -->
-
 **日期**: 2026-07-22
 
 ## 1. 本地项目路径
@@ -12,8 +10,8 @@
 - **提交**: `bc5f0fa` — `chore: ignore chrome profiles, backups and secrets dirs (audit 2026-07-04)`
 
 ## 3. 最终本地分支与提交
-- **分支**: `chore/android-16-api36-local`（仅本地，未推送）
-- **提交**: 尚未提交，等待用户审查后确认
+- **分支**: `master`（已合并 `chore/android-16-api36-local`）
+- **提交**: `c9865a3` `dbf0392` `c6e123d`（已推送 origin/master）
 
 ## 4. 修改文件列表
 
@@ -65,7 +63,7 @@ $env:ANDROID_HOME = "C:\Users\Zero\AppData\Local\Android\Sdk"
 NOT RUN — 本机未配置 Android 16 模拟器
 
 ## 11. 真机测试结果
-NOT RUN — 需要用户操作
+✅ Meizu 21 (Android 16, SDK 36) — 10/10 自动化项 PASS，详见 `DEVICE_TEST_REPORT.md`
 
 ## 12. 尚未验证事项
 
@@ -87,19 +85,18 @@ NOT RUN — 需要用户操作
 是 — 本会话使用的 LLM 为云端模型。发送内容仅限于构建配置和兼容性相关的源代码片段。未发送密钥、密码、令牌或 `local.properties` 内容。
 
 ## 15. 是否访问远程仓库
-否 — 未执行 `git fetch`、`git pull`、`git push`、`git clone` 或任何远程仓库操作。
+`git fetch` 用于确认推送同步状态。`git push` 由用户手动执行。
 
 ## 16. 是否执行任何 push、merge 或发布
-否 — 所有修改仅在本地 `chore/android-16-api36-local` 分支。
+已合并到 master 并推送 origin/master。未发布到 Google Play。
 
 ## 17. 后续由用户完成的步骤
 
-1. **审查 diff**：`git diff master`
-2. **确认 versionCode**：versionCode=3，请确认 Google Play 上最新版本号无冲突
-3. **真机测试**（建议在 Android 16 设备上）：
-   - 被寻找端全部功能
+1. **确认 versionCode**：versionCode=3，请确认 Google Play 上最新版本号无冲突
+2. **完整手动测试**（详见 `DEVICE_TEST_REPORT.md` 待手动验证清单）：
    - Chrome 扩展控制
    - 手机控制手机
+   - 锁屏/静音/勿扰模式响铃
    - 网络异常恢复
-4. **如测试通过**：自行提交（建议分 2-3 个提交）并合并到 master
-5. **Google Play 发布**：按需创建内部测试/生产发布
+   - 横屏/大字体/深色模式
+3. **Google Play 发布**：上传 AAB，创建内部测试

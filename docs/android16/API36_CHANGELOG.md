@@ -1,7 +1,5 @@
 # Android 16 / API 36 升级变更记录
 
-<!-- touched -->
-
 **日期**: 2026-07-22
 **分支**: `chore/android-16-api36-local`
 **起始提交**: `bc5f0fa`

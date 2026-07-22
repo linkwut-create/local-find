@@ -1,7 +1,5 @@
 # 自动化测试报告 — Android 16 / API 36
 
-<!-- touched -->
-
 **执行时间**: 2026-07-22
 **环境**: Windows 11, OpenJDK 21.0.10 (Android Studio JBR), Gradle 8.9
 

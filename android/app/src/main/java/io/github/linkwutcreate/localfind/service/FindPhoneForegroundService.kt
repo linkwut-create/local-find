@@ -259,10 +259,11 @@ class FindPhoneForegroundService : Service() {
     private fun acquireWifiLock() {
         if (wifiLock == null) {
             val wifiManager = getSystemService(Context.WIFI_SERVICE) as WifiManager
+            // WIFI_MODE_FULL_HIGH_PERF deprecated API 29; retained for Q+ high-perf Wi-Fi
+            @Suppress("DEPRECATION")
             wifiLock = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "LocalFind:WifiLock")
             } else {
-                @Suppress("DEPRECATION")
                 wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL, "LocalFind:WifiLock")
             }
         }
