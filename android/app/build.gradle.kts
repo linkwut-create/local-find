@@ -47,7 +47,11 @@ android {
     signingConfigs {
         if (hasReleaseSigningConfig) {
             create("release") {
-                storeFile = file(checkNotNull(releaseSigningStoreFile))
+                // Resolve relative to the Android project root (android/), whose path is pure
+                // ASCII. An absolute path cannot be used here: Java .properties are read as
+                // ISO-8859-1, so the non-ASCII characters in this repo's directory name would
+                // arrive mojibake'd and the keystore would never be found.
+                storeFile = rootProject.file(checkNotNull(releaseSigningStoreFile))
                 storePassword = checkNotNull(releaseSigningStorePassword)
                 keyAlias = checkNotNull(releaseSigningKeyAlias)
                 keyPassword = checkNotNull(releaseSigningKeyPassword)

@@ -37,6 +37,7 @@ This is an MVP testing release. It is not a Play Store production build and the 
 | Add phone | Chrome extension adds phone via IP + pairing mode acceptance |
 | Multi-device list | Save and switch between multiple paired phones |
 | Delete with revoke | Deleting a device on Chrome revokes the Android-side paired token |
+| Changed-IP recovery | Paired phones announce their current LAN address and the extension verifies it by persistent device ID |
 | Old 8-char token | Admin/fallback token for command endpoints |
 | Local protection | Optional PIN or WebAuthn for sensitive Chrome extension actions |
 
@@ -78,7 +79,11 @@ It contains the debug APK, Chrome extension files, README, docs, release manifes
 
 ## Known Limitations
 
-- Must type the phone's LAN IP at least once. No QR code, no auto-discovery.
+- Must type the phone's LAN IP at least once. After pairing, the Android foreground
+  service periodically announces its current private-LAN address to the local
+  discovery bridge; the bridge verifies the persistent device ID before the
+  extension updates its saved address. A bounded subnet probe remains a last
+  resort. This is not general discovery or an internet relay.
 - Debug APK only. No Play Store signing.
 - Chrome extension loaded unpacked. Not on Chrome Web Store.
 - Android-only. No iOS.
@@ -135,7 +140,7 @@ node --check chrome-extension\popup.js
 - **Release-signed APK** for easier installation
 - **UI polish** — Android pairing mode UX, Chrome popup layout
 - **QR code / short-code pairing** — no more typing IP addresses
-- **LAN auto-discovery** — NSD/mDNS from Chrome
+- **Discovery bridge packaging** — install/start the local discovery bridge with the extension
 - **Android controller management UI** — list and revoke paired controllers from the phone
 
 ## Tags
