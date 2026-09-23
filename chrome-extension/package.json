@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "commonjs",
+  "description": "Overrides the unrelated repo-root package.json's \"type\": \"module\" so net-utils.test.js can use require() with node:test. Not consumed by Chrome; the extension itself only loads net-utils.js/popup.js as plain classic <script> tags."
+}
