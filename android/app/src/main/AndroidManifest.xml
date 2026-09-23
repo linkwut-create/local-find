@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
     <!-- 控制手电筒需要相机权限，同时也用于扫码 -->
     <uses-permission android:name="android.permission.CAMERA" />
@@ -16,6 +17,9 @@
     
     <!-- 前台服务权限 (Android 9+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- Allow an explicitly enabled finder service to resume after reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     
     <!-- 前台服务特殊用途权限 (Android 14+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
@@ -25,6 +29,9 @@
 
     <!-- 保持 CPU 唤醒以防锁屏下硬件控制挂起 -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Let the user grant the standard Doze exemption needed for locked-screen use. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:allowBackup="true"
@@ -55,6 +62,16 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Find lost phone controlled via local Wi-Fi HTTP API" />
         </service>
+
+        <receiver
+            android:name=".service.ServiceRestartReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         
     </application>
 

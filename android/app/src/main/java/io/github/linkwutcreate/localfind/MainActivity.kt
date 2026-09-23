@@ -25,6 +25,7 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import android.widget.Toast
 import io.github.linkwutcreate.localfind.service.FindPhoneForegroundService
+import io.github.linkwutcreate.localfind.service.ServiceRunState
 import io.github.linkwutcreate.localfind.server.NsdStatus
 import io.github.linkwutcreate.localfind.server.ServerStatus
 import io.github.linkwutcreate.localfind.server.NsdDiscoveryManager
@@ -40,6 +41,7 @@ class MainActivity : FragmentActivity() {
 
     private var foregroundService: FindPhoneForegroundService? = null
     private var isServiceBound by mutableStateOf(false)
+    private var serviceStartRequested = false
 
     // 反射给 Jetpack Compose 驱动的响应式核心状态
     private var ringActiveState by mutableStateOf(false)
@@ -73,7 +75,7 @@ class MainActivity : FragmentActivity() {
             val boundService = binder.getService()
             foregroundService = boundService
             isServiceBound = true
-            isServiceRunningState = true
+            serviceStartRequested = false
             
             // 同步一次当前的各种硬件外设状态
             syncServiceStatus()
@@ -306,14 +308,37 @@ class MainActivity : FragmentActivity() {
 
     private fun refreshServiceStatus() {
         deviceIpState = NetworkUtil.getLocalIpAddress()
-        // 尝试绑定服务
-        try {
-            bindToService()
-        } catch (_: Exception) {}
+        if (ServiceRunState.shouldRun(this)) {
+            // A binding alone can recreate a Service without invoking
+            // onStartCommand, so recover with a started foreground service.
+            if (!isServiceBound && !serviceStartRequested) {
+                startAndBindService(persistRunState = false)
+            } else {
+                syncServiceStatus()
+            }
+        } else if (isServiceBound) {
+            syncServiceStatus()
+        } else {
+            // Do not use BIND_AUTO_CREATE here: a fresh install must remain
+            // stopped until the user explicitly starts the finder service.
+            isServiceRunningState = false
+            serverStatusState = ServerStatus.STOPPED
+        }
     }
 
     private fun openBatteryOptimizationSettings() {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                !powerManager.isIgnoringBatteryOptimizations(packageName)
+            ) {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:$packageName")
+                }
+                startActivity(intent)
+                return
+            }
+
             val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
             startActivity(intent)
         } catch (e: Exception) {
@@ -340,15 +365,23 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    private fun startAndBindService() {
+    private fun startAndBindService(persistRunState: Boolean = true) {
+        if (persistRunState) {
+            ServiceRunState.setShouldRun(this, true)
+        }
         deviceIpState = NetworkUtil.getLocalIpAddress()
         val serviceIntent = Intent(this, FindPhoneForegroundService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent)
-        } else {
-            startService(serviceIntent)
+        if (!serviceStartRequested && !(isServiceBound && isServiceRunningState)) {
+            serviceStartRequested = true
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
         }
-        bindToService()
+        if (!isServiceBound) {
+            bindToService()
+        }
     }
 
     private fun bindToService() {
@@ -357,12 +390,16 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun shutdownService() {
+        ServiceRunState.setShouldRun(this, false)
+        serviceStartRequested = false
         if (isServiceBound) {
             foregroundService?.setStatusChangeListener(null)
             foregroundService?.stopService()
             unbindService(serviceConnection)
             isServiceBound = false
             foregroundService = null
+        } else {
+            stopService(Intent(this, FindPhoneForegroundService::class.java))
         }
         isServiceRunningState = false
         serverStatusState = ServerStatus.STOPPED

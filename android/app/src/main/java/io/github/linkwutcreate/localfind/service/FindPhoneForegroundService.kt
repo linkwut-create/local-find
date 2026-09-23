@@ -21,6 +21,7 @@ import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import io.github.linkwutcreate.localfind.MainActivity
 import io.github.linkwutcreate.localfind.auth.PairingTokenManager
 import io.github.linkwutcreate.localfind.hardware.FlashlightController
@@ -31,6 +32,8 @@ import io.github.linkwutcreate.localfind.server.HttpServerManager
 import io.github.linkwutcreate.localfind.server.NsdAdvertiser
 import io.github.linkwutcreate.localfind.server.NsdStatus
 import io.github.linkwutcreate.localfind.server.ServerStatus
+import io.github.linkwutcreate.localfind.server.isListening
+import io.github.linkwutcreate.localfind.server.UdpDiscoveryAnnouncer
 import io.github.linkwutcreate.localfind.store.LocalDeviceIdentityStore
 import io.github.linkwutcreate.localfind.store.PairedControllerTokenStore
 import io.github.linkwutcreate.localfind.store.PairingRequestStore
@@ -44,6 +47,7 @@ class FindPhoneForegroundService : Service() {
     private lateinit var flashlightController: FlashlightController
     private var httpServerManager: HttpServerManager? = null
     private var nsdAdvertiser: NsdAdvertiser? = null
+    private var udpDiscoveryAnnouncer: UdpDiscoveryAnnouncer? = null
     private lateinit var pairingTokenManager: PairingTokenManager
     private lateinit var localDeviceIdentityStore: LocalDeviceIdentityStore
     private lateinit var pairingRequestStore: PairingRequestStore
@@ -99,6 +103,7 @@ class FindPhoneForegroundService : Service() {
         nsdAdvertiser = NsdAdvertiser(this) {
             onStatusChangeListener?.invoke()
         }
+        udpDiscoveryAnnouncer = UdpDiscoveryAnnouncer(this, localDeviceIdentityStore)
 
         currentIp = NetworkUtil.getLocalIpAddress()
         registerNetworkCallback()
@@ -139,6 +144,7 @@ class FindPhoneForegroundService : Service() {
                 nsdAdvertiser?.unregisterService()
                 nsdAdvertiser?.registerService()
             }
+            udpDiscoveryAnnouncer?.announceNow()
             
             updateNotification()
             onStatusChangeListener?.invoke()
@@ -173,6 +179,7 @@ class FindPhoneForegroundService : Service() {
         
         httpServerManager?.start()
         nsdAdvertiser?.registerService()
+        udpDiscoveryAnnouncer?.start()
         onStatusChangeListener?.invoke()
         
         // START_STICKY ensures service recreation after OOM kills
@@ -186,6 +193,7 @@ class FindPhoneForegroundService : Service() {
         stopWatchdog()
         httpServerManager?.shutdownAll()
         nsdAdvertiser?.unregisterService()
+        udpDiscoveryAnnouncer?.stop()
         networkCallback?.let {
             connectivityManager.unregisterNetworkCallback(it)
         }
@@ -199,6 +207,7 @@ class FindPhoneForegroundService : Service() {
         stopWatchdog()
         httpServerManager?.shutdownAll()
         nsdAdvertiser?.unregisterService()
+        udpDiscoveryAnnouncer?.stop()
         networkCallback?.let {
             try {
                 connectivityManager.unregisterNetworkCallback(it)
@@ -208,6 +217,25 @@ class FindPhoneForegroundService : Service() {
         releaseWifiLock()
         Log.d("ForegroundService", "Service onDestroy finished")
         super.onDestroy()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // Keep a user-enabled finder service started when the launcher task is
+        // dismissed. Explicit Stop Service clears this flag first.
+        if (ServiceRunState.shouldRun(this)) {
+            try {
+                val serviceIntent = Intent(this, FindPhoneForegroundService::class.java)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ContextCompat.startForegroundService(this, serviceIntent)
+                } else {
+                    startService(serviceIntent)
+                }
+                Log.d("ForegroundService", "Requested service restart after task removal")
+            } catch (error: Exception) {
+                Log.e("ForegroundService", "Unable to restart service after task removal", error)
+            }
+        }
+        super.onTaskRemoved(rootIntent)
     }
 
     private fun startWatchdog() {
@@ -289,7 +317,7 @@ class FindPhoneForegroundService : Service() {
 
     fun isRingActive(): Boolean = httpServerManager?.isRingActive ?: false
     fun getFlashMode(): String = httpServerManager?.flashMode ?: "off"
-    fun isServerRunning(): Boolean = httpServerManager?.currentStatus != ServerStatus.STOPPED
+    fun isServerRunning(): Boolean = httpServerManager?.currentStatus?.isListening() == true
     fun getServerStatus(): ServerStatus = httpServerManager?.currentStatus ?: ServerStatus.STOPPED
     fun getLastServerError(): String? = httpServerManager?.lastServerError
     fun restartServer() = httpServerManager?.restart()
@@ -298,7 +326,7 @@ class FindPhoneForegroundService : Service() {
     fun isWifiLockHeld(): Boolean = wifiLock?.isHeld ?: false
 
     fun getNsdStatus(): NsdStatus = nsdAdvertiser?.currentStatus ?: NsdStatus.IDLE
-    fun getNsdServiceType(): String = nsdAdvertiser?.serviceType ?: "_localfind._tcp."
+    fun getNsdServiceType(): String = nsdAdvertiser?.serviceType ?: "_localfind._tcp"
 
     fun getPairingToken(): String = pairingTokenManager.getToken() ?: ""
     fun regeneratePairingToken(): String {
