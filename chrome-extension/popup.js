@@ -13,6 +13,17 @@ const PROTECTION_METHOD_WEBAUTHN_OR_PIN = "webauthn-or-pin";
 const CONTROLLER_NAME = "Chrome on Windows";
 const CONTROLLER_TYPE = "chrome_extension";
 const PAIRING_POLL_INTERVAL_MS = 2000;
+const ADDRESS_RECOVERY_TIMEOUT_MS = 600;
+const ADDRESS_RECOVERY_CONCURRENCY = 24;
+const ADDRESS_RECOVERY_COOLDOWN_MS = 15000;
+const ADDRESS_RECOVERY_NARROW_MAX_MS = 10000;
+const ADDRESS_RECOVERY_WIDE_TIMEOUT_MS = 350;
+const ADDRESS_RECOVERY_WIDE_CONCURRENCY = 256;
+const ADDRESS_RECOVERY_WIDE_MAX_MS = 45000;
+const MIN_RECOVERY_PREFIX_LENGTH = 16;
+const DEFAULT_RECOVERY_PREFIX_LENGTH = 16;
+const DISCOVERY_BRIDGE_URL = "http://127.0.0.1:43789";
+const DISCOVERY_BRIDGE_TIMEOUT_MS = 30000;
 
 function resolveLang(mode) { if (mode === "en" || mode === "zh") return mode; var l = (navigator.language || "").split("-")[0]; return l === "zh" ? "zh" : "en"; }
 var savedMode = "system";
@@ -106,6 +117,7 @@ let devices = [];
 let selectedDeviceId = "";
 let controllerId = "";
 let pairingPollTimer = null;
+let lastAddressRecoveryAttemptAt = 0;
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -525,6 +537,7 @@ async function saveAcceptedDevice(pairingResult, target) {
     type: pairedDevice.type || "android_phone",
     host: pairedDevice.host || target.host,
     port: String(pairedDevice.port || target.port || DEFAULT_PORT),
+    networkPrefixLength: normalizeNetworkPrefixLength(pairedDevice.networkPrefixLength),
     token: controlToken,
     controllerId: controllerId || "",
     pairedAt: now,
@@ -567,6 +580,7 @@ function normalizeDevices(value) {
       type: device.type || "android_phone",
       host: device.host || "",
       port: String(device.port || DEFAULT_PORT),
+      networkPrefixLength: normalizeNetworkPrefixLength(device.networkPrefixLength),
       token: device.token || "",
       controllerId: device.controllerId || "",
       pairedAt: device.pairedAt || "",
@@ -594,7 +608,8 @@ function getSelectedCommandTarget() {
     host: selectedDevice.host,
     port: selectedDevice.port,
     token: selectedDevice.token,
-    deviceId: selectedDevice.id
+    deviceId: selectedDevice.id,
+    networkPrefixLength: selectedDevice.networkPrefixLength
   };
 }
 
@@ -1165,8 +1180,258 @@ async function sendRequest(command) {
   try {
     return await fetch(url, request);
   } catch {
-    throw new Error(getNetworkError());
+    const recoveredTarget = await discoverSelectedDeviceAddress(target)
+      || await recoverSelectedDeviceAddress(target);
+    if (!recoveredTarget) {
+      throw new Error(getNetworkError());
+    }
+
+    const recoveredUrl = `${getBaseUrlForTarget(recoveredTarget)}${command.path}`;
+    const recoveredRequest = { ...request };
+    if (command.method === "POST") {
+      recoveredRequest.headers = {
+        "X-LocalFind-Token": recoveredTarget.token
+      };
+    }
+
+    try {
+      return await fetch(recoveredUrl, recoveredRequest);
+    } catch {
+      throw new Error(getNetworkError());
+    }
   }
+}
+
+async function discoverSelectedDeviceAddress(target) {
+  if (!target?.deviceId) {
+    return null;
+  }
+
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), DISCOVERY_BRIDGE_TIMEOUT_MS);
+  try {
+    const params = new URLSearchParams({
+      deviceId: target.deviceId,
+      host: target.host || "",
+      port: String(target.port || DEFAULT_PORT),
+      prefixLength: String(target.networkPrefixLength || "")
+    });
+    const url = `${DISCOVERY_BRIDGE_URL}/discover?${params.toString()}`;
+    const response = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      signal: controller.signal
+    });
+    if (!response.ok) {
+      return null;
+    }
+
+    const body = await response.json();
+    const discovered = Array.isArray(body?.devices)
+      ? body.devices.find((device) => (
+        String(device?.id || "") === target.deviceId
+        && isPrivateIPv4(device?.host)
+        && isValidPort(String(device?.port || target.port))
+      ))
+      : null;
+    if (!discovered) {
+      return null;
+    }
+
+    return persistRecoveredDeviceAddress(
+      target,
+      discovered.host,
+      String(discovered.port || target.port),
+      discovered.networkPrefixLength
+    );
+  } catch {
+    return null;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * A paired token is stable, but a phone's DHCP address may not be. Chrome
+ * extensions cannot consume Android NSD directly, so on a connection failure
+ * we probe the last known subnet and accept a host only when its persistent
+ * device ID matches the selected paired device.
+ */
+async function recoverSelectedDeviceAddress(target) {
+  if (!target?.deviceId || !isPrivateIPv4(target.host)) {
+    return null;
+  }
+
+  const now = Date.now();
+  if (now - lastAddressRecoveryAttemptAt < ADDRESS_RECOVERY_COOLDOWN_MS) {
+    return null;
+  }
+  lastAddressRecoveryAttemptAt = now;
+
+  let foundHost = await scanRecoveryHosts(
+    buildRecoveryHosts(target.host, 24),
+    target,
+    ADDRESS_RECOVERY_CONCURRENCY,
+    ADDRESS_RECOVERY_TIMEOUT_MS,
+    ADDRESS_RECOVERY_NARROW_MAX_MS
+  );
+
+  if (!foundHost) {
+    const storedPrefixLength = normalizeNetworkPrefixLength(target.networkPrefixLength);
+    const prefixLength = Math.max(
+      storedPrefixLength || DEFAULT_RECOVERY_PREFIX_LENGTH,
+      MIN_RECOVERY_PREFIX_LENGTH
+    );
+
+    if (prefixLength < 24) {
+      foundHost = await scanRecoveryHosts(
+        buildRecoveryHosts(target.host, prefixLength),
+        target,
+        ADDRESS_RECOVERY_WIDE_CONCURRENCY,
+        ADDRESS_RECOVERY_WIDE_TIMEOUT_MS,
+        ADDRESS_RECOVERY_WIDE_MAX_MS
+      );
+    }
+  }
+
+  if (!foundHost) {
+    return null;
+  }
+
+  return persistRecoveredDeviceAddress(target, foundHost);
+}
+
+async function persistRecoveredDeviceAddress(target, host, port = target.port, networkPrefixLength = target.networkPrefixLength) {
+  const normalizedPrefixLength = normalizeNetworkPrefixLength(networkPrefixLength);
+  devices = devices.map((device) => (
+    device.id === target.deviceId
+      ? {
+        ...device,
+        host,
+        port: String(port || device.port || DEFAULT_PORT),
+        networkPrefixLength: normalizedPrefixLength || device.networkPrefixLength || 0
+      }
+      : device
+  ));
+  await setStorage({ devices });
+  updateEndpointPreview();
+  updateDeviceCard();
+  updatePairedDevicesList();
+
+  return {
+    ...target,
+    host,
+    port: String(port || target.port || DEFAULT_PORT),
+    networkPrefixLength: normalizedPrefixLength || target.networkPrefixLength || 0
+  };
+}
+
+async function scanRecoveryHosts(hosts, target, concurrency, timeoutMs, maxDurationMs) {
+  let nextIndex = 0;
+  let foundHost = "";
+  let cancelled = false;
+  const deadline = Date.now() + maxDurationMs;
+
+  async function scanWorker() {
+    while (!cancelled && Date.now() < deadline) {
+      const host = hosts[nextIndex++];
+      if (!host) {
+        return;
+      }
+
+      const info = await fetchDeviceInfo(host, target.port, timeoutMs);
+      if (info?.id === target.deviceId) {
+        foundHost = host;
+        cancelled = true;
+        return;
+      }
+    }
+  }
+
+  const workerCount = Math.min(concurrency, hosts.length);
+  await Promise.all(Array.from({ length: workerCount }, () => scanWorker()));
+  return foundHost;
+}
+
+function buildRecoveryHosts(host, prefixLength) {
+  const ipNumber = ipv4ToNumber(host);
+  if (ipNumber === null) {
+    return [];
+  }
+
+  const normalizedPrefixLength = Math.min(30, Math.max(16, Number(prefixLength) || 16));
+  const mask = (0xffffffff << (32 - normalizedPrefixLength)) >>> 0;
+  const network = (ipNumber & mask) >>> 0;
+  const broadcast = (network | (~mask >>> 0)) >>> 0;
+  const hosts = [];
+
+  for (let candidate = network + 1; candidate < broadcast; candidate += 1) {
+    if (candidate !== ipNumber) {
+      hosts.push(numberToIpv4(candidate));
+    }
+  }
+
+  return hosts;
+}
+
+function ipv4ToNumber(host) {
+  const octets = String(host || "").split(".").map(Number);
+  if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+    return null;
+  }
+
+  return (((octets[0] << 24) >>> 0)
+    + (octets[1] << 16)
+    + (octets[2] << 8)
+    + octets[3]) >>> 0;
+}
+
+function numberToIpv4(value) {
+  return [
+    (value >>> 24) & 0xff,
+    (value >>> 16) & 0xff,
+    (value >>> 8) & 0xff,
+    value & 0xff
+  ].join(".");
+}
+
+function normalizeNetworkPrefixLength(value) {
+  const prefixLength = Number(value);
+  if (!Number.isInteger(prefixLength) || prefixLength < 8 || prefixLength > 30) {
+    return 0;
+  }
+  return prefixLength;
+}
+
+async function fetchDeviceInfo(host, port, timeoutMs = ADDRESS_RECOVERY_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`http://${host}:${port}/device-info`, {
+      method: "GET",
+      cache: "no-store",
+      signal: controller.signal
+    });
+    if (!response.ok) {
+      return null;
+    }
+    return await response.json();
+  } catch {
+    return null;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
+function isPrivateIPv4(host) {
+  const octets = String(host || "").split(".").map(Number);
+  if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+    return false;
+  }
+
+  return octets[0] === 10
+    || (octets[0] === 192 && octets[1] === 168)
+    || (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31);
 }
 
 function openDiagnosticsPage() {

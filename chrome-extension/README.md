@@ -2,7 +2,7 @@
 
 This directory contains the minimal Chrome extension control entry for the Local Find Android HTTP service.
 
-L.4 adds remote revocation: deleting a paired phone in the extension now calls the Android `/pairing/revoke` endpoint first so the phone-side paired token is invalidated. The user still enters a phone IP address when pairing a new phone, confirms the request on the phone, and then selects a saved paired phone as the command target.
+L.4 adds remote revocation: deleting a paired phone in the extension now calls the Android `/pairing/revoke` endpoint first so the phone-side paired token is invalidated. The current address-recovery path uses the local discovery bridge: the Android foreground service announces its current LAN endpoint, and the bridge verifies the persistent device ID before the extension retries a command.
 
 ## Scope
 
@@ -11,7 +11,7 @@ L.4 adds remote revocation: deleting a paired phone in the extension now calls t
 - Supports adding one Android phone through phone-side pairing mode and confirmation.
 - Shows historical paired phones from `chrome.storage.local.devices[]`.
 - Supports switching `selectedDeviceId` from the paired-phone list.
-- Does not implement automatic discovery, QR codes, Native Messaging, a local PC service, cloud services, accounts, location, or background scanning.
+- Requires the companion local discovery bridge for automatic changed-IP recovery; it does not use cloud services, accounts, location, or internet relay.
 - Keeps legacy host/port/token storage for compatibility.
 
 ## Files
@@ -27,6 +27,7 @@ The extension declares:
 
 - `storage` so host and port can be saved in `chrome.storage.local`.
 - `http://*/*` host permission so the popup can call an Android device at a user-entered LAN host and port.
+- `http://127.0.0.1:43789/*` so the popup can query the local discovery bridge.
 
 It does not request `history`, `cookies`, `tabs`, `scripting`, `webRequest`, `clipboardRead`, or `<all_urls>`.
 
@@ -43,6 +44,28 @@ It does not request `history`, `cookies`, `tabs`, `scripting`, `webRequest`, `cl
 9. Recommended path: open the extension, click `一键找手机`, let the phone ring and flash, then click `停止全部` after finding the phone.
 10. Use `开始闪光` when visual feedback is useful.
 11. Use `打开诊断页` to open the Android service page in the browser.
+
+### Changed phone IP address
+
+Start the local bridge on the same Windows computer as Chrome Canary (the
+provided Canary helper starts it automatically):
+
+```powershell
+node tools\local_find_discovery_bridge.cjs
+```
+
+Keep it running while the extension is used. The phone sends a short LAN beacon
+every few seconds and immediately after its Wi-Fi address changes. The bridge
+does not receive or store the control token; it returns an address only after
+`/device-info` confirms the paired persistent device ID.
+
+### Chrome Canary on Windows
+
+Use `tools/open_cws_screenshot_profile.ps1` from the repository root. It resolves the current repository instead of the retired `D:\local-find` path and uses Canary's supported CDP `Extensions.loadUnpacked` flow. It also passes Windows 8.3 ASCII paths, which avoids extension-loading failures when a remote shell mangles the Chinese repository name.
+
+For a connection probe, pass `-PhoneUrl http://<phone-ip>:8888`. The result is written to `tools/cdp-extension-result.json` and the temporary Canary profile stays open for 30 minutes by default.
+
+If loading manually, select the repository's `chrome-extension` directory in `chrome://extensions`, not a stale copy under `D:\local-find`.
 
 `一键找手机` is equivalent to starting ring plus strobe flash in sequence.
 
@@ -64,6 +87,7 @@ The `删除` button revokes the Android-side paired token via `POST /pairing/rev
 - `请求配对` calls `POST /pairing/request` with the persistent `controllerId`, `controllerName: "Chrome on Windows"`, `controllerType: "chrome_extension"`, and a nonce.
 - The popup polls `GET /pairing/status?requestId=...` until the request is accepted, rejected, or expired.
 - On acceptance, the popup saves or updates the device in `chrome.storage.local.devices[]`, sets `selectedDeviceId`, and refreshes the paired-phone list.
+- After pairing, the phone's foreground service broadcasts its current LAN endpoint without a token; the local bridge verifies the persistent device ID and updates a stale saved host before retrying commands.
 - L.3 provides local paired-phone deletion in the Chrome extension. L.4 adds remote revocation via `POST /pairing/revoke` during deletion so the Android-side paired token is invalidated.
 
 ## Local Protection PIN
@@ -100,9 +124,10 @@ The `删除` button revokes the Android-side paired token via `POST /pairing/rev
 ## Troubleshooting
 
 - Make sure the computer and Android phone are on the same Wi-Fi.
+- Make sure `node tools\local_find_discovery_bridge.cjs` is running on the same computer as Chrome.
 - Make sure the Local Find service is running on the Android phone.
 - Before pairing, enable computer plugin pairing mode in the Android app and confirm the incoming request on the phone.
-- Check that the host is the phone's current LAN IP address.
+- The saved host may be old; with the bridge running, a paired command verifies the device ID and updates the host automatically.
 - Check that the port is correct. The default is `8888`.
 - If a command returns 401, enter the current phone token again. The phone token may have been reset, and any saved token should be updated or cleared.
 - If status or commands fail, open the browser diagnostic page from the popup and confirm the Android service responds.
