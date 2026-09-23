@@ -1,17 +1,41 @@
+param(
+    [string]$PhoneUrl = "",
+    [int]$KeepMs = 1800000
+)
+
 $ErrorActionPreference = "Stop"
 
-$ProfileDir = "D:\local-find-cws-chrome-profile"
-$DraftDir = "D:\local-find-screenshots-draft"
-$ExtensionDir = "D:\local-find\chrome-extension"
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
+$ProfileDir = Join-Path $ProjectRoot "local-find-cws-chrome-profile\CanaryDebug"
+$DraftDir = Join-Path $ProjectRoot "local-find-screenshots-draft"
+$ExtensionDir = Join-Path $ProjectRoot "chrome-extension"
+$LoaderPath = Join-Path $ProjectRoot "tools\load_extension_cdp_pipe.cjs"
+$DiscoveryBridgePath = Join-Path $ProjectRoot "tools\local_find_discovery_bridge.cjs"
+
+function Get-ShortPath([string]$Path) {
+    $quotedPath = '"' + $Path.Replace('"', '""') + '"'
+    $shortPath = cmd.exe /d /c ("for %I in (" + $quotedPath + ") do @echo %~sI")
+    if (-not $shortPath) {
+        throw "Could not resolve an ASCII short path for: $Path"
+    }
+    return $shortPath.Trim()
+}
 
 if (-not (Test-Path -LiteralPath (Join-Path $ExtensionDir "manifest.json"))) {
     throw "Local Find Chrome extension manifest was not found at: $(Join-Path $ExtensionDir "manifest.json")"
+}
+if (-not (Test-Path -LiteralPath $LoaderPath)) {
+    throw "The Canary CDP loader was not found at: $LoaderPath"
+}
+if (-not (Test-Path -LiteralPath $DiscoveryBridgePath)) {
+    throw "The local discovery bridge was not found at: $DiscoveryBridgePath"
 }
 
 New-Item -ItemType Directory -Force -Path $ProfileDir | Out-Null
 New-Item -ItemType Directory -Force -Path $DraftDir | Out-Null
 
 $ChromeCandidates = @(
+    (Join-Path $env:LocalAppData "Google\Chrome SxS\Application\chrome.exe"),
     (Join-Path $env:ProgramFiles "Google\Chrome\Application\chrome.exe"),
     (Join-Path ${env:ProgramFiles(x86)} "Google\Chrome\Application\chrome.exe"),
     (Join-Path $env:LocalAppData "Google\Chrome\Application\chrome.exe")
@@ -39,28 +63,67 @@ Checked:
 "@
 }
 
-$ChromeArgs = @(
-    "--user-data-dir=$ProfileDir",
-    "--load-extension=$ExtensionDir",
-    "--disable-extensions-except=$ExtensionDir",
-    "--new-window",
-    "chrome://extensions"
-)
+$ExtensionShortPath = Get-ShortPath $ExtensionDir
+$ProfileShortPath = Get-ShortPath $ProfileDir
+$ChromeShortPath = Get-ShortPath $ChromeExe
 
-Write-Host "Opening Chrome for Local Find Chrome Web Store screenshot capture..."
+Write-Host "Opening Chrome Canary with the supported CDP unpacked-extension loader..."
 Write-Host "Chrome: $ChromeExe"
-Write-Host "Profile: $ProfileDir"
+Write-Host "Profile: $ProfileDir (ASCII: $ProfileShortPath)"
 Write-Host "Draft screenshots: $DraftDir"
-Write-Host "Extension: $ExtensionDir"
+Write-Host "Extension: $ExtensionDir (ASCII: $ExtensionShortPath)"
+Write-Host "Loader: $LoaderPath"
 
-Start-Process -FilePath $ChromeExe -ArgumentList $ChromeArgs
+$node = Get-Command "node.exe" -ErrorAction SilentlyContinue
+if (-not $node) {
+    throw "Node.js is required to load the unpacked extension through Chrome Canary CDP."
+}
+
+try {
+    $bridgeHealthy = (Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:43789/health" -TimeoutSec 1).StatusCode -eq 200
+} catch {
+    $bridgeHealthy = $false
+}
+if (-not $bridgeHealthy) {
+    Write-Host "Starting the Local Find discovery bridge..."
+    Start-Process -FilePath $node.Source -ArgumentList @($DiscoveryBridgePath) -WorkingDirectory $ProjectRoot -WindowStyle Hidden
+    for ($attempt = 0; $attempt -lt 10; $attempt++) {
+        Start-Sleep -Milliseconds 300
+        try {
+            $bridgeHealthy = (Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:43789/health" -TimeoutSec 1).StatusCode -eq 200
+        } catch {
+            $bridgeHealthy = $false
+        }
+        if ($bridgeHealthy) { break }
+    }
+}
+if (-not $bridgeHealthy) {
+    throw "The Local Find discovery bridge did not start on http://127.0.0.1:43789."
+}
+Write-Host "Discovery bridge: http://127.0.0.1:43789"
+
+$LoaderArgs = @(
+    $LoaderPath,
+    "--chrome", $ChromeShortPath,
+    "--user-data-dir", $ProfileShortPath,
+    "--extension", $ExtensionShortPath,
+    "--result", (Join-Path $ProjectRoot "tools\cdp-extension-result.json"),
+    "--open-url", "chrome://extensions",
+    "--keep-ms", $KeepMs
+)
+if ($PhoneUrl) {
+    $LoaderArgs += @("--phone-url", $PhoneUrl)
+}
+
+& $node.Source $LoaderArgs
+if ($LASTEXITCODE -ne 0) {
+    throw "Chrome Canary CDP loader failed with exit code $LASTEXITCODE."
+}
 
 Write-Host ""
 Write-Host "Next steps:"
-Write-Host "1. Enable Developer mode if needed."
-Write-Host "2. Confirm Local Find is loaded."
-Write-Host "3. Pin extension."
-Write-Host "4. Open popup."
-Write-Host "5. Set English UI."
-Write-Host "6. Capture screenshots manually."
-Write-Host "7. Save drafts to D:\local-find-screenshots-draft\"
+Write-Host "1. Confirm Local Find is loaded in chrome://extensions."
+Write-Host "2. Pin the extension and open its popup."
+Write-Host "3. If pairing, enable pairing mode on the phone before clicking Request Pairing."
+Write-Host "4. Set English UI and capture screenshots manually."
+Write-Host "5. Save drafts to $DraftDir"
