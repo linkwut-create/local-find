@@ -41,7 +41,13 @@ Or transfer the APK to the phone and open it in a file manager.
 3. Grant notification permission (Android 13+).
 4. Tap **Start Service**. The app shows a foreground notification with the phone's LAN IP and port.
 5. The app displays an **8-character Token** — note this. It is your admin/fallback key.
-6. Optionally, disable battery optimization for the app to keep the service alive.
+6. Complete the **Keep this phone findable** setup before relying on the app:
+   - Set Local Find to **Don't optimize** or **Unrestricted** under Battery settings.
+   - Allow **background activity**.
+   - On Xiaomi, Huawei, Oppo, Meizu and similar devices, enable **Auto-start/Startup** and turn off **app freeze**, **background cleanup**, or similar restrictions.
+   - Set Wi-Fi to **stay on during sleep**.
+   - After changing these settings, tap **Stop Service**, then **Start Service** once.
+   - Keep the phone and controller on the same Wi-Fi/LAN and keep Local Find's ongoing notification visible.
 
 ### Service lifecycle
 
@@ -49,7 +55,15 @@ Or transfer the APK to the phone and open it in a file manager.
 - The notification shows the current LAN IP and port (e.g., `192.168.1.108:8888`).
 - A 15-second watchdog auto-restarts the server if it crashes.
 - The service acquires a partial wake lock and Wi-Fi lock.
-- To stop, tap **Stop Service** in the app or swipe away the notification.
+- The service sends a small, token-free UDP discovery beacon every few seconds on
+  the current Wi-Fi subnet. If DHCP changes the phone's IP, the next beacon
+  carries the new address without requiring a new pairing.
+- After the user starts the service, the app remembers that choice and requests a
+  restart after reboot or an app update. Reopening the app also repairs a service
+  that was stopped by the system.
+- To stop, tap **Stop Service** in the app. This clears the remembered run choice;
+  a force-stop from Android settings cannot be reversed remotely and requires
+  opening the app again.
 
 ## 3. Chrome Extension
 
@@ -79,6 +93,7 @@ chrome-extension/
 
 - `storage` — save paired devices and settings in `chrome.storage.local`.
 - `http://*/*` — call the Android HTTP server on user-entered LAN addresses.
+- `http://127.0.0.1:43789/*` — query the local discovery bridge for a changed phone address.
 - No `tabs`, `history`, `cookies`, `scripting`, or `<all_urls>`.
 
 ### Pin the extension
@@ -247,10 +262,18 @@ curl -X POST "$PHONE/command/stop-all" -H "X-LocalFind-Token: $TOKEN"
 
 1. Confirm phone and computer are on the **same Wi-Fi network**.
 2. Confirm the phone's Local Find notification shows a LAN IP (not `127.0.0.1` or `0.0.0.0`).
-3. Ping the phone from the computer: `ping <phone-ip>`.
-4. Try opening `http://<phone-ip>:8888/ping` in Chrome — should show `{"ok":true}`.
-5. Check that Windows Firewall or other security software is not blocking outbound port 8888.
-6. Some corporate/guest Wi-Fi networks isolate clients — try a personal hotspot.
+3. Make sure the local discovery bridge is running on the same computer as
+   Chrome: `node tools\local_find_discovery_bridge.cjs` (the provided Canary
+   helper starts it automatically). If a paired command
+   fails because the saved IP is stale, the extension first consumes the phone's
+   beacon, verifies `/device-info` against the persistent device ID, and updates
+   its saved IP automatically. A bounded private-subnet probe remains a last
+   resort.
+4. If recovery does not find it, ping the current phone IP from the computer:
+   `ping <phone-ip>`.
+5. Try opening `http://<phone-ip>:8888/ping` in Chrome — should show `{"ok":true}`.
+6. Check that Windows Firewall or other security software is not blocking outbound port 8888.
+7. Some corporate/guest Wi-Fi networks isolate clients — try a personal hotspot.
 
 ### 401 Unauthorized
 
@@ -261,8 +284,12 @@ curl -X POST "$PHONE/command/stop-all" -H "X-LocalFind-Token: $TOKEN"
 
 ### Phone service stops unexpectedly
 
+- If the service was previously started, open Local Find once; it now requests a
+  foreground-service restart. Do not use Android's **Force stop** if the phone
+  must remain findable; Android requires a manual relaunch after force-stop.
 - Check that battery optimization is disabled for Local Find.
-- On some phones (Xiaomi, Huawei, Oppo, etc.), enable "Auto-start" and disable "Background restrictions".
+- On some phones (Xiaomi, Huawei, Oppo, Meizu, etc.), enable "Auto-start/Startup", allow background activity, and disable app freeze/background cleanup.
+- Set Wi-Fi to stay on during sleep, then tap **Stop Service** and **Start Service** once.
 - The app uses a wake lock and Wi-Fi lock, but aggressive OEM power saving may still kill it.
 
 ### Flashlight doesn't work
@@ -275,14 +302,19 @@ curl -X POST "$PHONE/command/stop-all" -H "X-LocalFind-Token: $TOKEN"
 - Pairing mode has a 5-minute timeout. Re-enable it on the phone.
 - While pairing mode is active, the `/device-info` response shows `"pairingMode":true`.
 
-### NSD/mDNS not resolving
+### NSD/mDNS or changed-IP discovery not resolving
 
-- This is expected. The current version does not use NSD from Chrome.
-- Always enter the phone's IP address directly.
+- Chrome cannot consume Android NSD directly. The local bridge listens for the
+  Android UDP beacon and verifies the persistent device ID before updating the
+  paired address; NSD/mDNS is an optional fast path.
+- This recovery does not work across different networks, IPv6-only addresses, or
+  networks that isolate clients.
 
 ## 9. Current Limitations
 
-- **Manual IP entry**: must type the phone's LAN IP at least once. No QR code or auto-discovery.
+- **Initial IP entry**: must type the phone's LAN IP at least once. After pairing,
+  the local bridge plus Android beacon recovers changed private-LAN addresses;
+  this is not a general network discovery or internet relay.
 - **Android service only**: no iOS support.
 - **Debug APK only**: no release signing, no Play Store distribution.
 - **Single network**: phone and computer must be on the same LAN. No internet relay.
@@ -291,7 +323,9 @@ curl -X POST "$PHONE/command/stop-all" -H "X-LocalFind-Token: $TOKEN"
 - **Chrome storage is plaintext**: `chrome.storage.local` is not encrypted at rest.
 - **8-char token is high-privilege**: it can impersonate or revoke any paired controller.
 - **No re-pair button**: if a paired token is lost, delete and re-pair.
-- **No automatic background scanning**: the extension does not scan the LAN for phones.
+- **No general LAN scanning**: the extension does not continuously scan the LAN for
+  arbitrary phones; automatic recovery is limited to beacons from already paired
+  phones and the local bridge.
 
 ## 10. Release Package
 
