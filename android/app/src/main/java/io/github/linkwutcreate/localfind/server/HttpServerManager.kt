@@ -8,6 +8,7 @@ import io.github.linkwutcreate.localfind.model.PairingRequest
 import io.github.linkwutcreate.localfind.store.LocalDeviceIdentityStore
 import io.github.linkwutcreate.localfind.store.PairedControllerTokenStore
 import io.github.linkwutcreate.localfind.store.PairingRequestStore
+import io.github.linkwutcreate.localfind.util.NetworkUtil
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -41,6 +42,8 @@ enum class ServerStatus {
     FAILED
 }
 
+fun ServerStatus.isListening(): Boolean = this == ServerStatus.LISTENING
+
 class HttpServerManager(
     private val ringController: RingController,
     private val flashlightController: FlashlightController,
@@ -52,6 +55,13 @@ class HttpServerManager(
 ) {
     @Volatile
     private var server: NettyApplicationEngine? = null
+    /**
+     * Guards asynchronous start/restart work.  A service can be recreated while
+     * the previous Netty engine is still releasing port 8888, so a plain
+     * @Synchronized method is not enough: its coroutine continues after the
+     * method returns.
+     */
+    private var lifecycleGeneration: Long = 0L
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private val commandDispatcher = HardwareCommandDispatcher(ringController, flashlightController, onStatusChange)
@@ -95,6 +105,7 @@ class HttpServerManager(
                             put("name", identity.name)
                             put("type", identity.type)
                             put("port", getPort())
+                            put("networkPrefixLength", NetworkUtil.getLocalNetworkInfo()?.prefixLength ?: 24)
                             put("pairingMode", isPairingModeActive())
                             put("service", "running")
                         }
@@ -663,6 +674,7 @@ class HttpServerManager(
                 put("name", identity.name)
                 put("type", identity.type)
                 put("port", getPort())
+                put("networkPrefixLength", NetworkUtil.getLocalNetworkInfo()?.prefixLength ?: 24)
             })
             put("controlToken", request.controlToken)
         }
@@ -670,28 +682,14 @@ class HttpServerManager(
 
     @Synchronized
     fun start() {
-        if (server != null) return
-        
+        if (server != null || currentStatus == ServerStatus.STARTING) return
+
+        val generation = ++lifecycleGeneration
         currentStatus = ServerStatus.STARTING
+        lastServerError = null
         onStatusChange()
 
-        scope.launch {
-            try {
-                lastServerError = null
-                val newServer = createServer()
-                server = newServer
-                newServer.start(wait = false)
-                currentStatus = ServerStatus.LISTENING
-                onStatusChange()
-                Log.d("HttpServerManager", "Ktor server listening on port ${getPort()}")
-            } catch (e: Exception) {
-                currentStatus = ServerStatus.FAILED
-                lastServerError = e.message ?: e.toString()
-                server = null
-                onStatusChange()
-                Log.e("HttpServerManager", "Error starting Ktor server", e)
-            }
-        }
+        scope.launch { startServerWithRetry(generation, "starting") }
     }
 
     /**
@@ -699,38 +697,125 @@ class HttpServerManager(
      */
     @Synchronized
     fun restart() {
+        if (currentStatus == ServerStatus.STARTING) return
+
+        val previousServer = server
+        server = null
+        val generation = ++lifecycleGeneration
+        currentStatus = ServerStatus.STARTING
+        lastServerError = null
+        onStatusChange()
+
         scope.launch {
             try {
-                currentStatus = ServerStatus.STARTING
-                lastServerError = null
-                onStatusChange()
-
-                // 1. Synchronously stop existing instance
-                server?.stop(500, 1000)
-                server = null
-                
-                // 2. Create and start new instance
-                val newServer = createServer()
-                server = newServer
-                newServer.start(wait = false)
-                
-                currentStatus = ServerStatus.LISTENING
-                onStatusChange()
-                Log.d("HttpServerManager", "Ktor server restarted successfully")
+                // Release the old listener before creating the replacement.
+                // The stop may overlap with Android process/service teardown.
+                previousServer?.stop(500, 1000)
             } catch (e: Exception) {
-                currentStatus = ServerStatus.FAILED
-                lastServerError = e.message ?: e.toString()
-                server = null
+                Log.e("HttpServerManager", "Error stopping Ktor server before restart", e)
+            }
+
+            startServerWithRetry(generation, "restart")
+        }
+    }
+
+    /**
+     * Starts one server generation and tolerates the short port-release window
+     * observed when Android recreates the foreground service.  The old code
+     * reported FAILED on the first BindException and waited for the watchdog,
+     * which made an otherwise healthy paired phone unreachable for ~15 seconds.
+     */
+    private fun startServerWithRetry(generation: Long, operation: String) {
+        var lastError: Exception? = null
+
+        for (attempt in 1..SERVER_START_MAX_ATTEMPTS) {
+            if (!isCurrentStartingGeneration(generation)) return
+
+            var candidate: NettyApplicationEngine? = null
+            try {
+                val startedServer = createServer()
+                candidate = startedServer
+                startedServer.start(wait = false)
+
+                val accepted = synchronized(this) {
+                    if (generation != lifecycleGeneration || currentStatus != ServerStatus.STARTING) {
+                        false
+                    } else {
+                        server = startedServer
+                        currentStatus = ServerStatus.LISTENING
+                        true
+                    }
+                }
+
+                if (!accepted) {
+                    runCatching { startedServer.stop(500, 1000) }
+                    return
+                }
+
                 onStatusChange()
-                Log.e("HttpServerManager", "Error restarting Ktor server", e)
+                Log.d(
+                    "HttpServerManager",
+                    "Ktor server listening on port ${getPort()} ($operation, attempt $attempt)",
+                )
+                return
+            } catch (e: Exception) {
+                lastError = e
+                runCatching { candidate?.stop(500, 1000) }
+
+                if (!isAddressInUse(e) || attempt == SERVER_START_MAX_ATTEMPTS) break
+
+                // Keep this bounded and on the IO dispatcher.  This covers
+                // Android's short socket-release interval without deferring
+                // recovery to the 15-second watchdog.
+                try {
+                    Thread.sleep(SERVER_START_RETRY_DELAYS_MS[attempt - 1])
+                } catch (interrupted: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    lastError = interrupted
+                    break
+                }
             }
         }
+
+        val error = lastError ?: IllegalStateException("Unknown Ktor server start failure")
+        val shouldReportFailure = synchronized(this) {
+            if (generation != lifecycleGeneration || currentStatus != ServerStatus.STARTING) {
+                false
+            } else {
+                server = null
+                currentStatus = ServerStatus.FAILED
+                lastServerError = error.message ?: error.toString()
+                true
+            }
+        }
+        if (shouldReportFailure) {
+            onStatusChange()
+            Log.e("HttpServerManager", "Error $operation Ktor server", error)
+        }
+    }
+
+    private fun isCurrentStartingGeneration(generation: Long): Boolean = synchronized(this) {
+        generation == lifecycleGeneration && currentStatus == ServerStatus.STARTING
+    }
+
+    private fun isAddressInUse(error: Throwable): Boolean {
+        var current: Throwable? = error
+        while (current != null) {
+            if (current is java.net.BindException ||
+                current.message?.contains("Address already in use", ignoreCase = true) == true
+            ) {
+                return true
+            }
+            current = current.cause
+        }
+        return false
     }
 
     @Synchronized
     fun stopServerOnly() {
         val s = server
         server = null
+        lifecycleGeneration++
         currentStatus = ServerStatus.STOPPED
         scope.launch {
             try {
@@ -755,5 +840,7 @@ class HttpServerManager(
 
     companion object {
         const val PAIRING_MODE_TTL_MILLIS = 5 * 60 * 1000L
+        private const val SERVER_START_MAX_ATTEMPTS = 5
+        private val SERVER_START_RETRY_DELAYS_MS = longArrayOf(250L, 500L, 750L, 1000L)
     }
 }
