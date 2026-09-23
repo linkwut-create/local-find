@@ -49,3 +49,23 @@ local-find-screenshots-draft/
 
 # Signing secrets directory (defense in depth; *.jks already ignored above)
 local-find-secrets/
+
+# Local build caches redirected off C: for this workstation (LOCALFIND-LAND-RC-0923)
+android/.gradle-user-home/
+android/.tmp/
+
+# 09-14 manual verification screenshots/UI dumps/APK kept out of git; archived in
+# D:\AIProjects\cache\local-find-wip-backup-0923 (LOCALFIND-LAND-RC-0923 evidence backup)
+android/*.png
+android/*.xml
+android/*.apk
+
+# 09-14 CDP/manual debug tool output kept out of git; archived in the same backup
+tools/cdp-*.json
+tools/find-phone-locked-20260914.json
+tools/now-status*.json
+tools/soak-*.json
+tools/stale-*.json
+tools/status-after-*.json
+tools/stop-all-locked-20260914.json
+tools/wide-recovery-20260914.json
