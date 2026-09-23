@@ -588,6 +588,7 @@ fun FinderModeScreen(
         if (isServiceRunning && localIp != null && pairingToken.isNotEmpty()) {
             val qrContent = buildJsonObject {
                 put("type", "local_find_pairing")
+                put("deviceId", localDeviceId)
                 put("name", "LocalFind-${android.os.Build.MODEL}")
                 put("host", localIp)
                 put("port", port)
@@ -682,6 +683,12 @@ fun FinderModeScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Text(
+                    LFS.str("bg4"),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
                 
                 OutlinedButton(
                     onClick = onOpenBatterySettings,
@@ -775,6 +782,7 @@ fun ControllerModeScreen(
                     if (json.optString("type") == "local_find_pairing") {
                         val host = json.getString("host")
                         val port = json.getInt("port")
+                        val deviceId = json.optString("deviceId").trim()
                         val name = json.optString("name", LFS.str("scanned_device"))
                         val token = json.getString("token")
                         
@@ -782,7 +790,8 @@ fun ControllerModeScreen(
                             name = name,
                             host = host,
                             port = port,
-                            controlUrl = "http://$host:$port"
+                            controlUrl = "http://$host:$port",
+                            deviceId = deviceId,
                         )
                         
                         selectedDevice = device
@@ -837,9 +846,10 @@ fun ControllerModeScreen(
                                                 name = saved.name,
                                                 host = saved.host,
                                                 port = saved.port,
-                                                controlUrl = "http://${saved.host}:${saved.port}"
+                                                controlUrl = "http://${saved.host}:${saved.port}",
+                                                deviceId = saved.deviceId,
                                             )
-                                            tokenStore.saveRecentDevice(saved.name, saved.host, saved.port)
+                                            tokenStore.saveRecentDevice(device)
                                             selectedDevice = device
                                         },
                                         shape = RoundedCornerShape(8.dp),
@@ -850,8 +860,7 @@ fun ControllerModeScreen(
                                     }
                                     TextButton(
                                         onClick = {
-                                            tokenStore.removeSavedDevice(saved.host, saved.port)
-                                            tokenStore.clearToken(saved.host, saved.port)
+                                            tokenStore.removeSavedDevice(saved)
                                             recentDevice = tokenStore.getRecentDevice()
                                             savedDevices = tokenStore.getSavedDevices()
                                         },
@@ -880,7 +889,7 @@ fun ControllerModeScreen(
                                 }
                                 Button(
                                     onClick = {
-                                        tokenStore.saveRecentDevice(device.name, device.host, device.port)
+                                        tokenStore.saveRecentDevice(device)
                                         selectedDevice = device
                                     },
                                     shape = RoundedCornerShape(8.dp),
@@ -1030,7 +1039,7 @@ fun ControllerModeScreen(
                                     port = portInt,
                                     controlUrl = "http://$hostTrimmed:$portInt"
                                 )
-                                tokenStore.saveRecentDevice(name, device.host, portInt)
+                                tokenStore.saveRecentDevice(device)
                                 selectedDevice = device
                             },
                             modifier = Modifier.align(Alignment.End)
@@ -1071,7 +1080,7 @@ fun ControllerModeScreen(
                                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Button(
                                         onClick = { 
-                                            tokenStore.saveRecentDevice(device.name, device.host, device.port)
+                                            tokenStore.saveRecentDevice(device)
                                             selectedDevice = device 
                                         }, 
                                         shape = RoundedCornerShape(8.dp),
@@ -1082,7 +1091,7 @@ fun ControllerModeScreen(
                                     }
                                     OutlinedButton(
                                         onClick = { 
-                                            tokenStore.saveRecentDevice(device.name, device.host, device.port)
+                                            tokenStore.saveRecentDevice(device)
                                             onOpenBrowser(device) 
                                         },
                                         shape = RoundedCornerShape(8.dp),
@@ -1114,7 +1123,7 @@ fun RemoteControlPanel(
     val snackbarHostState = remember { SnackbarHostState() }
     
     var inputToken by remember { mutableStateOf(initialToken) }
-    var hasSavedToken by remember { mutableStateOf(tokenStore.getToken(device.host, device.port) != null) }
+    var hasSavedToken by remember { mutableStateOf(tokenStore.getToken(device) != null) }
     var connectionStatus by remember { mutableStateOf(RemoteConnectionStatus.IDLE) }
     var ringActive by remember { mutableStateOf(false) }
     var flashMode by remember { mutableStateOf("off") }
@@ -1122,13 +1131,12 @@ fun RemoteControlPanel(
 
     fun getEffectiveToken(): String? {
         if (inputToken.isNotEmpty()) return inputToken
-        return tokenStore.getToken(device.host, device.port)
+        return tokenStore.getToken(device)
     }
 
     fun handleSuccessfulCommand(usedToken: String) {
-        tokenStore.saveDevice(device.name, device.host, device.port)
-        if (usedToken == inputToken) {
-            tokenStore.saveToken(device.host, device.port, inputToken)
+        val identityBound = tokenStore.saveToken(device, usedToken)
+        if (identityBound && usedToken == inputToken) {
             inputToken = ""
             hasSavedToken = true
         }
@@ -1419,7 +1427,7 @@ fun RemoteControlPanel(
                                 }
                                 TextButton(
                                     onClick = { 
-                                        tokenStore.clearToken(device.host, device.port)
+                                        tokenStore.clearToken(device)
                                         hasSavedToken = false
                                     },
                                     contentPadding = PaddingValues(0.dp)
