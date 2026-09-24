@@ -45,8 +45,6 @@ param(
     [string]$LogDir = 'D:\AIProjects\cache\lf-ascii\android\build-logs'
 )
 
-$ErrorActionPreference = 'Stop'
-
 if (-not (Test-Path $JunctionPath)) {
     throw "ASCII junction not found at $JunctionPath. Create it first with:`n" +
           "  New-Item -ItemType Junction -Path `"$JunctionPath`" -Target `"<repo path>`""
