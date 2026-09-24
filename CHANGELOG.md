@@ -1,5 +1,34 @@
 ﻿# Changelog
 
+## Local Find 1.1.1 (RC2) - 2026-09-24
+
+Release candidate build. `versionCode 4`, `versionName 1.1.1`, `targetSdk 36`.
+Supersedes the 1.1.0 RC's versionCode 3, which cannot be reused since it was
+already uploaded to Google Play for review on 2026-09-13. Not uploaded to
+Google Play or the Chrome Web Store by this build; see
+`docs/release/1.1.1-readiness.md` for the upload steps and current status.
+
+### Highlights
+
+- **Vendor auto-start / battery setup guide**: the first time a user turns
+  on "Keep This Phone Findable", the app now walks them through the OEM
+  settings most likely to kill the background service — direct jumps to the
+  Xiaomi/Huawei-Honor/OPPO/vivo/Meizu auto-start managers where a stable
+  public Intent exists, honest step-by-step copy (falling back to the app
+  details page) for Samsung and stock Android where it doesn't — plus a
+  shared battery-optimization step and a self-check button. Reachable again
+  anytime from its own button. No new sensitive permission requested.
+- **`tools/build-android.ps1`**: codifies the ASCII-junction Gradle
+  workaround from the 1.1.0 landing session into a script.
+
+### Package scope
+
+- Android release AAB, signed with the same upload key already registered
+  with Play App Signing (see readiness doc for hashes).
+- Chrome extension as unpacked Manifest V3 extension, also packaged as
+  `local-find-release/local-find-chrome-extension-1.1.1.zip` (repacked with
+  forward-slash paths, fixing a 1.1.0-era packaging quirk).
+
 ## Local Find 1.1.0 - 2026-09-24
 
 Release candidate build. `versionCode 3`, `versionName 1.1.0`, `targetSdk 36`
