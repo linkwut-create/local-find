@@ -41,42 +41,45 @@ Reference docs:
 - `docs/CHROME_WEB_STORE_READINESS_AUDIT.md`
 - `docs/CHROME_WEB_STORE_SUBMISSION_STATUS.md`
 
-No changes to Chrome extension code, manifest, assets, or package while review is pending unless Chrome Web Store requests changes.
+⚠️ **Discrepancy found 2026-09-24**: the submitted package above is the `0.1.0`-era
+extension. Extension source (`popup.js`, `manifest.json`, and later `net-utils.js`)
+has since changed substantially — first in the 09-14 background-findability work,
+then in this landing session (identity-bound address recovery, `manifest.json`
+version bumped to `1.1.0`). This session did not check or change the CWS review
+status (UNKNOWN — no access to the CWS developer console) and did **not** submit
+anything; a newer, unsubmitted package exists locally at
+`local-find-release/local-find-chrome-extension-1.1.0.zip` (see
+`docs/release/1.1.0-readiness.md`). Whoever next touches the CWS listing should
+first confirm the current review outcome for the `0.1.0` submission before
+deciding whether to update or resubmit.
 
 ## Google Play Release
 
-Status: **PLAY.7B-FIX16K - 16 KB compatible replacement AAB built locally; not uploaded.**
+Status: **`versionCode 3` (Android 16 / API 36) uploaded and submitted for review on 2026-09-13.**
+A newer local rebuild exists from the 2026-09-24 landing session (see
+`docs/release/1.1.0-readiness.md`) with the same `versionCode 3` but different
+content — it has **not** been uploaded, and would need a `versionCode` bump
+before it could be.
 
 | Field | Value |
 |-------|-------|
 | `applicationId` | `io.github.linkwutcreate.localfind` |
-| `versionCode` | `2` |
-| `versionName` | `"1.0.1"` |
-| `targetSdk` | `35` |
+| `versionCode` (live production) | `2` / `versionName "1.0.1"` / `targetSdk 35` — released 2026-06-14 |
+| `versionCode` (submitted for review) | `3` / `versionName "1.1.0"` / `targetSdk 36` — uploaded and submitted 2026-09-13 |
 | Developer account | Registered, verified by owner |
 | Account type | **Personal** — confirmed (2026-05-29) |
 | Production access | **Approved** - app can create a production release |
-| Production path | App setup -> closed testing -> production access application -> approved |
+| Upload key | **Reset 2026-09-10** via Play App Signing (original upload key's password was unrecoverable). New key alias `localfind-upload`, cert SHA-256 `32:59:7A:5D:D1:FD:AA:B3:D5:7D:6D:FD:9F:E9:03:93:FF:D4:FE:29:E2:8F:09:C2:F9:7C:9C:A0:CB:C0:A8:53`. Details: `android/local-find-secrets/SIGNING_KEY_INFO.md` (gitignored). |
+| Release AAB signing | `hasReleaseSigningConfig` = true; keystore path resolved relative to `android/` (fixed 2026-09-10, see `docs/android16/AUTOMATED_TEST_REPORT.md` §6.3) |
+| `versionCode 3` upload | **Completed 2026-09-13** — 0 errors, 2 advisory warnings (missing deobfuscation/native-debug-symbol files, don't block release). Full runbook and cooldown-period gotcha: `docs/android16/PLAY_UPLOAD_RUNBOOK.md` |
+| `versionCode 3` review status | Submitted; awaiting Google review as of 2026-09-13 (not re-checked by the 2026-09-24 landing session) |
+| 2026-09-24 rebuild | New AAB built from the same `versionCode 3` after landing 09-14's background-findability/identity-binding/address-recovery work; SHA256 and readiness details in `docs/release/1.1.0-readiness.md`. **Not uploaded** — would collide with the already-submitted `versionCode 3` binary; needs a version bump first if it is to be shipped. |
 | Closed testing required | **Satisfied** - 12+ testers for at least 14 days |
 | Closed testing release | **Published** |
 | Testers Community report | **Available** |
 | Tester feedback | No critical crashes or blocking bugs reported |
-| Future improvements | Onboarding, help/FAQ, store listing, feedback/rating entry |
-| Internal testing | Available |
-| Upload keystore | **Confirmed** — exists, all 4 signing variables set |
-| Key alias | `localfind-upload` |
-| Release AAB signing | `hasReleaseSigningConfig` = true |
-| Previous AAB | `versionCode 1` — uploaded to testing, blocked for production by 16 KB page-size requirement |
-| Replacement AAB | **Built and signed locally; not uploaded** |
-| Replacement AAB path | `android/app/build/outputs/bundle/release/app-release.aab` |
-| Replacement AAB size | 20,484,249 bytes |
-| Replacement AAB SHA256 | `447178CCCC6AE1DEAF26320A35E48338CD5D0127CF1C427140DDA527D19ECBFC` |
-| 16 KB verification | **PASS** — 64-bit ELF alignment, `PAGE_ALIGNMENT_16K`, and `zipalign -P 16` |
-| Internal testing | **Smoke test PASS** — 8/8 checks passed, no blocker |
-| Play Console forms | **Completed (draft)** — not submitted |
-| Production release | **Not created** — waiting for approval to upload `versionCode 2` |
 
-Next: obtain explicit approval before uploading the `versionCode 2` AAB or creating the production release.
+Next: decide whether to bump `versionCode` to ship the 2026-09-24 rebuild, and whether/when to check the `versionCode 3` review outcome.
 
 Reference docs:
 - `docs/GOOGLE_PLAY_PRODUCTION_ACCESS_APPLICATION.md`
@@ -84,7 +87,9 @@ Reference docs:
 - `docs/GOOGLE_PLAY_RELEASE_READINESS.md`
 - `docs/GOOGLE_PLAY_RELEASE_PLAN.md`
 - `docs/GOOGLE_PLAY_DEVELOPER_ACCOUNT_STATUS.md`
-- `docs/GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md` (new)
+- `docs/GOOGLE_PLAY_STORE_ASSET_PRODUCTION_PLAN.md`
+- `docs/android16/PLAY_UPLOAD_RUNBOOK.md` (new, 2026-09-10/13)
+- `docs/release/1.1.0-readiness.md` (new, 2026-09-24)
 
 ### Google Play Release Blockers
 
