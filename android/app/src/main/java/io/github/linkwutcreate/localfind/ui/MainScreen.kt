@@ -51,6 +51,8 @@ import io.github.linkwutcreate.localfind.server.RemoteControlClient
 import io.github.linkwutcreate.localfind.server.ControlResult
 import io.github.linkwutcreate.localfind.auth.RemoteDeviceTokenStore
 import io.github.linkwutcreate.localfind.model.PairingRequest
+import io.github.linkwutcreate.localfind.onboarding.OnboardingStep
+import io.github.linkwutcreate.localfind.onboarding.SelfCheckResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -112,7 +114,13 @@ fun MainScreen(
     onOpenBatterySettings: () -> Unit,
     onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit,
     language: String,
-    onLanguageChange: (String) -> Unit
+    onLanguageChange: (String) -> Unit,
+    showOnboarding: Boolean,
+    onboardingSteps: List<OnboardingStep>,
+    onOpenOnboarding: () -> Unit,
+    onDismissOnboarding: () -> Unit,
+    onLaunchOnboardingStep: (OnboardingStep) -> Unit,
+    onSelfCheckOnboarding: () -> SelfCheckResult,
 ) {
     LFS.setLanguage(language)
     var selectedTabIndex by remember { mutableIntStateOf(0) }
@@ -196,7 +204,8 @@ fun MainScreen(
                     onRejectPairingRequest = onRejectPairingRequest,
                     onRequestPermission = onRequestPermission,
                     onOpenBatterySettings = onOpenBatterySettings,
-                    onAuthenticate = onAuthenticate
+                    onAuthenticate = onAuthenticate,
+                    onOpenOnboarding = onOpenOnboarding
                 )
             } else {
                 ControllerModeScreen(
@@ -213,6 +222,15 @@ fun MainScreen(
                     onAuthenticate = onAuthenticate
                 )
             }
+        }
+
+        if (showOnboarding) {
+            OnboardingGuideDialog(
+                steps = onboardingSteps,
+                onLaunchStep = onLaunchOnboardingStep,
+                onSelfCheck = onSelfCheckOnboarding,
+                onDismiss = onDismissOnboarding,
+            )
         }
     }
 }
@@ -251,7 +269,8 @@ fun FinderModeScreen(
     onRejectPairingRequest: (String) -> Unit,
     onRequestPermission: () -> Unit,
     onOpenBatterySettings: () -> Unit,
-    onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit
+    onAuthenticate: (reason: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) -> Unit,
+    onOpenOnboarding: () -> Unit
 ) {
     val clipboardManager = LocalClipboardManager.current
     var isTokenVisible by remember { mutableStateOf(false) }
@@ -696,6 +715,13 @@ fun FinderModeScreen(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(LFS.str("battery_settings"), fontSize = 12.sp)
+                }
+                OutlinedButton(
+                    onClick = onOpenOnboarding,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(LFS.str("onboard_guide_button"), fontSize = 12.sp)
                 }
             }
         }

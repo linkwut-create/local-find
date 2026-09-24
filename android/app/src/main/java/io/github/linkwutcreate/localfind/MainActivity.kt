@@ -36,6 +36,14 @@ import io.github.linkwutcreate.localfind.model.PairingRequest
 import io.github.linkwutcreate.localfind.ui.MainScreen
 import io.github.linkwutcreate.localfind.ui.LFS
 import io.github.linkwutcreate.localfind.util.NetworkUtil
+import io.github.linkwutcreate.localfind.onboarding.IntentResolver
+import io.github.linkwutcreate.localfind.onboarding.IntentSpec
+import io.github.linkwutcreate.localfind.onboarding.LaunchTarget
+import io.github.linkwutcreate.localfind.onboarding.OnboardingPrefs
+import io.github.linkwutcreate.localfind.onboarding.OnboardingStep
+import io.github.linkwutcreate.localfind.onboarding.SelfCheckResult
+import io.github.linkwutcreate.localfind.onboarding.VendorDetector
+import io.github.linkwutcreate.localfind.onboarding.VendorGuide
 
 class MainActivity : FragmentActivity() {
 
@@ -61,6 +69,9 @@ class MainActivity : FragmentActivity() {
     private var pairingModeExpiresAtState by mutableStateOf(0L)
     private var pendingPairingRequestsState by mutableStateOf(listOf<PairingRequest>())
     private var languageState by mutableStateOf("en")
+    private var showOnboardingState by mutableStateOf(false)
+    private val onboardingVendor by lazy { VendorDetector.detect(Build.MANUFACTURER, Build.BRAND) }
+    private val onboardingSteps by lazy { VendorGuide.stepsFor(onboardingVendor) }
 
     // NSD Discovery 状态
     private lateinit var nsdDiscoveryManager: NsdDiscoveryManager
@@ -173,7 +184,13 @@ class MainActivity : FragmentActivity() {
                             pairingModeExpiresAt = pairingModeExpiresAtState,
                             pendingPairingRequests = pendingPairingRequestsState,
                             remoteTokenStore = remoteTokenStore,
-                            onStartService = { startAndBindService() },
+                            onStartService = {
+                                if (!OnboardingPrefs.hasShownGuide(this)) {
+                                    OnboardingPrefs.markGuideShown(this)
+                                    showOnboardingState = true
+                                }
+                                startAndBindService()
+                            },
                             onStopService = { shutdownService() },
                             onRestartServer = { foregroundService?.restartServer() },
                             onRegenerateToken = {
@@ -248,7 +265,13 @@ class MainActivity : FragmentActivity() {
                             languageState = resolveLanguage(mode)
                             val p = getSharedPreferences("pairing_prefs", Context.MODE_PRIVATE)
                             p.edit().putString("app_language", mode).apply()
-                        }
+                        },
+                        showOnboarding = showOnboardingState,
+                        onboardingSteps = onboardingSteps,
+                        onOpenOnboarding = { showOnboardingState = true },
+                        onDismissOnboarding = { showOnboardingState = false },
+                        onLaunchOnboardingStep = { step -> launchOnboardingStep(step) },
+                        onSelfCheckOnboarding = { runOnboardingSelfCheck() }
                     )
                 }
             }
@@ -348,6 +371,57 @@ class MainActivity : FragmentActivity() {
             }
             startActivity(intent)
         }
+    }
+
+    /**
+     * Resolves and launches one onboarding step's target settings screen. Vendor steps try
+     * their candidate Activities in order (see [IntentResolver]); the battery step reuses
+     * the existing [openBatteryOptimizationSettings] flow so there is exactly one code path
+     * that shows the system "ignore battery optimizations" dialog. Any failure — including
+     * a candidate that resolved via [android.content.pm.PackageManager] but still refuses to
+     * launch, which some OEMs do — falls back to this app's details page, never leaves the
+     * user on an error with no next step.
+     */
+    private fun launchOnboardingStep(step: OnboardingStep) {
+        if (step.id == "battery") {
+            openBatteryOptimizationSettings()
+            return
+        }
+        val target = IntentResolver.pickLaunchTarget(step.candidates) { spec ->
+            resolveVendorIntent(spec)?.resolveActivity(packageManager) != null
+        }
+        val intentToLaunch = when (target) {
+            is LaunchTarget.VendorScreen -> resolveVendorIntent(target.spec)
+            LaunchTarget.AppDetails -> null
+        } ?: appDetailsIntent()
+        try {
+            startActivity(intentToLaunch)
+        } catch (e: Exception) {
+            try {
+                startActivity(appDetailsIntent())
+            } catch (e2: Exception) {
+                Toast.makeText(this, LFS.str("onboard_jump_failed"), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun resolveVendorIntent(spec: IntentSpec): Intent? = try {
+        Intent().apply { setClassName(spec.packageName, spec.className) }
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun appDetailsIntent(): Intent =
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+
+    private fun runOnboardingSelfCheck(): SelfCheckResult {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        val batteryUnrestricted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+            powerManager.isIgnoringBatteryOptimizations(packageName)
+        val serviceRunning = isServiceBound && isServiceRunningState
+        return SelfCheckResult(serviceRunning = serviceRunning, batteryUnrestricted = batteryUnrestricted)
     }
 
     private fun checkAndRequestPermissions() {
