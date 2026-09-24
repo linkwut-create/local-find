@@ -1,5 +1,20 @@
 # Local Find Project Status
 
+## 1.1.1 Publish (2026-09-25)
+
+Status: Play, Chrome Web Store and GitHub all updated for 1.1.1 in one session.
+
+| Field | Value |
+|-------|-------|
+| GitHub Release | [v1.1.1](https://github.com/linkwut-create/local-find/releases/tag/v1.1.1) |
+| GitHub assets | `local-find-1.1.1-release.apk`, `local-find-chrome-extension-1.1.1.zip`, `SHA256SUMS.txt` (no AAB, no signing material) |
+| `master` push | `git rev-list --count origin/master..master` = 0 after push |
+| Google Play | `versionCode 4` (1.1.1) submitted to production track for review |
+| Chrome Web Store | `1.1.1` package submitted for review; `0.1.0` confirmed published (not pending) |
+
+Full narrative, screenshots and verification commands: `docs/evidence/2026-09-25-publish-1.1.1.md`.
+See the Chrome Web Store and Google Play sections below for the corrected historical record.
+
 ## MVP-U.5 GitHub Release Closeout
 
 Status: Released on GitHub as a prerelease.
@@ -26,7 +41,7 @@ No Android source, Chrome extension source, release package, or tag was changed 
 
 ## Chrome Web Store Release
 
-Status: Submitted for review / pending review.
+Status: `0.1.0` **published** (not pending — corrected 2026-09-25, see below); `1.1.1` submitted for review 2026-09-25.
 
 | Field | Value |
 |-------|-------|
@@ -41,25 +56,22 @@ Reference docs:
 - `docs/CHROME_WEB_STORE_READINESS_AUDIT.md`
 - `docs/CHROME_WEB_STORE_SUBMISSION_STATUS.md`
 
-⚠️ **Discrepancy found 2026-09-24**: the submitted package above is the `0.1.0`-era
-extension. Extension source (`popup.js`, `manifest.json`, and later `net-utils.js`)
-has since changed substantially — first in the 09-14 background-findability work,
-then in this landing session (identity-bound address recovery, `manifest.json`
-version bumped to `1.1.0`). This session did not check or change the CWS review
-status (UNKNOWN — no access to the CWS developer console) and did **not** submit
-anything; a newer, unsubmitted package exists locally at
-`local-find-release/local-find-chrome-extension-1.1.0.zip` (see
-`docs/release/1.1.0-readiness.md`). Whoever next touches the CWS listing should
-first confirm the current review outcome for the `0.1.0` submission before
-deciding whether to update or resubmit.
+✅ **Resolved 2026-09-25**: the `0.1.0` submission's actual review outcome was
+checked in the CWS developer console — status is **"已发布 - 公开发布" (Published,
+publicly available)**, not pending as previously recorded. The `1.1.1` package
+(`local-find-release/local-find-chrome-extension-1.1.1.zip`) was uploaded as a
+new draft package and submitted for review the same day; console shows
+"待审核" (pending review) with auto-publish-on-approval enabled. Permissions
+unchanged (`storage`, host permission), so no new permission justification was
+needed; listing description was checked against current behavior and needed no
+changes. Evidence: `docs/evidence/2026-09-25-publish-1.1.1.md`.
 
 ## Google Play Release
 
-Status: **`versionCode 3` (Android 16 / API 36) uploaded and submitted for review on 2026-09-13.**
-A newer local rebuild exists from the 2026-09-24 landing session (see
-`docs/release/1.1.0-readiness.md`) with the same `versionCode 3` but different
-content — it has **not** been uploaded, and would need a `versionCode` bump
-before it could be.
+Status: **`versionCode 3` (1.1.0) passed review and is the live production release** (confirmed
+2026-09-25: production track shows "有效"/Active, 177 countries, 9 installs).
+**`versionCode 4` (1.1.1) uploaded and submitted for review on 2026-09-25** — see the
+2026-09-25 section below for the submission record.
 
 | Field | Value |
 |-------|-------|
@@ -72,14 +84,14 @@ before it could be.
 | Upload key | **Reset 2026-09-10** via Play App Signing (original upload key's password was unrecoverable). New key alias `localfind-upload`, cert SHA-256 `32:59:7A:5D:D1:FD:AA:B3:D5:7D:6D:FD:9F:E9:03:93:FF:D4:FE:29:E2:8F:09:C2:F9:7C:9C:A0:CB:C0:A8:53`. Details: `android/local-find-secrets/SIGNING_KEY_INFO.md` (gitignored). |
 | Release AAB signing | `hasReleaseSigningConfig` = true; keystore path resolved relative to `android/` (fixed 2026-09-10, see `docs/android16/AUTOMATED_TEST_REPORT.md` §6.3) |
 | `versionCode 3` upload | **Completed 2026-09-13** — 0 errors, 2 advisory warnings (missing deobfuscation/native-debug-symbol files, don't block release). Full runbook and cooldown-period gotcha: `docs/android16/PLAY_UPLOAD_RUNBOOK.md` |
-| `versionCode 3` review status | Submitted; awaiting Google review as of 2026-09-13 (not re-checked by the 2026-09-24 landing session) |
-| 2026-09-24 rebuild | New AAB built from the same `versionCode 3` after landing 09-14's background-findability/identity-binding/address-recovery work; SHA256 and readiness details in `docs/release/1.1.0-readiness.md`. **Not uploaded** — would collide with the already-submitted `versionCode 3` binary; needs a version bump first if it is to be shipped. |
+| `versionCode 3` review status | **Passed review, live in production** (confirmed 2026-09-25) |
+| `versionCode 4` (1.1.1) upload | **Completed 2026-09-25** — 0 errors, 2 advisory warnings (missing deobfuscation/native-debug-symbol files — build has none, ignored per runbook), submitted for review same day. Version notes in en-US/zh-CN. Details: `docs/evidence/2026-09-25-publish-1.1.1.md`. |
 | Closed testing required | **Satisfied** - 12+ testers for at least 14 days |
 | Closed testing release | **Published** |
 | Testers Community report | **Available** |
 | Tester feedback | No critical crashes or blocking bugs reported |
 
-Next: decide whether to bump `versionCode` to ship the 2026-09-24 rebuild, and whether/when to check the `versionCode 3` review outcome.
+Next: await Google's review outcome for `versionCode 4` (1.1.1).
 
 Reference docs:
 - `docs/GOOGLE_PLAY_PRODUCTION_ACCESS_APPLICATION.md`
