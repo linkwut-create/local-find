@@ -17,14 +17,14 @@ Local-first Android phone finder for trusted nearby devices. Find your phone on 
 
 ## Current Release
 
-The current public MVP testing release is **Local Find MVP-U.5**:
+The current release is **Local Find 1.1.1** (`versionCode 4`):
 
-- GitHub Release: [Local Find MVP-U.5](https://github.com/linkwut-create/local-find/releases/tag/mvp-u5-ok)
-- Tag: `mvp-u5-ok`
-- Package: `local-find-mvp-u5.zip`
-- SHA256: `81764E96AD9648CCC3369F54CDB6113DCFB342BEBC9A42D314337B2EB59FB371`
+- GitHub Release: [Local Find 1.1.1](https://github.com/linkwut-create/local-find/releases/tag/v1.1.1)
+- Tag: `v1.1.1`
+- Assets: `local-find-1.1.1-release.apk`, `local-find-chrome-extension-1.1.1.zip`, `SHA256SUMS.txt`
+- Also submitted for review: Google Play (production track, `versionCode 4`) and the Chrome Web Store extension listing.
 
-This is an MVP testing release. It is not a Play Store production build and the Chrome extension is distributed as an unpacked Manifest V3 extension for testing.
+The GitHub release APK is provided for sideloading/testing; the Play Store AAB is not attached here (no signing material is published). See `docs/release/1.1.1-readiness.md` for build and verification details.
 
 ## Current Capabilities
 
